@@ -9,9 +9,9 @@ import { gsap } from "@/utils/gsap";
 import { useGSAP } from "@gsap/react";
 
 const LEFT_LINKS = [
-  { name: "Menu", href: "#chapter-signature-dishes" },
-  { name: "Locations", href: "#chapter-locations" },
-  { name: "Our Story", href: "#chapter-family-kitchen" },
+  { name: "Menu", href: "/menu" },
+  { name: "Locations", href: "/#chapter-locations" },
+  { name: "Our Story", href: "/#chapter-family-kitchen" },
 ];
 
 export function Navbar() {
@@ -162,7 +162,7 @@ export function Navbar() {
             >
               <motion.div variants={buttonVariants} whileHover={{ y: -2 }} transition={{ duration: 0.3 }} className="flex items-center">
                 <Link
-                  href="#chapter-reservation"
+                  href="/#chapter-reservation"
                   className={`flex items-center justify-center h-[42px] px-6 rounded-full text-[12px] tracking-[0.12em] font-medium uppercase font-sans whitespace-nowrap border transition-all duration-300 ease-in-out ${
                     isScrolled 
                       ? "border-[rgba(43,36,29,0.15)] text-[#2B241D] hover:bg-[#2B241D] hover:text-[#F5F0E6] hover:border-[#2B241D]" 
@@ -285,7 +285,7 @@ export function Navbar() {
                 transition={{ delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
               >
                 <Link
-                  href="#chapter-reservation"
+                  href="/#chapter-reservation"
                   onClick={toggleMobileMenu}
                   className="w-full h-[46px] flex items-center justify-center border border-[rgba(43,36,29,0.15)] text-[#2B241D] text-[12px] tracking-[0.12em] font-medium uppercase hover:bg-[#2B241D] hover:text-[#F5F0E6] transition-all duration-300 ease-in-out"
                 >

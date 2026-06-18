@@ -39,14 +39,14 @@ export function StickyMenuNav() {
     const element = document.getElementById(id);
     if (element) {
       window.scrollTo({
-        top: element.offsetTop - 100, // Offset for sticky nav
+        top: element.offsetTop - 170, // Offset for main navbar + sticky nav
         behavior: "smooth"
       });
     }
   };
 
   return (
-    <div className="sticky top-0 z-[60] w-full bg-[#F6F2EA]/95 backdrop-blur-md border-b border-[#2A211C]/10 hidden md:block transition-all duration-500">
+    <div className="sticky top-[90px] lg:top-[110px] z-[40] w-full bg-[#F6F2EA]/95 backdrop-blur-md border-b border-[#2A211C]/10 hidden md:block transition-all duration-500">
       <div className="max-w-[1200px] mx-auto px-6 h-[60px] flex items-center justify-center overflow-x-auto hide-scrollbar">
         <ul className="flex items-center gap-8 lg:gap-12 w-max">
           {SECTIONS.map((section) => (
