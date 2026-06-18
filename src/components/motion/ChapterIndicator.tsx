@@ -7,9 +7,9 @@ import { useGSAP } from "@gsap/react";
 const CHAPTERS = [
   { id: "arrival", num: "I", label: "Arrival" },
   { id: "family-kitchen", num: "II", label: "Family Kitchen" },
-  { id: "celebration-table", num: "III", label: "Celebration Table" },
+  { id: "ritual", num: "III", label: "The Ritual" },
   { id: "signature-dishes", num: "IV", label: "Signature Dishes" },
-  { id: "experience", num: "V", label: "Experience" },
+  { id: "offerings", num: "V", label: "The Offerings" },
   { id: "locations", num: "VI", label: "Locations" },
   { id: "reservation", num: "VII", label: "Reservation" },
 ];

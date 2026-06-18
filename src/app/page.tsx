@@ -1,8 +1,8 @@
 import { Hero } from "@/components/home/Hero";
 import { Story } from "@/components/home/Story";
-import { CelebrationTable } from "@/components/home/CelebrationTable";
+import { TheRitual } from "@/components/home/TheRitual";
 import { SignatureDishes } from "@/components/home/SignatureDishes";
-import { Experience } from "@/components/home/Experience";
+import { MenuPreview } from "@/components/home/MenuPreview";
 import { Locations } from "@/components/home/LocationsPreview";
 import { ReservationCTA } from "@/components/home/ReservationCTA";
 import { ChapterIndicator } from "@/components/motion/ChapterIndicator";
@@ -20,9 +20,9 @@ export default function Home() {
       {/* Content wrapper slides over the sticky hero */}
       <div className="relative z-10 w-full bg-[#F5F0E6] shadow-[0_-20px_50px_rgba(0,0,0,0.3)]">
         <div id="chapter-family-kitchen"><Story /></div>
-        <div id="chapter-celebration-table"><CelebrationTable /></div>
+        <div id="chapter-ritual"><TheRitual /></div>
         <div id="chapter-signature-dishes"><SignatureDishes /></div>
-        <div id="chapter-experience"><Experience /></div>
+        <div id="chapter-offerings"><MenuPreview /></div>
         <div id="chapter-locations"><Locations /></div>
         <div id="chapter-reservation"><ReservationCTA /></div>
       </div>

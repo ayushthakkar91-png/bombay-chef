@@ -18,21 +18,21 @@ export function ReservationCTA() {
   }, []);
 
   return (
-    <section className="relative bg-[#5D0925] w-full py-24 lg:py-[120px] px-6 overflow-hidden">
+    <section className="relative bg-[#2A211C] w-full py-24 lg:py-[140px] px-6 overflow-hidden">
       {/* Subtle floating texture */}
+      {/* Film grain texture */}
       <div 
         ref={bgRef}
-        className="absolute inset-0 opacity-[0.03]"
+        className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay"
         style={{
-          backgroundImage: `radial-gradient(circle at 20% 50%, #F5F0E6 1px, transparent 1px), radial-gradient(circle at 80% 20%, #F5F0E6 1px, transparent 1px), radial-gradient(circle at 60% 80%, #F5F0E6 1px, transparent 1px)`,
-          backgroundSize: '120px 120px, 80px 80px, 160px 160px',
-          backgroundPosition: '0px 0px'
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+          backgroundSize: '200px 200px',
         }}
       />
 
       <div className="relative z-10 max-w-[900px] mx-auto text-center flex flex-col items-center">
         <span className="text-[#A88442] text-[13px] tracking-[0.2em] font-semibold uppercase mb-6 font-sans block">
-          Chapter VII : The Next Chapter
+          Chapter VII &middot; The Next Chapter
         </span>
         <h2 className="text-[32px] sm:text-[36px] md:text-[48px] lg:text-[56px] font-serif text-[#F5F0E6] leading-[1.15] mb-5">
           Reserve Your Table
