@@ -14,6 +14,18 @@ const LEFT_LINKS = [
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const navRef = useRef<HTMLElement>(null);
+
+  useGSAP(() => {
+    if (navRef.current) {
+      gsap.fromTo(
+        navRef.current,
+        { y: -100, opacity: 0 },
+        { y: 0, opacity: 1, duration: 1.2, ease: "power3.out" }
+      );
+    }
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -60,6 +72,7 @@ export function Navbar() {
   return (
     <>
       <header
+        ref={navRef}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ease-in-out border-b ${
           isScrolled
             ? "bg-[#F5F0E6] border-[rgba(43,36,29,0.08)] shadow-[0_4px_20px_rgba(0,0,0,0.02)]"

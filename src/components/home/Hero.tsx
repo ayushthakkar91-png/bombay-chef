@@ -9,22 +9,49 @@ export function Hero() {
   const bgRef = useRef<HTMLDivElement>(null);
   const headlineRef = useRef<HTMLHeadingElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const subtitleRef = useRef<HTMLParagraphElement>(null);
+  const buttonsRef = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
-    // Cinematic background drift
-    gsap.fromTo(
+    // Cinematic background drift and infinite breathing
+    const bgTimeline = gsap.timeline();
+    bgTimeline.fromTo(
       bgRef.current,
       { scale: 1.08 },
       { scale: 1, duration: 20, ease: "none" }
-    );
+    ).to(bgRef.current, {
+      scale: 1.02,
+      duration: 15,
+      ease: "sine.inOut",
+      yoyo: true,
+      repeat: -1
+    });
 
     // Staggered word reveal emerging from darkness
     if (headlineRef.current) {
       const words = headlineRef.current.querySelectorAll('.word');
       gsap.fromTo(
         words,
-        { y: 40, opacity: 0 },
-        { y: 0, opacity: 1, duration: 1.5, stagger: 0.05, ease: "power3.out", delay: 0.3 }
+        { y: 120, opacity: 0 },
+        { y: 0, opacity: 1, duration: 1.4, stagger: 0.05, ease: "power4.out", delay: 0.2 }
+      );
+    }
+
+    // Subtitle fade in
+    if (subtitleRef.current) {
+      gsap.fromTo(
+        subtitleRef.current,
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 1.2, delay: 1.0, ease: "power2.out" }
+      );
+    }
+
+    // Buttons fade up
+    if (buttonsRef.current) {
+      gsap.fromTo(
+        buttonsRef.current,
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 1.2, delay: 1.3, ease: "power2.out" }
       );
     }
 
@@ -43,6 +70,18 @@ export function Hero() {
         }
       });
     }
+
+    // Background transition as Chapter 2 enters
+    gsap.to(bgRef.current, {
+      scale: 1.1,
+      opacity: 0.3,
+      scrollTrigger: {
+        trigger: "#chapter-family-kitchen",
+        start: "top bottom",
+        end: "top top",
+        scrub: true,
+      }
+    });
   }, []);
 
   return (
@@ -97,6 +136,7 @@ export function Hero() {
 
           {/* Subheading */}
           <p 
+            ref={subtitleRef}
             className="text-[16px] lg:text-[20px] text-[#F5F0E6] opacity-90 max-w-[700px] mx-auto mb-[6vh] font-sans tracking-widest font-light"
             style={{ lineHeight: "1.9" }}
           >
@@ -105,6 +145,7 @@ export function Hero() {
 
           {/* Buttons */}
           <div 
+            ref={buttonsRef}
             className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-[8vh] w-full sm:w-auto"
           >
             <div className="w-full sm:w-auto">
