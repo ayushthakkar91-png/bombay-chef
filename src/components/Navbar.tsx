@@ -83,8 +83,8 @@ export function Navbar() {
         }`}
       >
         <div className="w-full px-6 md:px-12 lg:px-16">
-          {/* Height reduced to 80px for a more cinematic widescreen feel */}
-          <nav className="relative flex justify-between items-center h-[72px] lg:h-[80px] py-[12px]" aria-label="Main Navigation">
+          {/* Height increased to 110px to accommodate the taller logo lockup with elegant breathing room */}
+          <nav className="relative flex justify-between items-center h-[90px] lg:h-[110px] py-[16px]" aria-label="Main Navigation">
             
             <div className="flex-1 lg:hidden" />
 
