@@ -20,6 +20,8 @@ export function Navbar() {
   const pathname = usePathname();
   const navRef = useRef<HTMLElement>(null);
 
+  const isDarkTheme = isScrolled || ['/contact', '/locations', '/reservations'].includes(pathname);
+
   useGSAP(() => {
     if (navRef.current) {
       gsap.fromTo(
@@ -77,7 +79,7 @@ export function Navbar() {
       <header
         ref={navRef}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ease-in-out border-b ${
-          isScrolled
+          isDarkTheme
             ? "bg-[#F5F0E6] border-[rgba(43,36,29,0.08)] shadow-[0_4px_20px_rgba(0,0,0,0.02)]"
             : "bg-transparent border-[rgba(245,240,230,0.08)]"
         }`}
@@ -100,7 +102,7 @@ export function Navbar() {
                   <Link
                     href={link.href}
                     className={`text-[14px] tracking-[0.08em] font-medium uppercase transition-colors duration-300 ease-in-out relative group whitespace-nowrap ${
-                      isScrolled ? "text-[#2B241D] hover:text-[#A88442]" : "text-[#F5F0E6] hover:text-[#A88442]"
+                      isDarkTheme ? "text-[#2B241D] hover:text-[#A88442]" : "text-[#F5F0E6] hover:text-[#A88442]"
                     }`}
                   >
                     {link.name}
@@ -119,7 +121,7 @@ export function Navbar() {
                   initial="hidden"
                   animate="show"
                   className={`w-[36px] h-[42px] lg:w-[44px] lg:h-[52px] transition-colors duration-500 mb-2 ${
-                    isScrolled ? "bg-[#2B241D]" : "bg-[#F5F0E6]"
+                    isDarkTheme ? "bg-[#2B241D]" : "bg-[#F5F0E6]"
                   }`}
                   style={{
                     WebkitMaskImage: "url('/images/brand/logo.svg')",
@@ -140,12 +142,12 @@ export function Navbar() {
                   className="flex flex-col items-center text-center mt-1"
                 >
                   <span className={`font-serif text-[1.1rem] lg:text-[1.2rem] tracking-[0.2em] uppercase leading-none transition-colors duration-500 ${
-                    isScrolled ? "text-[#2B241D]" : "text-[#F5F0E6]"
+                    isDarkTheme ? "text-[#2B241D]" : "text-[#F5F0E6]"
                   }`}>
                     Bombay Bicycle Chef
                   </span>
                   <span className={`font-sans text-[0.6rem] tracking-[0.25em] uppercase font-medium mt-1.5 transition-colors duration-500 ${
-                    isScrolled ? "text-[#A88442]" : "text-[#A88442]/90"
+                    isDarkTheme ? "text-[#A88442]" : "text-[#A88442]/90"
                   }`}>
                     Modern Indian Kitchen
                   </span>
@@ -164,7 +166,7 @@ export function Navbar() {
                 <Link
                   href="/#chapter-reservation"
                   className={`flex items-center justify-center h-[42px] px-6 rounded-full text-[12px] tracking-[0.12em] font-medium uppercase font-sans whitespace-nowrap border transition-all duration-300 ease-in-out ${
-                    isScrolled 
+                    isDarkTheme 
                       ? "border-[rgba(43,36,29,0.15)] text-[#2B241D] hover:bg-[#2B241D] hover:text-[#F5F0E6] hover:border-[#2B241D]" 
                       : "border-[rgba(245,240,230,0.35)] text-[#F5F0E6] hover:bg-[#F5F0E6] hover:text-[#2B241D] hover:border-[#F5F0E6]"
                   }`}
@@ -194,7 +196,7 @@ export function Navbar() {
                 aria-expanded={isMobileMenuOpen}
                 aria-label="Toggle menu"
                 className={`p-2 focus:outline-none transition-colors duration-500 ${
-                  isScrolled ? "text-[#2B241D]" : "text-[#F5F0E6]"
+                  isDarkTheme ? "text-[#2B241D]" : "text-[#F5F0E6]"
                 }`}
               >
                 <Menu size={28} strokeWidth={1.5} />
