@@ -1,9 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
+import { gsap } from "@/utils/gsap";
+import { useGSAP } from "@gsap/react";
 
 const LEFT_LINKS = [
   { name: "Menu", href: "#chapter-signature-dishes" },
