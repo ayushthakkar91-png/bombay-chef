@@ -25,8 +25,8 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
       autoRaf={false}
       root
       options={{ 
-        lerp: 0.04, 
-        duration: 2.0, 
+        lerp: 0.05, 
+        duration: 1.5, 
         smoothWheel: true,
         orientation: 'vertical',
         gestureOrientation: 'vertical',

@@ -61,7 +61,6 @@ export function Hero() {
         y: -100,
         opacity: 0,
         scale: 0.95,
-        filter: "blur(5px)",
         scrollTrigger: {
           trigger: "#chapter-family-kitchen", // Next section
           start: "top bottom", // When Chapter 2 touches the bottom of screen
