@@ -35,7 +35,13 @@ export function Hero() {
         <div className="absolute inset-0 mix-blend-overlay bg-[#5D0925] opacity-20 z-10" />
       </div>
 
-
+      {/* Subtle dark gradient at the bottom */}
+      <div 
+        className="absolute inset-0 z-20 pointer-events-none" 
+        style={{
+          background: "linear-gradient(to bottom, transparent 70%, rgba(16,12,8,0.75) 100%)"
+        }}
+      />
 
       {/* Content */}
       <div className="relative z-30 w-full max-w-[1440px] mx-auto px-6 md:px-12 pt-[18vh] lg:pt-[22vh] pb-[5vh] text-center flex flex-col items-center">
