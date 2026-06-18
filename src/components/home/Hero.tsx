@@ -28,30 +28,30 @@ export function Hero() {
           className="object-cover object-center"
           sizes="100vw"
         />
-        <div 
-          className="absolute inset-0"
-          style={{
-            background: "linear-gradient(rgba(20, 10, 5, 0.45), rgba(20, 10, 5, 0.65))"
-          }}
-        />
+        {/* Cinematic treatments: Darken edges, vignette, and warmth */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/60 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/50 z-10" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0.6)_100%)] z-10 pointer-events-none" />
+        <div className="absolute inset-0 mix-blend-overlay bg-[#5D0925] opacity-20 z-10" />
       </div>
 
-      <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0.55)_0%,transparent_75%)]" />
+      {/* Smooth transition into Chapter II (F5F0E6) */}
+      <div className="absolute bottom-0 left-0 right-0 h-[25vh] bg-gradient-to-t from-[#F5F0E6] via-[#F5F0E6]/30 to-transparent z-20 pointer-events-none" />
 
       {/* Content */}
-      <div className="relative z-10 w-full max-w-[1440px] mx-auto px-6 md:px-12 pt-[12vh] lg:pt-[15vh] pb-[5vh] text-center flex flex-col items-center">
+      <div className="relative z-30 w-full max-w-[1440px] mx-auto px-6 md:px-12 pt-[18vh] lg:pt-[22vh] pb-[5vh] text-center flex flex-col items-center">
         <div className="flex flex-col items-center">
           {/* Label */}
           <span 
-            className="text-[#A88442] text-[13px] tracking-[0.25em] font-semibold uppercase mb-[2vh] md:mb-[3vh] font-sans"
+            className="text-[#A88442] text-[12px] lg:text-[14px] tracking-[0.3em] font-semibold uppercase mb-[4vh] font-sans"
           >
             Chapter I : The Arrival
           </span>
 
           {/* Heading */}
           <h1 
-            className="font-serif text-[#F5F0E6] mb-[3vh] md:mb-[4vh] tracking-wide font-medium"
-            style={{ fontSize: "clamp(2.5rem, min(8vw, 12vh), 7rem)", lineHeight: "0.95" }}
+            className="font-serif text-[#F5F0E6] mb-[5vh] tracking-wide font-normal"
+            style={{ fontSize: "clamp(3.5rem, min(12vw, 16vh), 9rem)", lineHeight: "0.9" }}
           >
             Inspired By Bombay.<br />
             Made For London.
@@ -59,20 +59,20 @@ export function Hero() {
 
           {/* Subheading */}
           <p 
-            className="text-[16px] lg:text-[18px] text-[#F5F0E6] opacity-90 max-w-[700px] mx-auto mb-[4vh] font-sans tracking-wide"
-            style={{ lineHeight: "1.8" }}
+            className="text-[16px] lg:text-[20px] text-[#F5F0E6] opacity-90 max-w-[700px] mx-auto mb-[6vh] font-sans tracking-widest font-light"
+            style={{ lineHeight: "1.9" }}
           >
             A warm Indian dining experience inspired by family kitchens, spice markets and the timeless spirit of Bombay.
           </p>
 
           {/* Buttons */}
           <div 
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-[6vh] w-full sm:w-auto"
+            className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-[8vh] w-full sm:w-auto"
           >
             <div className="w-full sm:w-auto">
               <Link
                 href="#chapter-reservation"
-                className="flex items-center justify-center w-full sm:w-auto h-[52px] px-8 rounded-full border border-[rgba(245,240,230,0.35)] text-[#F5F0E6] text-[14px] tracking-[0.12em] font-medium uppercase font-sans hover:bg-[#F5F0E6] hover:text-[#2B241D] transition-colors duration-500"
+                className="flex items-center justify-center w-full sm:w-auto h-[56px] px-10 rounded-none border border-white/30 text-[#F5F0E6] text-[13px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-white/10 hover:border-white transition-all duration-500"
               >
                 Reserve A Table
               </Link>
@@ -80,7 +80,7 @@ export function Hero() {
             <div className="w-full sm:w-auto">
               <Link
                 href="https://www.bombaybicyclechef.uk/locator"
-                className="flex items-center justify-center w-full sm:w-auto h-[52px] px-8 rounded-full bg-[#5D0925] border border-[#5D0925] text-[#F5F0E6] text-[14px] tracking-[0.12em] font-medium uppercase font-sans hover:bg-[#420616] hover:border-[#420616] transition-colors duration-500"
+                className="flex items-center justify-center w-full sm:w-auto h-[56px] px-10 rounded-none bg-[#5D0925] border border-[#5D0925] text-[#F5F0E6] text-[13px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-transparent hover:border-[#F5F0E6] transition-all duration-500"
               >
                 Order Online
               </Link>
@@ -89,14 +89,13 @@ export function Hero() {
 
           {/* Trust Line */}
           <div 
-            className="flex flex-wrap justify-center items-center gap-2 text-sm text-[#F5F0E6] opacity-80 tracking-wide font-sans"
+            className="flex flex-wrap justify-center items-center gap-4 text-[12px] lg:text-[13px] text-[#2B241D] opacity-60 tracking-[0.2em] font-sans uppercase font-medium absolute bottom-[4vh] left-0 w-full z-40"
           >
-            <span className="text-[#A88442]">★★★★★</span>
-            <span>4.6 Google Rating</span>
-            <span className="opacity-50 px-2 hidden sm:inline">·</span>
-            <span className="w-full sm:w-auto text-center mt-2 sm:mt-0">3 London Locations</span>
-            <span className="opacity-50 px-2 hidden sm:inline">·</span>
-            <span className="w-full sm:w-auto text-center mt-2 sm:mt-0">Fresh Tandoor Daily</span>
+            <span className="w-full sm:w-auto text-center mt-2 sm:mt-0">Established 1987</span>
+            <span className="opacity-40 hidden sm:inline">|</span>
+            <span className="w-full sm:w-auto text-center mt-2 sm:mt-0">Three London Locations</span>
+            <span className="opacity-40 hidden sm:inline">|</span>
+            <span className="w-full sm:w-auto text-center mt-2 sm:mt-0">Inspired By Bombay</span>
           </div>
         </div>
       </div>

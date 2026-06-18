@@ -67,8 +67,8 @@ export function Navbar() {
         }`}
       >
         <div className="w-full px-6 md:px-12 lg:px-16">
-          {/* Height reduced to 88px, added vertical padding for balance */}
-          <nav className="relative flex justify-between items-center h-[72px] lg:h-[88px] py-[12px]" aria-label="Main Navigation">
+          {/* Height reduced to 80px for a more cinematic widescreen feel */}
+          <nav className="relative flex justify-between items-center h-[72px] lg:h-[80px] py-[12px]" aria-label="Main Navigation">
             
             <div className="flex-1 lg:hidden" />
 
@@ -102,7 +102,7 @@ export function Navbar() {
                   variants={logoVariants}
                   initial="hidden"
                   animate="show"
-                  className={`w-[32px] h-[37px] lg:w-[40px] lg:h-[46px] transition-colors duration-500 mb-2 ${
+                  className={`w-[24px] h-[28px] lg:w-[28px] lg:h-[32px] transition-colors duration-500 mb-2 ${
                     isScrolled ? "bg-[#2B241D]" : "bg-[#F5F0E6]"
                   }`}
                   style={{
@@ -123,7 +123,7 @@ export function Navbar() {
                   animate="show"
                   className="flex flex-col items-center text-center"
                 >
-                  <span className={`font-serif text-[16px] lg:text-[18px] tracking-wider leading-none transition-colors duration-500 ${
+                  <span className={`font-serif text-[14px] lg:text-[16px] tracking-widest uppercase leading-none transition-colors duration-500 ${
                     isScrolled ? "text-[#2B241D]" : "text-[#F5F0E6]"
                   }`}>
                     Bombay Bicycle Chef
