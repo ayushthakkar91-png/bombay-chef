@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 
 const TESTIMONIALS = [
   {
@@ -20,7 +20,7 @@ const TESTIMONIALS = [
   }
 ];
 
-const fade = {
+const fade: Variants = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { duration: 1.5, ease: "easeOut" } }
 };
