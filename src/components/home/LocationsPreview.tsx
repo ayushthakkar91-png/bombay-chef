@@ -16,14 +16,14 @@ const LOCATIONS = [
     address: "89 Northcote Road, SW11 6PL",
     phone: "020 8123 4568",
     vibe: "High ceilings, large tables, perfect for Sunday gatherings.",
-    image: "/images/locations/battersea.jpg"
+    image: "/images/locations/balham.jpg"
   },
   {
     name: "Kilburn",
     address: "244 High Road, NW6 2BS",
     phone: "020 8123 4569",
     vibe: "Cozy booths and a lively bar serving spice-infused cocktails.",
-    image: "/images/locations/kilburn.jpg"
+    image: "/images/locations/balham.jpg"
   }
 ];
 
@@ -78,7 +78,7 @@ export function Locations() {
               </p>
               
               <Link 
-                href="/reservations"
+                href="#chapter-reservation"
                 className="inline-flex items-center text-[#A88442] text-[13px] tracking-[0.15em] font-medium uppercase hover:text-[#F5F0E6] transition-colors duration-300"
               >
                 Book {loc.name} <span className="ml-2 transition-transform duration-300 group-hover:translate-x-2">→</span>

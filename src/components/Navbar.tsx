@@ -6,9 +6,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 
 const LEFT_LINKS = [
-  { name: "Menu", href: "/menu" },
-  { name: "Locations", href: "/locations" },
-  { name: "Our Story", href: "/about" },
+  { name: "Menu", href: "#chapter-signature-dishes" },
+  { name: "Locations", href: "#chapter-locations" },
+  { name: "Our Story", href: "#chapter-family-kitchen" },
 ];
 
 export function Navbar() {
@@ -141,7 +141,7 @@ export function Navbar() {
             >
               <motion.div variants={buttonVariants} whileHover={{ y: -2 }} transition={{ duration: 0.3 }}>
                 <Link
-                  href="/reservations"
+                  href="#chapter-reservation"
                   className={`flex items-center justify-center h-[52px] px-8 rounded-full text-[14px] tracking-[0.12em] font-medium uppercase font-sans whitespace-nowrap border transition-all duration-300 ease-in-out ${
                     isScrolled 
                       ? "border-[rgba(43,36,29,0.15)] text-[#2B241D] hover:bg-[#2B241D] hover:text-[#F5F0E6] hover:border-[#2B241D]" 
@@ -153,7 +153,7 @@ export function Navbar() {
               </motion.div>
               <motion.div variants={buttonVariants} whileHover={{ y: -2 }} transition={{ duration: 0.3 }}>
                 <Link
-                  href="/order"
+                  href="https://www.bombaybicyclechef.uk/locator"
                   className="flex items-center justify-center h-[52px] px-8 rounded-full bg-[#5D0925] text-[#F5F0E6] text-[14px] tracking-[0.12em] font-medium uppercase font-sans whitespace-nowrap border border-[#5D0925] hover:bg-[#420616] hover:border-[#420616] transition-all duration-300"
                 >
                   Order Online
@@ -261,14 +261,14 @@ export function Navbar() {
                 transition={{ delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
               >
                 <Link
-                  href="/reservations"
+                  href="#chapter-reservation"
                   onClick={toggleMobileMenu}
                   className="w-full h-[54px] flex items-center justify-center border border-[rgba(43,36,29,0.15)] text-[#2B241D] text-[14px] tracking-[0.12em] font-medium uppercase hover:bg-[#2B241D] hover:text-[#F5F0E6] transition-all duration-300 ease-in-out"
                 >
                   Reserve Table
                 </Link>
                 <Link
-                  href="/order"
+                  href="https://www.bombaybicyclechef.uk/locator"
                   onClick={toggleMobileMenu}
                   className="w-full h-[54px] flex items-center justify-center bg-[#5D0925] border border-[#5D0925] text-[#F5F0E6] text-[14px] tracking-[0.12em] font-medium uppercase hover:bg-[#420616] hover:border-[#420616] transition-colors duration-300 shadow-md ease-in-out"
                 >

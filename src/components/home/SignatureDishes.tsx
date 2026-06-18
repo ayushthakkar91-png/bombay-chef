@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { gsap, ScrollTrigger } from "@/utils/gsap";
+import { useGSAP } from "@gsap/react";
 import Image from "next/image";
 
 const DISHES = [
@@ -20,15 +21,29 @@ const DISHES = [
 ];
 
 export function SignatureDishes() {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "end start"]
-  });
-  const y = useTransform(scrollYProgress, [0, 1], ["-5%", "5%"]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imageWrapperRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    // Mask reveal animation as user scrolls
+    gsap.fromTo(
+      imageWrapperRef.current,
+      { clipPath: "inset(20% 10% 20% 10%)" },
+      {
+        clipPath: "inset(0% 0% 0% 0%)",
+        ease: "none",
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: "top center",
+          end: "bottom bottom",
+          scrub: true,
+        },
+      }
+    );
+  }, []);
 
   return (
-    <section className="bg-[#F5F0E6] relative w-full pt-20 pb-20 lg:pt-[100px] lg:pb-[100px] border-t border-[rgba(43,36,29,0.05)]">
+    <section ref={containerRef} className="bg-[#F5F0E6] relative w-full pt-20 pb-20 lg:pt-[100px] lg:pb-[100px] border-t border-[rgba(43,36,29,0.05)]">
       <div className="max-w-[1200px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-start">
         
         {/* Left Side: Editorial Typography Menu */}
@@ -59,17 +74,18 @@ export function SignatureDishes() {
         </div>
 
         {/* Right Side: Single Featured Image */}
-        <div ref={ref} className="lg:col-span-5 relative w-full h-[60vh] lg:h-[80vh] lg:sticky lg:top-[10vh] overflow-hidden bg-[#2B241D]">
-          <motion.div style={{ y }} className="absolute inset-0 w-full h-[110%] -top-[5%]">
+        <div className="lg:col-span-5 relative w-full h-[60vh] lg:h-[80vh] lg:sticky lg:top-[10vh] overflow-hidden">
+          <div ref={imageWrapperRef} className="absolute inset-0 w-full h-full bg-[#2B241D]">
             <Image
-              src="/images/dishes/lamb-chops.jpg"
+              src="/images/dishes/chapter2.jpg"
               alt="Tandoori Lamb Chops"
               fill
               className="object-cover object-center"
+              sizes="(max-width: 1024px) 100vw, 40vw"
             />
             {/* Fallback overlay */}
             <div className="absolute inset-0 bg-black/10 mix-blend-overlay" />
-          </motion.div>
+          </div>
         </div>
 
       </div>

@@ -1,6 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useRef } from "react";
+import { gsap } from "@/utils/gsap";
+import { useGSAP } from "@gsap/react";
 
 const NARRATIVE = [
   {
@@ -14,19 +16,24 @@ const NARRATIVE = [
 ];
 
 export function Experience() {
+  const bgRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    gsap.to(bgRef.current, {
+      backgroundPosition: "100% 100%",
+      duration: 40,
+      ease: "none",
+      repeat: -1,
+      yoyo: true
+    });
+  }, []);
+
   return (
     <section className="w-full relative bg-[#F5F0E6] overflow-hidden pt-20 pb-20 lg:pt-[120px] lg:pb-[120px] px-6">
       
       {/* Drifting Atmosphere */}
-      <motion.div 
-        animate={{ 
-          backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"],
-        }}
-        transition={{ 
-          duration: 40, 
-          ease: "linear", 
-          repeat: Infinity 
-        }}
+      <div 
+        ref={bgRef}
         className="absolute inset-0 z-0 opacity-40 pointer-events-none"
         style={{
           background: "radial-gradient(circle at center, rgba(168,132,66,0.08) 0%, transparent 60%)",

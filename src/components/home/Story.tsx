@@ -61,6 +61,7 @@ export function Story() {
                 alt="The Family Kitchen"
                 fill
                 className="object-cover object-center"
+                sizes="(max-width: 1024px) 100vw, 50vw"
               />
               {/* Fallback overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent z-10" />
