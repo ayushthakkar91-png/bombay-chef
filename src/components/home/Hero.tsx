@@ -35,8 +35,7 @@ export function Hero() {
         <div className="absolute inset-0 mix-blend-overlay bg-[#5D0925] opacity-20 z-10" />
       </div>
 
-      {/* Smooth transition into Chapter II (F5F0E6) */}
-      <div className="absolute bottom-0 left-0 right-0 h-[25vh] bg-gradient-to-t from-[#F5F0E6] via-[#F5F0E6]/30 to-transparent z-20 pointer-events-none" />
+
 
       {/* Content */}
       <div className="relative z-30 w-full max-w-[1440px] mx-auto px-6 md:px-12 pt-[18vh] lg:pt-[22vh] pb-[5vh] text-center flex flex-col items-center">
@@ -89,7 +88,7 @@ export function Hero() {
 
           {/* Trust Line */}
           <div 
-            className="flex flex-wrap justify-center items-center gap-4 text-[12px] lg:text-[13px] text-[#2B241D] opacity-60 tracking-[0.2em] font-sans uppercase font-medium absolute bottom-[4vh] left-0 w-full z-40"
+            className="flex flex-wrap justify-center items-center gap-4 text-[12px] lg:text-[13px] text-[#F5F0E6] opacity-60 tracking-[0.2em] font-sans uppercase font-medium absolute bottom-[4vh] left-0 w-full z-40"
           >
             <span className="w-full sm:w-auto text-center mt-2 sm:mt-0">Established 1987</span>
             <span className="opacity-40 hidden sm:inline">|</span>
