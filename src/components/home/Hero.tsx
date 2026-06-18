@@ -151,7 +151,7 @@ export function Hero() {
             <div className="w-full sm:w-auto">
               <Link
                 href="#chapter-reservation"
-                className="flex items-center justify-center w-full sm:w-auto h-[56px] px-10 rounded-none bg-[#5D0925] border border-[#5D0925] text-[#F8F4ED] text-[13px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-[#420616] hover:border-[#420616] transition-all duration-500"
+                className="flex items-center justify-center w-full sm:w-auto h-[46px] px-8 rounded-none bg-[#5D0925] border border-[#5D0925] text-[#F8F4ED] text-[12px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-[#420616] hover:border-[#420616] transition-all duration-500"
               >
                 Reserve A Table
               </Link>
@@ -159,7 +159,7 @@ export function Hero() {
             <div className="w-full sm:w-auto">
               <Link
                 href="https://www.bombaybicyclechef.uk/locator"
-                className="flex items-center justify-center w-full sm:w-auto h-[56px] px-10 rounded-none border border-white/30 text-[#F5F0E6] text-[13px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-white/10 hover:border-white transition-all duration-500"
+                className="flex items-center justify-center w-full sm:w-auto h-[46px] px-8 rounded-none border border-white/30 text-[#F5F0E6] text-[12px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-white/10 hover:border-white transition-all duration-500"
               >
                 Order Online
               </Link>
