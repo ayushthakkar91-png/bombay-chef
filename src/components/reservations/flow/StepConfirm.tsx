@@ -13,9 +13,9 @@ export function StepConfirm({ state, prevStep }: Props) {
 
   return (
     <div className="w-full flex flex-col pt-8 max-w-[800px] mx-auto bg-[#2A211C] p-8 lg:p-16 relative overflow-hidden text-center">
-      
+
       {/* Film grain texture */}
-      <div 
+      <div
         className="absolute inset-0 opacity-[0.05] pointer-events-none mix-blend-overlay"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
@@ -32,7 +32,7 @@ export function StepConfirm({ state, prevStep }: Props) {
         </h2>
 
         <div className="w-full grid grid-cols-2 md:grid-cols-4 gap-y-12 gap-x-6 text-left border-y border-[#F6F2EA]/10 py-12 mb-16">
-          
+
           <div className="flex flex-col">
             <h4 className="text-[#B08A3E] text-[10px] tracking-[0.2em] uppercase font-semibold font-sans mb-3">Location</h4>
             <p className="text-[#F6F2EA] font-serif text-[24px] capitalize">{location || "N/A"}</p>
@@ -73,8 +73,8 @@ export function StepConfirm({ state, prevStep }: Props) {
           >
             Confirm Reservation
           </button>
-          
-          <button 
+
+          <button
             onClick={prevStep}
             className="text-[#F6F2EA]/50 text-[12px] uppercase tracking-[0.15em] font-medium hover:text-[#B08A3E] transition-colors w-full sm:w-auto mt-4 sm:mt-0"
           >

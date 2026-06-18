@@ -52,7 +52,7 @@ export function MenuHero() {
       />
 
       <div ref={textRef} className="relative z-10 text-center flex flex-col items-center">
-        <h1 className="text-[60px] sm:text-[80px] md:text-[100px] lg:text-[120px] font-serif text-[#F6F2EA] leading-none mb-8 tracking-wide">
+        <h1 className="text-[48px] sm:text-[64px] md:text-[80px] lg:text-[96px] font-serif text-[#F6F2EA] leading-none mb-8 tracking-wide">
           THE MENU
         </h1>
         

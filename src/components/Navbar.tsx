@@ -114,13 +114,13 @@ export function Navbar() {
             </motion.div>
 
             {/* Center Brand Lockup */}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center w-max">
               <Link href="/" className="group flex flex-col items-center cursor-pointer">
                 <motion.div 
                   variants={logoVariants}
                   initial="hidden"
                   animate="show"
-                  className={`w-[36px] h-[42px] lg:w-[44px] lg:h-[52px] transition-colors duration-500 mb-2 ${
+                  className={`w-[44px] h-[52px] transition-colors duration-500 md:mb-2 ${
                     isDarkTheme ? "bg-[#2B241D]" : "bg-[#F5F0E6]"
                   }`}
                   style={{
@@ -139,14 +139,14 @@ export function Navbar() {
                   variants={logoVariants}
                   initial="hidden"
                   animate="show"
-                  className="flex flex-col items-center text-center mt-1"
+                  className="hidden md:flex flex-col items-center text-center mt-1 w-max"
                 >
-                  <span className={`font-serif text-[1.1rem] lg:text-[1.2rem] tracking-[0.2em] uppercase leading-none transition-colors duration-500 ${
+                  <span className={`whitespace-nowrap font-serif text-[1rem] sm:text-[1.1rem] lg:text-[1.2rem] tracking-[0.15em] sm:tracking-[0.2em] uppercase leading-none transition-colors duration-500 ${
                     isDarkTheme ? "text-[#2B241D]" : "text-[#F5F0E6]"
                   }`}>
                     Bombay Bicycle Chef
                   </span>
-                  <span className={`font-sans text-[0.6rem] tracking-[0.25em] uppercase font-medium mt-1.5 transition-colors duration-500 ${
+                  <span className={`whitespace-nowrap font-sans text-[0.55rem] sm:text-[0.6rem] tracking-[0.2em] sm:tracking-[0.25em] uppercase font-medium mt-1.5 transition-colors duration-500 ${
                     isDarkTheme ? "text-[#A88442]" : "text-[#A88442]/90"
                   }`}>
                     Modern Indian Kitchen
@@ -217,10 +217,10 @@ export function Navbar() {
             className="fixed inset-0 z-[60] bg-[#F5F0E6] flex flex-col"
           >
             {/* Mobile Menu Header */}
-            <div className="relative px-6 md:px-12 h-[80px] flex justify-between items-center w-full">
+            <div className="relative px-6 md:px-12 h-[110px] flex justify-between items-center w-full pt-4">
               <div className="flex-1" />
 
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-max">
                 <Link href="/" className="flex flex-col items-center" onClick={toggleMobileMenu}>
                   <div 
                     className="w-[36px] h-[42px] bg-[#2B241D] mb-2"
@@ -236,11 +236,11 @@ export function Navbar() {
                     }}
                     aria-hidden="true"
                   />
-                  <div className="flex flex-col items-center text-center mt-1">
-                    <span className="font-serif text-[1.1rem] tracking-[0.2em] uppercase leading-none text-[#2B241D]">
+                  <div className="flex flex-col items-center text-center mt-1 w-max">
+                    <span className="whitespace-nowrap font-serif text-[1rem] sm:text-[1.1rem] tracking-[0.15em] sm:tracking-[0.2em] uppercase leading-none text-[#2B241D]">
                       Bombay Bicycle Chef
                     </span>
-                    <span className="font-sans text-[0.6rem] tracking-[0.25em] uppercase font-medium mt-1.5 text-[#A88442]">
+                    <span className="whitespace-nowrap font-sans text-[0.55rem] sm:text-[0.6rem] tracking-[0.2em] sm:tracking-[0.25em] uppercase font-medium mt-1.5 text-[#A88442]">
                       Modern Indian Kitchen
                     </span>
                   </div>
@@ -259,8 +259,8 @@ export function Navbar() {
             </div>
 
             {/* Mobile Menu Links */}
-            <nav className="flex-grow flex flex-col items-center justify-center space-y-10 px-6">
-              <ul className="flex flex-col items-center space-y-8 w-full">
+            <nav className="flex-grow flex flex-col items-center justify-center px-6 pb-12">
+              <ul className="flex flex-col items-center space-y-6 w-full">
                 {LEFT_LINKS.map((link, index) => (
                   <motion.li
                     key={link.name}
@@ -271,7 +271,7 @@ export function Navbar() {
                     <Link
                       href={link.href}
                       onClick={toggleMobileMenu}
-                      className="text-xl md:text-2xl font-serif tracking-widest uppercase text-[#2B241D] hover:text-[#A88442] transition-colors duration-300 ease-in-out"
+                      className="text-[22px] font-serif tracking-[0.15em] uppercase text-[#2B241D] hover:text-[#A88442] transition-colors duration-300 ease-in-out"
                     >
                       {link.name}
                     </Link>
@@ -281,7 +281,7 @@ export function Navbar() {
 
               {/* Mobile CTA Buttons */}
               <motion.div 
-                className="pt-12 flex flex-col space-y-4 w-full max-w-sm"
+                className="mt-12 flex flex-col space-y-4 w-full max-w-[280px]"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3, ease: [0.16, 1, 0.3, 1] }}

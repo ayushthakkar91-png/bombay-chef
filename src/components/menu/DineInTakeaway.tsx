@@ -13,9 +13,9 @@ export function DineInTakeaway() {
       
       {/* Left: DINE IN */}
       <motion.div 
-        className="relative h-1/2 md:h-full flex flex-col items-center justify-center cursor-pointer group border-b md:border-b-0 md:border-r border-[#F6F2EA]/10"
+        className="relative w-full h-1/2 md:w-auto md:h-full flex flex-col items-center justify-center cursor-pointer group border-b md:border-b-0 md:border-r border-[#F6F2EA]/10"
         animate={{
-          width: hoveredSide === "left" ? "65%" : hoveredSide === "right" ? "35%" : "50%"
+          flex: hoveredSide === "left" ? 1.8 : hoveredSide === "right" ? 0.6 : 1
         }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         onMouseEnter={() => setHoveredSide("left")}
@@ -51,9 +51,9 @@ export function DineInTakeaway() {
 
       {/* Right: TAKEAWAY */}
       <motion.div 
-        className="relative h-1/2 md:h-full flex flex-col items-center justify-center cursor-pointer group"
+        className="relative w-full h-1/2 md:w-auto md:h-full flex flex-col items-center justify-center cursor-pointer group"
         animate={{
-          width: hoveredSide === "right" ? "65%" : hoveredSide === "left" ? "35%" : "50%"
+          flex: hoveredSide === "right" ? 1.8 : hoveredSide === "left" ? 0.6 : 1
         }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         onMouseEnter={() => setHoveredSide("right")}

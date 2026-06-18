@@ -127,7 +127,7 @@ export function Hero() {
           <h1 
             ref={headlineRef}
             className="font-serif text-[#F5F0E6] mb-[5vh] tracking-wide font-normal max-w-[1100px]"
-            style={{ fontSize: "clamp(4.8rem, 7vw, 8rem)", lineHeight: "0.92" }}
+            style={{ fontSize: "clamp(2.5rem, 6vw, 8rem)", lineHeight: "0.92" }}
           >
             <span className="word inline-block">Inspired</span> <span className="word inline-block">By</span> <span className="word inline-block">Bombay.</span><br />
             <span className="word inline-block">Made</span> <span className="word inline-block">For</span> <span className="word inline-block">London.</span>
@@ -145,7 +145,7 @@ export function Hero() {
           {/* Buttons */}
           <div 
             ref={buttonsRef}
-            className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-[8vh] w-full sm:w-auto"
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mb-8 lg:mb-[8vh] w-full sm:w-auto"
           >
             <div className="w-full sm:w-auto">
               <Link
@@ -167,13 +167,13 @@ export function Hero() {
 
           {/* Trust Line */}
           <div 
-            className="flex flex-wrap justify-center items-center gap-4 text-[12px] lg:text-[13px] text-[#F5F0E6] opacity-60 tracking-[0.2em] font-sans uppercase font-medium absolute bottom-[4vh] left-0 w-full z-40"
+            className="flex flex-wrap justify-center items-center gap-3 sm:gap-4 text-[10px] sm:text-[12px] lg:text-[13px] text-[#F5F0E6] opacity-60 tracking-[0.2em] font-sans uppercase font-medium relative lg:absolute lg:bottom-[4vh] left-0 w-full z-40 mt-6 lg:mt-0"
           >
-            <span className="w-full sm:w-auto text-center mt-2 sm:mt-0">Established 1987</span>
+            <span className="w-full sm:w-auto text-center mt-1 sm:mt-0">Established 1987</span>
             <span className="opacity-40 hidden sm:inline">|</span>
-            <span className="w-full sm:w-auto text-center mt-2 sm:mt-0">Three London Locations</span>
+            <span className="w-full sm:w-auto text-center mt-1 sm:mt-0">Three London Locations</span>
             <span className="opacity-40 hidden sm:inline">|</span>
-            <span className="w-full sm:w-auto text-center mt-2 sm:mt-0">Inspired By Bombay</span>
+            <span className="w-full sm:w-auto text-center mt-1 sm:mt-0">Inspired By Bombay</span>
           </div>
         </div>
       </div>
