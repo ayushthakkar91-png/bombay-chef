@@ -3,11 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
-import { gsap } from "@/utils/gsap";
+import { gsap, ScrollTrigger } from "@/utils/gsap";
 import { useGSAP } from "@gsap/react";
 export function Hero() {
   const bgRef = useRef<HTMLDivElement>(null);
   const headlineRef = useRef<HTMLHeadingElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
     // Cinematic background drift
@@ -25,6 +26,22 @@ export function Hero() {
         { y: 40, opacity: 0 },
         { y: 0, opacity: 1, duration: 1.5, stagger: 0.05, ease: "power3.out", delay: 0.3 }
       );
+    }
+
+    // Cinematic scroll away when Chapter 2 enters
+    if (contentRef.current) {
+      gsap.to(contentRef.current, {
+        y: -100,
+        opacity: 0,
+        scale: 0.95,
+        filter: "blur(5px)",
+        scrollTrigger: {
+          trigger: "#chapter-family-kitchen", // Next section
+          start: "top bottom", // When Chapter 2 touches the bottom of screen
+          end: "top 40%", // When Chapter 2 is 40% up
+          scrub: 1,
+        }
+      });
     }
   }, []);
 
@@ -56,7 +73,10 @@ export function Hero() {
       />
 
       {/* Content */}
-      <div className="relative z-30 w-full max-w-[1440px] mx-auto px-6 md:px-12 pt-[18vh] lg:pt-[22vh] pb-[5vh] text-center flex flex-col items-center">
+      <div 
+        ref={contentRef}
+        className="relative z-30 w-full max-w-[1440px] mx-auto px-6 md:px-12 pt-[18vh] lg:pt-[22vh] pb-[5vh] text-center flex flex-col items-center"
+      >
         <div className="flex flex-col items-center">
           {/* Label */}
           <span 

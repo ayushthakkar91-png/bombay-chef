@@ -15,6 +15,7 @@ const TIMELINE = [
 export function Story() {
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
+  const headlineRef = useRef<HTMLHeadingElement>(null);
 
   useGSAP(() => {
     gsap.to(imageRef.current, {
@@ -27,6 +28,23 @@ export function Story() {
         scrub: true,
       },
     });
+
+    if (headlineRef.current) {
+      gsap.fromTo(
+        headlineRef.current,
+        { y: 60, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          scrollTrigger: {
+            trigger: "#chapter-family-kitchen",
+            start: "top 80%",
+            end: "top 30%",
+            scrub: 1,
+          }
+        }
+      );
+    }
   }, []);
 
   return (
@@ -39,7 +57,7 @@ export function Story() {
             Chapter II : The Family Kitchen
           </span>
 
-          <h2 className="text-[32px] sm:text-[40px] md:text-[56px] lg:text-[72px] font-serif text-[#2B241D] leading-[1.15] mb-6">
+          <h2 ref={headlineRef} className="text-[32px] sm:text-[40px] md:text-[56px] lg:text-[72px] font-serif text-[#2B241D] leading-[1.15] mb-6">
             Some Flavours<br />Never Leave You
           </h2>
 
