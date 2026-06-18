@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { gsap, ScrollTrigger } from "@/utils/gsap";
+import { useGSAP } from "@gsap/react";
 import Image from "next/image";
 
 const TIMELINE = [
@@ -12,12 +13,21 @@ const TIMELINE = [
 ];
 
 export function Story() {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "end start"]
-  });
-  const y = useTransform(scrollYProgress, [0, 1], ["-15%", "15%"]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLDivElement>(null);
+
+  useGSAP(() => {
+    gsap.to(imageRef.current, {
+      yPercent: 15,
+      ease: "none",
+      scrollTrigger: {
+        trigger: containerRef.current,
+        start: "top bottom",
+        end: "bottom top",
+        scrub: true,
+      },
+    });
+  }, []);
 
   return (
     <section className="bg-[#F5F0E6] w-full pt-20 pb-20 lg:pt-[100px] lg:pb-[100px] px-6">
@@ -41,20 +51,20 @@ export function Story() {
         </div>
 
         {/* Two Column Layout */}
-        <div ref={ref} className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start">
+        <div ref={containerRef} className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start">
           
           {/* Left: Image */}
           <div className="relative w-full aspect-[3/4] lg:aspect-[4/5] overflow-hidden bg-[#2B241D]">
-            <motion.div style={{ y }} className="absolute inset-0 w-full h-[110%] -top-[5%]">
+            <div ref={imageRef} className="absolute inset-0 w-full h-[115%] -top-[15%]">
               <Image
-                src="/images/story/nostalgia.jpg"
-                alt="Old Bombay cafe"
+                src="/images/dishes/chapter2.jpg"
+                alt="The Family Kitchen"
                 fill
                 className="object-cover object-center"
               />
               {/* Fallback overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent z-10" />
-            </motion.div>
+            </div>
           </div>
 
           {/* Right: Story Copy & Timeline */}
