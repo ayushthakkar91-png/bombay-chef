@@ -57,7 +57,7 @@ export function Story() {
           <div className="relative w-full aspect-[3/4] lg:aspect-[4/5] overflow-hidden bg-[#2B241D]">
             <div ref={imageRef} className="absolute inset-0 w-full h-[115%] -top-[15%]">
               <Image
-                src="/images/dishes/chapter2.jpg"
+                src="/images/dishes/chapter-2-new.jpg"
                 alt="The Family Kitchen"
                 fill
                 className="object-cover object-center"

@@ -77,7 +77,7 @@ export function SignatureDishes() {
         <div className="lg:col-span-5 relative w-full h-[60vh] lg:h-[80vh] lg:sticky lg:top-[10vh] overflow-hidden">
           <div ref={imageWrapperRef} className="absolute inset-0 w-full h-full bg-[#2B241D]">
             <Image
-              src="/images/dishes/chapter2.jpg"
+              src="/images/dishes/chapter-2-new.jpg"
               alt="Tandoori Lamb Chops"
               fill
               className="object-cover object-center"
