@@ -80,7 +80,7 @@ export function Hero() {
             className="text-[16px] lg:text-[20px] text-[#F5F0E6] opacity-90 max-w-[700px] mx-auto mb-[6vh] font-sans tracking-widest font-light"
             style={{ lineHeight: "1.9" }}
           >
-            A warm Indian dining experience inspired by family kitchens, spice markets and the timeless spirit of Bombay.
+            From the family kitchens of Bombay to the tables of London, every meal begins with a story.
           </p>
 
           {/* Buttons */}
