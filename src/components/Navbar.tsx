@@ -102,7 +102,7 @@ export function Navbar() {
                   variants={logoVariants}
                   initial="hidden"
                   animate="show"
-                  className={`w-[24px] h-[28px] lg:w-[28px] lg:h-[32px] transition-colors duration-500 mb-2 ${
+                  className={`w-[24px] h-[28px] lg:w-[28px] lg:h-[32px] transition-colors duration-500 mb-1 ${
                     isScrolled ? "bg-[#2B241D]" : "bg-[#F5F0E6]"
                   }`}
                   style={{
@@ -121,12 +121,17 @@ export function Navbar() {
                   variants={logoVariants}
                   initial="hidden"
                   animate="show"
-                  className="flex flex-col items-center text-center"
+                  className="flex flex-col items-center text-center mt-1"
                 >
-                  <span className={`font-serif text-[1.8rem] tracking-wide leading-none transition-colors duration-500 ${
+                  <span className={`font-serif text-[1.5rem] tracking-widest uppercase leading-none transition-colors duration-500 ${
                     isScrolled ? "text-[#2B241D]" : "text-[#F5F0E6]"
                   }`}>
                     Bombay Bicycle Chef
+                  </span>
+                  <span className={`font-sans text-[0.65rem] tracking-[0.25em] uppercase font-medium mt-1 transition-colors duration-500 ${
+                    isScrolled ? "text-[#A88442]" : "text-[#A88442]/90"
+                  }`}>
+                    Modern Indian Kitchen
                   </span>
                 </motion.div>
               </Link>
@@ -200,7 +205,7 @@ export function Navbar() {
               <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
                 <Link href="/" className="flex flex-col items-center" onClick={toggleMobileMenu}>
                   <div 
-                    className="w-[32px] h-[37px] bg-[#2B241D] mb-2"
+                    className="w-[28px] h-[32px] bg-[#2B241D] mb-1.5"
                     style={{
                       WebkitMaskImage: "url('/images/brand/logo.svg')",
                       maskImage: "url('/images/brand/logo.svg')",
@@ -213,9 +218,12 @@ export function Navbar() {
                     }}
                     aria-hidden="true"
                   />
-                  <div className="flex flex-col items-center text-center">
-                    <span className="font-serif text-[16px] tracking-wider leading-none text-[#2B241D]">
+                  <div className="flex flex-col items-center text-center mt-1">
+                    <span className="font-serif text-[1.5rem] tracking-widest uppercase leading-none text-[#2B241D]">
                       Bombay Bicycle Chef
+                    </span>
+                    <span className="font-sans text-[0.65rem] tracking-[0.25em] uppercase font-medium mt-1 text-[#A88442]">
+                      Modern Indian Kitchen
                     </span>
                   </div>
                 </Link>
