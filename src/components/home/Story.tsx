@@ -54,7 +54,7 @@ export function Story() {
         {/* Top Centered Intro */}
         <div className="flex flex-col items-center text-center max-w-[900px] mx-auto mb-12 lg:mb-16">
           <span className="text-[#5D0925] text-[13px] tracking-[0.2em] font-semibold uppercase mb-4 font-sans">
-            Chapter II : The Family Kitchen
+            II &middot; The Family Kitchen
           </span>
 
           <h2 ref={headlineRef} className="text-[32px] sm:text-[40px] md:text-[56px] lg:text-[72px] font-serif text-[#2B241D] leading-[1.15] mb-6">

@@ -82,7 +82,7 @@ export function Hero() {
           <span 
             className="text-[#A88442] text-[0.85rem] tracking-[0.4em] opacity-70 font-medium uppercase mb-[4vh] font-sans"
           >
-            Chapter I : The Arrival
+            I &middot; The Arrival
           </span>
 
           {/* Heading */}
