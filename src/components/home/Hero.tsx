@@ -88,8 +88,8 @@ export function Hero() {
           {/* Heading */}
           <h1 
             ref={headlineRef}
-            className="font-serif text-[#F5F0E6] mb-[5vh] tracking-wide font-normal max-w-[1200px]"
-            style={{ fontSize: "clamp(5rem, 8vw, 8rem)", lineHeight: "0.95" }}
+            className="font-serif text-[#F5F0E6] mb-[5vh] tracking-wide font-normal max-w-[1100px]"
+            style={{ fontSize: "clamp(4.8rem, 7vw, 8rem)", lineHeight: "0.92" }}
           >
             <span className="word inline-block">Inspired</span> <span className="word inline-block">By</span> <span className="word inline-block">Bombay.</span><br />
             <span className="word inline-block">Made</span> <span className="word inline-block">For</span> <span className="word inline-block">London.</span>
