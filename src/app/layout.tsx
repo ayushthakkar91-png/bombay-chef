@@ -4,6 +4,7 @@ import "./globals.css";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SmoothScroll } from "@/components/motion/SmoothScroll";
+import { MobileBottomBar } from "@/components/common/MobileBottomBar";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-serif",
@@ -50,6 +51,7 @@ export default function RootLayout({
           <Navbar />
           <main className="flex-grow">{children}</main>
           <Footer />
+          <MobileBottomBar />
         </SmoothScroll>
       </body>
     </html>

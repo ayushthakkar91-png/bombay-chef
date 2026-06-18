@@ -10,8 +10,8 @@ import { useGSAP } from "@gsap/react";
 
 const LEFT_LINKS = [
   { name: "Menu", href: "/menu" },
-  { name: "Locations", href: "/#chapter-locations" },
-  { name: "Our Story", href: "/#chapter-family-kitchen" },
+  { name: "Locations", href: "/locations" },
+  { name: "Contact", href: "/contact" },
 ];
 
 export function Navbar() {

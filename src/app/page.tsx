@@ -6,6 +6,7 @@ import { MenuPreview } from "@/components/home/MenuPreview";
 import { Locations } from "@/components/home/LocationsPreview";
 import { ReservationCTA } from "@/components/home/ReservationCTA";
 import { ChapterIndicator } from "@/components/motion/ChapterIndicator";
+import { DineInTakeaway } from "@/components/menu/DineInTakeaway";
 
 export default function Home() {
   return (
@@ -22,6 +23,7 @@ export default function Home() {
         <div id="chapter-family-kitchen"><Story /></div>
         <div id="chapter-ritual"><TheRitual /></div>
         <div id="chapter-signature-dishes"><SignatureDishes /></div>
+        <div id="chapter-dine-in-takeaway"><DineInTakeaway /></div>
         <div id="chapter-offerings"><MenuPreview /></div>
         <div id="chapter-locations"><Locations /></div>
         <div id="chapter-reservation"><ReservationCTA /></div>
