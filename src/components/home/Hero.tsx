@@ -7,13 +7,25 @@ import { gsap } from "@/utils/gsap";
 import { useGSAP } from "@gsap/react";
 export function Hero() {
   const bgRef = useRef<HTMLDivElement>(null);
+  const headlineRef = useRef<HTMLHeadingElement>(null);
 
   useGSAP(() => {
+    // Cinematic background drift
     gsap.fromTo(
       bgRef.current,
-      { scale: 1.12 },
-      { scale: 1, duration: 18, ease: "none" }
+      { scale: 1.08 },
+      { scale: 1, duration: 20, ease: "none" }
     );
+
+    // Staggered word reveal emerging from darkness
+    if (headlineRef.current) {
+      const words = headlineRef.current.querySelectorAll('.word');
+      gsap.fromTo(
+        words,
+        { y: 40, opacity: 0 },
+        { y: 0, opacity: 1, duration: 1.5, stagger: 0.05, ease: "power3.out", delay: 0.3 }
+      );
+    }
   }, []);
 
   return (
@@ -48,18 +60,19 @@ export function Hero() {
         <div className="flex flex-col items-center">
           {/* Label */}
           <span 
-            className="text-[#A88442] text-[12px] lg:text-[14px] tracking-[0.3em] font-semibold uppercase mb-[4vh] font-sans"
+            className="text-[#A88442] text-[0.85rem] tracking-[0.4em] opacity-70 font-medium uppercase mb-[4vh] font-sans"
           >
             Chapter I : The Arrival
           </span>
 
           {/* Heading */}
           <h1 
-            className="font-serif text-[#F5F0E6] mb-[5vh] tracking-wide font-normal"
-            style={{ fontSize: "clamp(3.5rem, min(12vw, 16vh), 9rem)", lineHeight: "0.9" }}
+            ref={headlineRef}
+            className="font-serif text-[#F5F0E6] mb-[5vh] tracking-wide font-normal max-w-[1200px]"
+            style={{ fontSize: "clamp(5rem, 8vw, 8rem)", lineHeight: "0.95" }}
           >
-            Inspired By Bombay.<br />
-            Made For London.
+            <span className="word inline-block">Inspired</span> <span className="word inline-block">By</span> <span className="word inline-block">Bombay.</span><br />
+            <span className="word inline-block">Made</span> <span className="word inline-block">For</span> <span className="word inline-block">London.</span>
           </h1>
 
           {/* Subheading */}
@@ -77,7 +90,7 @@ export function Hero() {
             <div className="w-full sm:w-auto">
               <Link
                 href="#chapter-reservation"
-                className="flex items-center justify-center w-full sm:w-auto h-[56px] px-10 rounded-none border border-white/30 text-[#F5F0E6] text-[13px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-white/10 hover:border-white transition-all duration-500"
+                className="flex items-center justify-center w-full sm:w-auto h-[56px] px-10 rounded-none bg-[#5D0925] border border-[#5D0925] text-[#F8F4ED] text-[13px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-[#420616] hover:border-[#420616] transition-all duration-500"
               >
                 Reserve A Table
               </Link>
@@ -85,7 +98,7 @@ export function Hero() {
             <div className="w-full sm:w-auto">
               <Link
                 href="https://www.bombaybicyclechef.uk/locator"
-                className="flex items-center justify-center w-full sm:w-auto h-[56px] px-10 rounded-none bg-[#5D0925] border border-[#5D0925] text-[#F5F0E6] text-[13px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-transparent hover:border-[#F5F0E6] transition-all duration-500"
+                className="flex items-center justify-center w-full sm:w-auto h-[56px] px-10 rounded-none border border-white/30 text-[#F5F0E6] text-[13px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-white/10 hover:border-white transition-all duration-500"
               >
                 Order Online
               </Link>

@@ -83,7 +83,7 @@ export function Navbar() {
                 <motion.div key={link.name} variants={itemVariants}>
                   <Link
                     href={link.href}
-                    className={`text-[14px] tracking-[0.12em] font-medium uppercase transition-colors duration-300 ease-in-out relative group whitespace-nowrap ${
+                    className={`text-[14px] tracking-[0.08em] font-medium uppercase transition-colors duration-300 ease-in-out relative group whitespace-nowrap ${
                       isScrolled ? "text-[#2B241D] hover:text-[#A88442]" : "text-[#F5F0E6] hover:text-[#A88442]"
                     }`}
                   >
@@ -123,7 +123,7 @@ export function Navbar() {
                   animate="show"
                   className="flex flex-col items-center text-center"
                 >
-                  <span className={`font-serif text-[14px] lg:text-[16px] tracking-widest uppercase leading-none transition-colors duration-500 ${
+                  <span className={`font-serif text-[1.8rem] tracking-wide leading-none transition-colors duration-500 ${
                     isScrolled ? "text-[#2B241D]" : "text-[#F5F0E6]"
                   }`}>
                     Bombay Bicycle Chef
