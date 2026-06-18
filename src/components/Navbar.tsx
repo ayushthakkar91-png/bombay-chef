@@ -96,7 +96,7 @@ export function Navbar() {
               className="hidden lg:flex items-center space-x-10 xl:space-x-14 flex-1"
             >
               {LEFT_LINKS.map((link) => (
-                <motion.div key={link.name} variants={itemVariants}>
+                <motion.div key={link.name} variants={itemVariants} className="flex items-center">
                   <Link
                     href={link.href}
                     className={`text-[14px] tracking-[0.08em] font-medium uppercase transition-colors duration-300 ease-in-out relative group whitespace-nowrap ${
@@ -160,7 +160,7 @@ export function Navbar() {
               animate="show"
               className="hidden lg:flex items-center justify-end space-x-5 flex-1"
             >
-              <motion.div variants={buttonVariants} whileHover={{ y: -2 }} transition={{ duration: 0.3 }}>
+              <motion.div variants={buttonVariants} whileHover={{ y: -2 }} transition={{ duration: 0.3 }} className="flex items-center">
                 <Link
                   href="#chapter-reservation"
                   className={`flex items-center justify-center h-[52px] px-8 rounded-full text-[14px] tracking-[0.12em] font-medium uppercase font-sans whitespace-nowrap border transition-all duration-300 ease-in-out ${
@@ -172,7 +172,7 @@ export function Navbar() {
                   Reserve Table
                 </Link>
               </motion.div>
-              <motion.div variants={buttonVariants} whileHover={{ y: -2 }} transition={{ duration: 0.3 }}>
+              <motion.div variants={buttonVariants} whileHover={{ y: -2 }} transition={{ duration: 0.3 }} className="flex items-center">
                 <Link
                   href="https://www.bombaybicyclechef.uk/locator"
                   className="flex items-center justify-center h-[52px] px-8 rounded-full bg-[#5D0925] text-[#F5F0E6] text-[14px] tracking-[0.12em] font-medium uppercase font-sans whitespace-nowrap border border-[#5D0925] hover:bg-[#420616] hover:border-[#420616] transition-all duration-300"
