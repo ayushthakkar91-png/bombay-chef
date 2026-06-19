@@ -203,13 +203,13 @@ export function Hero() {
       {/* Content */}
       <div
         ref={contentRef}
-        className="relative z-30 w-full max-w-[1200px] mx-auto px-5 sm:px-8 md:px-12 pt-[20vh] sm:pt-[24vh] lg:pt-[28vh] pb-[3vh] sm:pb-[5vh] text-center flex flex-col items-center"
+        className="relative z-30 w-full max-w-[1200px] mx-auto px-5 sm:px-8 md:px-12 pt-[10vh] sm:pt-[18vh] lg:pt-[26vh] pb-[3vh] sm:pb-[5vh] text-center flex flex-col items-center"
       >
         <div className="flex flex-col items-center">
           {/* Chapter Label */}
           <span
             ref={chapterRef}
-            className="text-[#C8A96B] text-[0.6rem] sm:text-[0.7rem] md:text-[0.75rem] tracking-[0.3em] sm:tracking-[0.4em] font-normal uppercase mb-[1.5vh] sm:mb-[2vh] font-sans"
+            className="text-[#C8A96B] text-[0.75rem] tracking-[0.4em] font-normal uppercase mb-[5vh] font-sans block"
             style={{ opacity: 0 }}
           >
             Chapter I &middot; The Arrival
@@ -218,29 +218,33 @@ export function Hero() {
           {/* Hindi Script */}
           <span
             ref={hindiRef}
-            className="text-[#F3EEE8]/75 text-[12px] sm:text-[14px] md:text-[15px] tracking-[0.04em] sm:tracking-[0.08em] font-light mb-[2vh] sm:mb-[3vh] block px-2"
+            className="text-[#F3EEE8]/75 text-[15px] tracking-[0.08em] font-light mb-[6vh] block"
             style={{ opacity: 0 }}
           >
-            कहानियाँ वहीं शुरू होती हैं जहाँ लोग साथ बैठते हैं
+            कहानियाँ वहीं शुरू होती हैं<br className="sm:hidden" /> जहाँ लोग साथ बैठते हैं
           </span>
 
           {/* Heading */}
           <h1
             ref={headlineRef}
-            className="font-serif text-[#F3EEE8] mb-[2.5vh] sm:mb-[3vh] tracking-wide font-normal max-w-[900px] px-2"
-            style={{ fontSize: "clamp(1.8rem, 7vw, 5.8rem)", lineHeight: "1.1" }}
+            className="font-serif text-[#F3EEE8] mb-[6vh] tracking-wide font-normal max-w-[900px] flex flex-col space-y-2 sm:space-y-4"
+            style={{ fontSize: "clamp(1.75rem, 5.5vw, 5.8rem)", lineHeight: "1.15" }}
           >
-            <span className="word inline-block">Every</span> <span className="word inline-block">City</span> <span className="word inline-block">Has</span> <span className="word inline-block">Its</span> <span className="word inline-block">Stories.</span><br />
-            <span className="word inline-block">Ours</span> <span className="word inline-block">Begin</span> <span className="word inline-block">Around</span> <span className="word inline-block">A</span> <span className="word inline-block">Table.</span>
+            <span className="block">
+              <span className="word inline-block">Every</span> <span className="word inline-block">City</span> <span className="word inline-block">Has</span> <span className="word inline-block">Its</span> <span className="word inline-block">Stories.</span>
+            </span>
+            <span className="block">
+              <span className="word inline-block">Ours</span> <span className="word inline-block">Begin</span> <span className="word inline-block">Around</span> <span className="word inline-block">A</span> <span className="word inline-block">Table.</span>
+            </span>
           </h1>
 
           {/* Tagline */}
           <p
             ref={subtitleRef}
-            className="text-[11px] sm:text-[12px] lg:text-[15px] text-[#C8A96B] max-w-[320px] sm:max-w-[500px] mx-auto mb-[3vh] sm:mb-[4vh] font-sans tracking-[0.15em] sm:tracking-[0.2em] font-normal uppercase"
+            className="text-[13px] lg:text-[15px] text-[#C8A96B] max-w-[500px] mx-auto mb-[4vh] font-sans tracking-[0.2em] font-normal uppercase"
             style={{ lineHeight: "2", opacity: 0 }}
           >
-            Inspired By Bombay. Made For London.
+            Inspired By Bombay.<br className="sm:hidden" /> Made For London.
           </p>
 
           {/* CTA */}

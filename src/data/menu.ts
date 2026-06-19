@@ -34,16 +34,7 @@ export const MENU_DATA: MenuCategory[] = [
       { name: "Tandoori Mixed Grill", price: "£14.95", description: "A selection of prawn, lamb and chicken, marinated in herbs and spices." }
     ]
   },
-  {
-    id: "signatures",
-    title: "SIGNATURES",
-    items: [
-      { name: "Black House Daal", price: "£8.95", description: "Black lentils cooked with butter, cream and simmered on low heat for that unique flavour." },
-      { name: "Butter Chicken", price: "£11.55", description: "Indulge in our signature Butter Chicken, featuring succulent chicken in a rich onion-tomato gravy, blended with cashew nuts." },
-      { name: "Bombay Lamb", price: "£11.55", description: "Tender lamb cooked with curry sauce, ginger, garlic, coriander, onions, green chili and fresh tomatoes." },
-      { name: "King Prawn Masala", price: "£15.95", description: "Marinated king prawn, grilled in clay oven, and cooked in masala sauce." }
-    ]
-  },
+
   {
     id: "curries",
     title: "CURRIES",

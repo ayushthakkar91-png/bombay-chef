@@ -34,7 +34,7 @@ export function Locations() {
 
         {/* Heading */}
         <div className="text-center max-w-[900px] mx-auto mb-20 lg:mb-32">
-          <span className="text-[#A88442] text-[13px] tracking-[0.2em] font-semibold uppercase mb-8 block font-sans">
+          <span className="text-[#A88442] text-[11px] tracking-[0.35em] font-normal uppercase mb-8 block font-sans">
             Chapter VI &middot; London Locations
           </span>
           <h2 className="text-[36px] sm:text-[48px] md:text-[56px] lg:text-[72px] font-serif text-[#F5F0E6] leading-[1.1] mb-8">

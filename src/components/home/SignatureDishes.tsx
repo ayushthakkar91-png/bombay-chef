@@ -9,17 +9,17 @@ import { motion, AnimatePresence } from "framer-motion";
 const DISHES = [
   {
     title: "Black House Daal",
-    description: "Simmered for 24 hours over a slow fire. A rich, dark, deeply comforting bowl of heritage.",
+    description: "Slow-cooked Black House Daal.",
     image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?q=80&w=2000&auto=format&fit=crop"
   },
   {
     title: "Tandoori Lamb Chops",
-    description: "Marinated overnight in dark spices and ginger. Charred to perfection in the clay oven.",
+    description: "Tandoori Lamb Chops kissed by charcoal.",
     image: "https://images.unsplash.com/photo-1544025162-811114cdb83b?q=80&w=2000&auto=format&fit=crop"
   },
   {
     title: "Bicycle Biryani",
-    description: "Fragrant basmati rice layered with tender meat and saffron. Memories of grand celebrations.",
+    description: "Biryanis layered with patience and spice.",
     image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?q=80&w=2000&auto=format&fit=crop"
   }
 ];
@@ -30,7 +30,6 @@ export function SignatureDishes() {
   const dishRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useGSAP(() => {
-    // Set up scroll triggers for each dish to update the active index
     dishRefs.current.forEach((dish, index) => {
       if (!dish) return;
       ScrollTrigger.create({
@@ -44,47 +43,64 @@ export function SignatureDishes() {
   }, []);
 
   return (
-    <section ref={containerRef} className="bg-[#F5F0E6] relative w-full pt-20 pb-20 lg:pt-[140px] lg:pb-[140px] border-t border-[rgba(43,36,29,0.05)]">
+    <section ref={containerRef} className="bg-[#F5F0E6] relative w-full pt-24 pb-24 lg:pt-[160px] lg:pb-[160px] border-t border-[rgba(43,36,29,0.05)]">
       <div className="max-w-[1200px] mx-auto px-6 grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-start relative">
         
-        {/* Left Side: Editorial Typography Menu */}
+        {/* Left Side: Story & Menu */}
         <div className="lg:col-span-6 flex flex-col lg:pr-12 py-10 z-10">
-          <span className="text-[#5D0925] text-[13px] tracking-[0.2em] font-semibold uppercase mb-8 font-sans block">
+          <span className="text-[#A88442] text-[11px] tracking-[0.35em] font-normal uppercase mb-6 font-sans">
             Chapter IV &middot; The Signature Dishes
           </span>
+
+          <span className="text-[#2B241D]/60 text-[16px] tracking-[0.06em] font-light mb-8 italic">
+            याद रह जाने वाले स्वाद
+          </span>
           
-          <h2 className="text-[32px] sm:text-[40px] md:text-[56px] lg:text-[64px] font-serif text-[#2B241D] leading-[1.1] mb-20">
-            The Dishes People<br />Come Back For
+          <h2 className="text-[36px] sm:text-[48px] md:text-[60px] font-serif text-[#2B241D] leading-[1.1] mb-10 tracking-[0.01em]">
+            The Dishes People<br />Return For.
           </h2>
 
-          <div className="flex flex-col space-y-32 lg:pb-[40vh]">
+          <div className="flex flex-col space-y-6 text-[#5E564D] text-[17px] leading-[2.1] mb-16 font-sans tracking-[0.02em]">
+            <p>Some recipes earn their place through time.</p>
+          </div>
+
+          <div className="flex flex-col space-y-24 lg:pb-[30vh]">
             {DISHES.map((dish, i) => (
               <div 
                 key={i}
                 ref={(el) => { dishRefs.current[i] = el; }}
-                className="flex flex-col transition-opacity duration-500"
-                style={{ opacity: activeIndex === i ? 1 : 0.3 }}
+                className="flex flex-col transition-opacity duration-700"
+                style={{ opacity: activeIndex === i ? 1 : 0.25 }}
               >
-                <h3 className="text-3xl md:text-4xl font-serif text-[#2B241D] mb-4 tracking-wide">
+                <h3 className="text-[28px] md:text-[36px] font-serif text-[#2B241D] mb-4 tracking-wide">
                   {dish.title}
                 </h3>
-                <p className="text-[18px] text-[#5E564D] leading-[1.9] max-w-md font-sans">
+                <p className="text-[16px] text-[#5E564D] leading-[1.9] max-w-md font-sans">
                   {dish.description}
                 </p>
               </div>
             ))}
+
+            {/* Outro Text (Appears after scrolling past the dishes) */}
+            <div className="flex flex-col space-y-6 text-[#5E564D] text-[16px] leading-[2.1] font-sans tracking-[0.02em] pt-12">
+              <p>Each dish tells a story of tradition, craftsmanship and flavour.</p>
+              <p>Prepared with respect for where it came from.<br />Served with pride for where it is today.</p>
+              <p className="text-[#2B241D] text-[20px] lg:text-[24px] font-serif mt-4 leading-[1.4] tracking-wide">
+                These are the dishes that bring people back.<br />Again and again.
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Right Side: Pinned Featured Image */}
-        <div className="lg:col-span-6 relative w-full h-[60vh] lg:h-[80vh] lg:sticky lg:top-[10vh] overflow-hidden bg-[#2B241D]">
+        <div className="lg:col-span-6 relative w-full h-[60vh] lg:h-[85vh] lg:sticky lg:top-[7.5vh] overflow-hidden bg-[#2B241D]">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeIndex}
               initial={{ opacity: 0, scale: 1.05 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.8, ease: "easeInOut" }}
+              transition={{ duration: 1.2, ease: "easeInOut" }}
               className="absolute inset-0 w-full h-full"
             >
               <Image
@@ -94,8 +110,7 @@ export function SignatureDishes() {
                 className="object-cover object-center"
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
-              {/* Luxury tint */}
-              <div className="absolute inset-0 bg-black/10 mix-blend-overlay" />
+              <div className="absolute inset-0 bg-black/15 mix-blend-overlay" />
             </motion.div>
           </AnimatePresence>
         </div>

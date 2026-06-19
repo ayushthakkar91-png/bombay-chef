@@ -1,6 +1,5 @@
 import { MenuHero } from "@/components/menu/MenuHero";
 import { StickyMenuNav } from "@/components/menu/StickyMenuNav";
-import { MenuSignature } from "@/components/menu/MenuSignature";
 import { FullMenu } from "@/components/menu/FullMenu";
 import { DineInTakeaway } from "@/components/menu/DineInTakeaway";
 import { ChefRecommendations } from "@/components/menu/ChefRecommendations";
@@ -22,7 +21,6 @@ export default function MenuPage() {
       <main className="min-h-screen bg-[#F6F2EA] selection:bg-[#B08A3E] selection:text-[#F6F2EA]">
         <MenuHero />
         <StickyMenuNav />
-        <MenuSignature />
         <FullMenu />
         <DineInTakeaway />
         <ChefRecommendations />

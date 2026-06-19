@@ -41,8 +41,8 @@ export function MenuPreview() {
     <section ref={containerRef} className="bg-[#F5F0E6] w-full pt-20 pb-20 lg:pt-[140px] lg:pb-[140px] px-6 border-t border-[rgba(43,36,29,0.05)]">
       <div className="max-w-[1000px] mx-auto text-center" ref={contentRef}>
         
-        <span className="text-[#5D0925] text-[13px] tracking-[0.2em] font-semibold uppercase mb-8 font-sans block">
-          Chapter V &middot; The Offerings
+        <span className="text-[#A88442] text-[11px] tracking-[0.35em] font-normal uppercase mb-8 font-sans block">
+          Chapter V &middot; The Dining Experience
         </span>
         
         <h2 className="text-[36px] md:text-[48px] lg:text-[64px] font-serif text-[#2B241D] leading-[1.15] mb-16">

@@ -31,8 +31,8 @@ export function ReservationCTA() {
       />
 
       <div className="relative z-10 max-w-[900px] mx-auto text-center flex flex-col items-center">
-        <span className="text-[#A88442] text-[13px] tracking-[0.2em] font-semibold uppercase mb-6 font-sans block">
-          Chapter VII &middot; The Next Chapter
+        <span className="text-[#A88442] text-[11px] tracking-[0.35em] font-normal uppercase mb-6 font-sans block">
+          Chapter VII &middot; Reserve Your Table
         </span>
         <h2 className="text-[32px] sm:text-[36px] md:text-[48px] lg:text-[56px] font-serif text-[#F5F0E6] leading-[1.15] mb-5">
           Reserve Your Table

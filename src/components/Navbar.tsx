@@ -84,7 +84,7 @@ export function Navbar() {
           }`}
       >
         <div className="w-full px-6 md:px-12 lg:px-16">
-          <nav className="relative flex justify-between items-center h-[72px] lg:h-[88px]" aria-label="Main Navigation">
+          <nav className="relative flex justify-between items-center h-[84px] lg:h-[88px]" aria-label="Main Navigation">
 
             <div className="flex-1 lg:hidden" />
 
@@ -117,7 +117,7 @@ export function Navbar() {
                   variants={logoVariants}
                   initial="hidden"
                   animate="show"
-                  className={`w-[40px] h-[48px] transition-colors duration-500 ${isDarkTheme ? "bg-[#2B241D]" : "bg-[#F5F0E6]"
+                  className={`w-[48px] h-[58px] lg:w-[40px] lg:h-[48px] transition-colors duration-500 ${isDarkTheme ? "bg-[#2B241D]" : "bg-[#F5F0E6]"
                     }`}
                   style={{
                     WebkitMaskImage: "url('/images/brand/logo.svg')",

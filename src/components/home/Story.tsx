@@ -52,19 +52,22 @@ export function Story() {
       <div className="max-w-[1200px] mx-auto">
         
         {/* Top Centered Intro */}
-        <div className="flex flex-col items-center text-center max-w-[900px] mx-auto mb-12 lg:mb-16">
-          <span className="text-[#5D0925] text-[13px] tracking-[0.2em] font-semibold uppercase mb-4 font-sans">
-            II &middot; The Family Kitchen
+        <div className="flex flex-col items-center text-center max-w-[900px] mx-auto mb-16 lg:mb-24">
+          <span className="text-[#A88442] text-[11px] tracking-[0.35em] font-normal uppercase mb-6 font-sans">
+            Chapter II &middot; The Family Kitchen
           </span>
 
-          <h2 ref={headlineRef} className="text-[32px] sm:text-[40px] md:text-[56px] lg:text-[72px] font-serif text-[#2B241D] leading-[1.15] mb-6">
-            Some Flavours<br />Never Leave You
+          <span className="text-[#2B241D]/60 text-[16px] tracking-[0.06em] font-light mb-8 italic">
+            कुछ स्वाद कभी साथ नहीं छोड़ते
+          </span>
+
+          <h2 ref={headlineRef} className="text-[36px] sm:text-[48px] md:text-[64px] font-serif text-[#2B241D] leading-[1.1] mb-10 tracking-[0.01em]">
+            Some Flavours<br />Never Leave You.
           </h2>
 
-          <div className="flex flex-col space-y-2 text-[#5E564D] font-serif text-lg md:text-xl lg:text-[24px] leading-[1.5]">
-            <p>The aroma of spices drifting from a family kitchen.</p>
-            <p>The sound of loved ones gathering around a table.</p>
-            <p>The dishes ordered for every celebration.</p>
+          <div className="flex flex-col space-y-6 text-[#5E564D] font-serif text-[18px] md:text-[22px] lg:text-[24px] leading-[1.6] max-w-[800px]">
+            <p>Long before there was a restaurant, there was a family table.</p>
+            <p>There were recipes passed from one generation to the next. Spices measured by memory. Meals prepared slowly, shared generously, and remembered long after the plates were cleared.</p>
           </div>
         </div>
 
@@ -88,18 +91,15 @@ export function Story() {
 
           {/* Right: Story Copy & Timeline */}
           <div className="flex flex-col lg:pt-12">
-            <div className="flex flex-col space-y-5 text-[#5E564D] text-[18px] leading-[1.9] mb-12 font-sans">
+            <div className="flex flex-col space-y-6 text-[#5E564D] text-[15px] lg:text-[17px] leading-[2.1] mb-16 font-sans tracking-[0.02em]">
               <p>
-                Bombay Bicycle Chef was built around memories.
+                Bombay Bicycle Chef was built around those moments.
               </p>
               <p>
-                Inspired by the spirit of Bombay and shaped by life in London, our kitchens bring people together through food that feels familiar, comforting and unforgettable.
+                Inspired by the warmth of Bombay&apos;s family kitchens and shaped by life in London, we create food that feels familiar, comforting, and deeply personal.
               </p>
-              <p>
-                Because every great meal is more than food.
-              </p>
-              <p className="text-[#2B241D] text-2xl lg:text-3xl font-serif mt-6">
-                It&apos;s a memory being made.
+              <p className="text-[#2B241D] text-[20px] lg:text-[24px] font-serif mt-8 leading-[1.4] tracking-wide">
+                Because every great meal begins long before it reaches the table.
               </p>
             </div>
 
