@@ -32,22 +32,22 @@ export function Hero() {
     // ═══ Cinematic Reveal Sequence ═══
     const reveal = gsap.timeline({ delay: 0.4 });
 
-    // 1. Chapter label — fade in first
-    if (chapterRef.current) {
-      reveal.fromTo(
-        chapterRef.current,
-        { opacity: 0, y: 10 },
-        { opacity: 0.7, y: 0, duration: 1.4, ease: "power2.out" }
-      );
-    }
-
-    // 2. Hindi line — fade in second, ethereal
+    // 1. Hindi line — fade in first, emotional prologue
     if (hindiRef.current) {
       reveal.fromTo(
         hindiRef.current,
         { opacity: 0, y: 15 },
-        { opacity: 0.6, y: 0, duration: 1.8, ease: "power2.out" },
-        "-=0.8"
+        { opacity: 0.8, y: 0, duration: 1.8, ease: "power2.out" }
+      );
+    }
+
+    // 2. Chapter label — fade in second, subtle marker
+    if (chapterRef.current) {
+      reveal.fromTo(
+        chapterRef.current,
+        { opacity: 0, y: 10 },
+        { opacity: 0.6, y: 0, duration: 1.4, ease: "power2.out" },
+        "-=1.0"
       );
     }
 
@@ -130,7 +130,7 @@ export function Hero() {
 
         {/* Candle Flicker Overlay */}
         <div className="absolute inset-0 bg-[#B08A3E] mix-blend-overlay z-10 pointer-events-none animate-flicker" />
-        
+
         {/* Subtle Glow Pulse */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_60%,rgba(168,132,66,0.12)_0%,rgba(0,0,0,0)_60%)] z-10 pointer-events-none animate-glow" />
 
@@ -203,31 +203,31 @@ export function Hero() {
       {/* Content */}
       <div
         ref={contentRef}
-        className="relative z-30 w-full max-w-[1200px] mx-auto px-5 sm:px-8 md:px-12 pt-[10vh] sm:pt-[18vh] lg:pt-[26vh] pb-[3vh] sm:pb-[5vh] text-center flex flex-col items-center"
+        className="relative z-30 w-full max-w-[1200px] mx-auto px-5 sm:px-8 md:px-12 pt-[6vh] sm:pt-[12vh] lg:pt-[24vh] pb-[3vh] sm:pb-[5vh] text-center flex flex-col items-center"
       >
         <div className="flex flex-col items-center">
-          {/* Chapter Label */}
-          <span
-            ref={chapterRef}
-            className="text-[#C8A96B] text-[0.75rem] tracking-[0.4em] font-normal uppercase mb-[5vh] font-sans block"
-            style={{ opacity: 0 }}
-          >
-            Chapter I &middot; The Arrival
-          </span>
-
-          {/* Hindi Script */}
+          {/* Hindi Script (Prologue) */}
           <span
             ref={hindiRef}
-            className="text-[#F3EEE8]/75 text-[15px] tracking-[0.08em] font-light mb-[6vh] block"
+            className="text-[#F3EEE8]/80 text-[15px] italic tracking-[0.08em] font-light mb-[3vh] block"
             style={{ opacity: 0 }}
           >
             कहानियाँ वहीं शुरू होती हैं<br className="sm:hidden" /> जहाँ लोग साथ बैठते हैं
           </span>
 
+          {/* Chapter Label (Marker) */}
+          <span
+            ref={chapterRef}
+            className="text-[#C8A96B]/80 text-[10px] tracking-[0.4em] font-normal uppercase mb-[5vh] font-sans block"
+            style={{ opacity: 0 }}
+          >
+            Chapter I &middot; The Arrival
+          </span>
+
           {/* Heading */}
           <h1
             ref={headlineRef}
-            className="font-serif text-[#F3EEE8] mb-[6vh] tracking-wide font-normal max-w-[900px] flex flex-col space-y-2 sm:space-y-4"
+            className="font-serif text-[#F3EEE8] mb-[4vh] sm:mb-[6vh] tracking-wide font-normal max-w-[900px] flex flex-col space-y-2 sm:space-y-4"
             style={{ fontSize: "clamp(1.75rem, 5.5vw, 5.8rem)", lineHeight: "1.15" }}
           >
             <span className="block">
@@ -241,7 +241,7 @@ export function Hero() {
           {/* Tagline */}
           <p
             ref={subtitleRef}
-            className="text-[13px] lg:text-[15px] text-[#C8A96B] max-w-[500px] mx-auto mb-[4vh] font-sans tracking-[0.2em] font-normal uppercase"
+            className="text-[13px] lg:text-[15px] text-[#C8A96B] max-w-[500px] mx-auto mb-[6vh] font-sans tracking-[0.2em] font-normal uppercase"
             style={{ lineHeight: "2", opacity: 0 }}
           >
             Inspired By Bombay.<br className="sm:hidden" /> Made For London.

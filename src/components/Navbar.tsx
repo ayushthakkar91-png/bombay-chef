@@ -176,7 +176,7 @@ export function Navbar() {
                 className={`p-2 focus:outline-none transition-colors duration-500 ${isDarkTheme ? "text-[#2B241D]" : "text-[#F5F0E6]"
                   }`}
               >
-                <Menu size={28} strokeWidth={1.5} />
+                <Menu size={28} strokeWidth={1} />
               </button>
             </motion.div>
           </nav>
@@ -194,7 +194,7 @@ export function Navbar() {
             className="fixed inset-0 z-[60] bg-[#F5F0E6] flex flex-col"
           >
             {/* Mobile Menu Header */}
-            <div className="relative px-6 md:px-12 h-[110px] flex justify-between items-center w-full pt-4">
+            <div className="relative px-6 md:px-12 h-[130px] flex justify-between items-center w-full pt-8">
               <div className="flex-1" />
 
               <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-max">
@@ -227,7 +227,7 @@ export function Navbar() {
                   aria-label="Close menu"
                   className="p-2 text-[#2B241D] hover:text-[#A88442] transition-colors duration-300 focus:outline-none -mr-2"
                 >
-                  <X size={28} strokeWidth={1.5} />
+                  <X size={28} strokeWidth={1} />
                 </button>
               </div>
             </div>
