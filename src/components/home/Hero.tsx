@@ -7,6 +7,8 @@ import { gsap, ScrollTrigger } from "@/utils/gsap";
 import { useGSAP } from "@gsap/react";
 export function Hero() {
   const bgRef = useRef<HTMLDivElement>(null);
+  const chapterRef = useRef<HTMLSpanElement>(null);
+  const hindiRef = useRef<HTMLSpanElement>(null);
   const headlineRef = useRef<HTMLHeadingElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
@@ -27,31 +29,56 @@ export function Hero() {
       repeat: -1
     });
 
-    // Staggered word reveal emerging from darkness
+    // ═══ Cinematic Reveal Sequence ═══
+    const reveal = gsap.timeline({ delay: 0.4 });
+
+    // 1. Chapter label — fade in first
+    if (chapterRef.current) {
+      reveal.fromTo(
+        chapterRef.current,
+        { opacity: 0, y: 10 },
+        { opacity: 0.7, y: 0, duration: 1.4, ease: "power2.out" }
+      );
+    }
+
+    // 2. Hindi line — fade in second, ethereal
+    if (hindiRef.current) {
+      reveal.fromTo(
+        hindiRef.current,
+        { opacity: 0, y: 15 },
+        { opacity: 0.6, y: 0, duration: 1.8, ease: "power2.out" },
+        "-=0.8"
+      );
+    }
+
+    // 3. Main headline — split text reveal
     if (headlineRef.current) {
       const words = headlineRef.current.querySelectorAll('.word');
-      gsap.fromTo(
+      reveal.fromTo(
         words,
         { y: 120, opacity: 0 },
-        { y: 0, opacity: 1, duration: 1.4, stagger: 0.05, ease: "power4.out", delay: 0.2 }
+        { y: 0, opacity: 1, duration: 1.4, stagger: 0.06, ease: "power4.out" },
+        "-=0.6"
       );
     }
 
-    // Subtitle fade in
+    // 4. Tagline — fade up
     if (subtitleRef.current) {
-      gsap.fromTo(
+      reveal.fromTo(
         subtitleRef.current,
         { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, duration: 1.2, delay: 1.0, ease: "power2.out" }
+        { opacity: 0.9, y: 0, duration: 1.2, ease: "power2.out" },
+        "-=0.6"
       );
     }
 
-    // Buttons fade up
+    // 5. CTA — appear last
     if (buttonsRef.current) {
-      gsap.fromTo(
+      reveal.fromTo(
         buttonsRef.current,
-        { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, duration: 1.2, delay: 1.3, ease: "power2.out" }
+        { opacity: 0, y: 15 },
+        { opacity: 1, y: 0, duration: 1.0, ease: "power2.out" },
+        "-=0.4"
       );
     }
 
@@ -100,80 +127,142 @@ export function Hero() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/50 z-10" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0.6)_100%)] z-10 pointer-events-none" />
         <div className="absolute inset-0 mix-blend-overlay bg-[#5D0925] opacity-20 z-10" />
+
+        {/* Candle Flicker Overlay */}
+        <div className="absolute inset-0 bg-[#B08A3E] mix-blend-overlay z-10 pointer-events-none animate-flicker" />
+        
+        {/* Subtle Glow Pulse */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_60%,rgba(168,132,66,0.12)_0%,rgba(0,0,0,0)_60%)] z-10 pointer-events-none animate-glow" />
+
+        {/* Floating Dust Particles */}
+        <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden mix-blend-screen">
+          {Array.from({ length: 18 }).map((_, i) => (
+            <div
+              key={i}
+              className="dust-particle"
+              style={{
+                width: (Math.abs(Math.sin(i * 12.34)) * 3 + 1.5) + 'px',
+                height: (Math.abs(Math.sin(i * 43.21)) * 3 + 1.5) + 'px',
+                left: (Math.abs(Math.sin(i * 76.54)) * 100) + '%',
+                top: (Math.abs(Math.sin(i * 98.76)) * 100) + '%',
+                animationDuration: (Math.abs(Math.sin(i * 24.68)) * 12 + 15) + 's',
+                animationDelay: (Math.abs(Math.sin(i * 13.57)) * -20) + 's',
+                opacity: 0,
+              }}
+            />
+          ))}
+        </div>
+
+        <style dangerouslySetInnerHTML={{
+          __html: `
+          @keyframes warm-flicker {
+            0%, 100% { opacity: 0.04; }
+            10% { opacity: 0.08; }
+            20% { opacity: 0.03; }
+            30% { opacity: 0.07; }
+            40% { opacity: 0.04; }
+            50% { opacity: 0.09; }
+            60% { opacity: 0.05; }
+            70% { opacity: 0.11; }
+            80% { opacity: 0.04; }
+            90% { opacity: 0.07; }
+          }
+          .animate-flicker {
+            animation: warm-flicker 5s infinite;
+          }
+          @keyframes subtle-pulse {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.05); }
+          }
+          .animate-glow {
+            animation: subtle-pulse 10s infinite ease-in-out;
+          }
+          @keyframes float-up {
+            0% { transform: translateY(0) translateX(0); opacity: 0; }
+            20% { opacity: 0.5; }
+            80% { opacity: 0.5; }
+            100% { transform: translateY(-120px) translateX(20px); opacity: 0; }
+          }
+          .dust-particle {
+            position: absolute;
+            background: radial-gradient(circle, rgba(245,240,230,0.5) 0%, rgba(245,240,230,0) 80%);
+            border-radius: 50%;
+            animation: float-up linear infinite;
+          }
+        `}} />
       </div>
 
       {/* Subtle dark gradient at the bottom */}
-      <div 
-        className="absolute inset-0 z-20 pointer-events-none" 
+      <div
+        className="absolute inset-0 z-20 pointer-events-none"
         style={{
           background: "linear-gradient(to bottom, transparent 70%, rgba(16,12,8,0.75) 100%)"
         }}
       />
 
       {/* Content */}
-      <div 
+      <div
         ref={contentRef}
-        className="relative z-30 w-full max-w-[1440px] mx-auto px-6 md:px-12 pt-[18vh] lg:pt-[22vh] pb-[5vh] text-center flex flex-col items-center"
+        className="relative z-30 w-full max-w-[1200px] mx-auto px-5 sm:px-8 md:px-12 pt-[20vh] sm:pt-[24vh] lg:pt-[28vh] pb-[3vh] sm:pb-[5vh] text-center flex flex-col items-center"
       >
         <div className="flex flex-col items-center">
-          {/* Label */}
-          <span 
-            className="text-[#A88442] text-[0.85rem] tracking-[0.4em] opacity-70 font-medium uppercase mb-[4vh] font-sans"
+          {/* Chapter Label */}
+          <span
+            ref={chapterRef}
+            className="text-[#C8A96B] text-[0.6rem] sm:text-[0.7rem] md:text-[0.75rem] tracking-[0.3em] sm:tracking-[0.4em] font-normal uppercase mb-[1.5vh] sm:mb-[2vh] font-sans"
+            style={{ opacity: 0 }}
           >
-            I &middot; The Arrival
+            Chapter I &middot; The Arrival
+          </span>
+
+          {/* Hindi Script */}
+          <span
+            ref={hindiRef}
+            className="text-[#F3EEE8]/75 text-[12px] sm:text-[14px] md:text-[15px] tracking-[0.04em] sm:tracking-[0.08em] font-light mb-[2vh] sm:mb-[3vh] block px-2"
+            style={{ opacity: 0 }}
+          >
+            कहानियाँ वहीं शुरू होती हैं जहाँ लोग साथ बैठते हैं
           </span>
 
           {/* Heading */}
-          <h1 
+          <h1
             ref={headlineRef}
-            className="font-serif text-[#F5F0E6] mb-[5vh] tracking-wide font-normal max-w-[1100px]"
-            style={{ fontSize: "clamp(2.5rem, 6vw, 8rem)", lineHeight: "0.92" }}
+            className="font-serif text-[#F3EEE8] mb-[2.5vh] sm:mb-[3vh] tracking-wide font-normal max-w-[900px] px-2"
+            style={{ fontSize: "clamp(1.8rem, 7vw, 5.8rem)", lineHeight: "1.1" }}
           >
-            <span className="word inline-block">Inspired</span> <span className="word inline-block">By</span> <span className="word inline-block">Bombay.</span><br />
-            <span className="word inline-block">Made</span> <span className="word inline-block">For</span> <span className="word inline-block">London.</span>
+            <span className="word inline-block">Every</span> <span className="word inline-block">City</span> <span className="word inline-block">Has</span> <span className="word inline-block">Its</span> <span className="word inline-block">Stories.</span><br />
+            <span className="word inline-block">Ours</span> <span className="word inline-block">Begin</span> <span className="word inline-block">Around</span> <span className="word inline-block">A</span> <span className="word inline-block">Table.</span>
           </h1>
 
-          {/* Subheading */}
-          <p 
+          {/* Tagline */}
+          <p
             ref={subtitleRef}
-            className="text-[16px] lg:text-[20px] text-[#F5F0E6] opacity-90 max-w-[700px] mx-auto mb-[6vh] font-sans tracking-widest font-light"
-            style={{ lineHeight: "1.9" }}
+            className="text-[11px] sm:text-[12px] lg:text-[15px] text-[#C8A96B] max-w-[320px] sm:max-w-[500px] mx-auto mb-[3vh] sm:mb-[4vh] font-sans tracking-[0.15em] sm:tracking-[0.2em] font-normal uppercase"
+            style={{ lineHeight: "2", opacity: 0 }}
           >
-            From the family kitchens of Bombay to the tables of London, every meal begins with a story.
+            Inspired By Bombay. Made For London.
           </p>
 
-          {/* Buttons */}
-          <div 
+          {/* CTA */}
+          <div
             ref={buttonsRef}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mb-8 lg:mb-[8vh] w-full sm:w-auto"
+            className="flex flex-col items-center justify-center gap-5 sm:gap-8 w-full sm:w-auto"
+            style={{ opacity: 0 }}
           >
-            <div className="w-full sm:w-auto">
-              <Link
-                href="#chapter-reservation"
-                className="flex items-center justify-center w-full sm:w-auto h-[46px] px-8 rounded-none bg-[#5D0925] border border-[#5D0925] text-[#F8F4ED] text-[12px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-[#420616] hover:border-[#420616] transition-all duration-500"
-              >
-                Reserve A Table
-              </Link>
-            </div>
-            <div className="w-full sm:w-auto">
-              <Link
-                href="https://www.bombaybicyclechef.uk/locator"
-                className="flex items-center justify-center w-full sm:w-auto h-[46px] px-8 rounded-none border border-white/30 text-[#F5F0E6] text-[12px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-white/10 hover:border-white transition-all duration-500"
-              >
-                Order Online
-              </Link>
-            </div>
-          </div>
+            <a
+              href="#chapter-reservation"
+              className="flex items-center justify-center h-[40px] sm:h-[44px] px-8 sm:px-10 rounded-none bg-[#5D0925] border border-[#5D0925] text-[#F8F4ED] text-[10px] sm:text-[11px] tracking-[0.18em] font-normal uppercase font-sans hover:bg-[#420616] hover:border-[#420616] transition-all duration-500"
+            >
+              Reserve A Table
+            </a>
 
-          {/* Trust Line */}
-          <div 
-            className="flex flex-wrap justify-center items-center gap-3 sm:gap-4 text-[10px] sm:text-[12px] lg:text-[13px] text-[#F5F0E6] opacity-60 tracking-[0.2em] font-sans uppercase font-medium relative lg:absolute lg:bottom-[4vh] left-0 w-full z-40 mt-6 lg:mt-0"
-          >
-            <span className="w-full sm:w-auto text-center mt-1 sm:mt-0">Established 1987</span>
-            <span className="opacity-40 hidden sm:inline">|</span>
-            <span className="w-full sm:w-auto text-center mt-1 sm:mt-0">Three London Locations</span>
-            <span className="opacity-40 hidden sm:inline">|</span>
-            <span className="w-full sm:w-auto text-center mt-1 sm:mt-0">Inspired By Bombay</span>
+            <a
+              href="#chapter-family-kitchen"
+              className="group flex flex-col items-center gap-2 text-[#C8A96B]/50 hover:text-[#F5F0E6]/70 transition-colors duration-500"
+            >
+              <span className="text-[9px] sm:text-[10px] tracking-[0.25em] uppercase font-sans font-normal">Explore The Story</span>
+              <span className="text-[11px] sm:text-[12px] group-hover:translate-y-1 transition-transform duration-300">↓</span>
+            </a>
           </div>
         </div>
       </div>

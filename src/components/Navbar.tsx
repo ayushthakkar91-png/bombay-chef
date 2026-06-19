@@ -78,20 +78,18 @@ export function Navbar() {
     <>
       <header
         ref={navRef}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ease-in-out border-b ${
-          isDarkTheme
-            ? "bg-[#F5F0E6] border-[rgba(43,36,29,0.08)] shadow-[0_4px_20px_rgba(0,0,0,0.02)]"
-            : "bg-transparent border-[rgba(245,240,230,0.08)]"
-        }`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ease-in-out border-b ${isDarkTheme
+          ? "bg-[#F5F0E6] border-[rgba(43,36,29,0.08)] shadow-[0_4px_20px_rgba(0,0,0,0.02)]"
+          : "bg-transparent border-[rgba(245,240,230,0.08)]"
+          }`}
       >
         <div className="w-full px-6 md:px-12 lg:px-16">
-          {/* Height increased to 110px to accommodate the taller logo lockup with elegant breathing room */}
-          <nav className="relative flex justify-between items-center h-[90px] lg:h-[110px] py-[16px]" aria-label="Main Navigation">
-            
+          <nav className="relative flex justify-between items-center h-[72px] lg:h-[88px]" aria-label="Main Navigation">
+
             <div className="flex-1 lg:hidden" />
 
             {/* Desktop Left Links */}
-            <motion.div 
+            <motion.div
               variants={containerVariants}
               initial="hidden"
               animate="show"
@@ -101,28 +99,26 @@ export function Navbar() {
                 <motion.div key={link.name} variants={itemVariants} className="flex items-center">
                   <Link
                     href={link.href}
-                    className={`text-[14px] tracking-[0.08em] font-medium uppercase transition-colors duration-300 ease-in-out relative group whitespace-nowrap ${
-                      isDarkTheme ? "text-[#2B241D] hover:text-[#A88442]" : "text-[#F5F0E6] hover:text-[#A88442]"
-                    }`}
+                    className={`text-[13px] tracking-[0.14em] font-normal uppercase transition-colors duration-300 ease-in-out relative group whitespace-nowrap ${isDarkTheme ? "text-[#2B241D]/80 hover:text-[#2B241D]" : "text-[#F5F0E6]/70 hover:text-[#F5F0E6]"
+                      }`}
                   >
                     {link.name}
                     {/* Underline grows from center */}
-                    <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-[1px] bg-[#A88442] transition-all duration-300 ease-in-out group-hover:w-full opacity-0 group-hover:opacity-100"></span>
+                    <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-0 h-[1px] bg-[#B08A3E] transition-all duration-300 ease-in-out group-hover:w-full opacity-0 group-hover:opacity-100"></span>
                   </Link>
                 </motion.div>
               ))}
             </motion.div>
 
-            {/* Center Brand Lockup */}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center w-max">
-              <Link href="/" className="group flex flex-col items-center cursor-pointer">
-                <motion.div 
+            {/* Center Brand Lockup — Logo mark only */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+              <Link href="/" className="group flex items-center cursor-pointer">
+                <motion.div
                   variants={logoVariants}
                   initial="hidden"
                   animate="show"
-                  className={`w-[44px] h-[52px] transition-colors duration-500 md:mb-2 ${
-                    isDarkTheme ? "bg-[#2B241D]" : "bg-[#F5F0E6]"
-                  }`}
+                  className={`w-[40px] h-[48px] transition-colors duration-500 ${isDarkTheme ? "bg-[#2B241D]" : "bg-[#F5F0E6]"
+                    }`}
                   style={{
                     WebkitMaskImage: "url('/images/brand/logo.svg')",
                     maskImage: "url('/images/brand/logo.svg')",
@@ -135,28 +131,11 @@ export function Navbar() {
                   }}
                   aria-hidden="true"
                 />
-                <motion.div 
-                  variants={logoVariants}
-                  initial="hidden"
-                  animate="show"
-                  className="hidden md:flex flex-col items-center text-center mt-1 w-max"
-                >
-                  <span className={`whitespace-nowrap font-serif text-[1rem] sm:text-[1.1rem] lg:text-[1.2rem] tracking-[0.15em] sm:tracking-[0.2em] uppercase leading-none transition-colors duration-500 ${
-                    isDarkTheme ? "text-[#2B241D]" : "text-[#F5F0E6]"
-                  }`}>
-                    Bombay Bicycle Chef
-                  </span>
-                  <span className={`whitespace-nowrap font-sans text-[0.55rem] sm:text-[0.6rem] tracking-[0.2em] sm:tracking-[0.25em] uppercase font-medium mt-1.5 transition-colors duration-500 ${
-                    isDarkTheme ? "text-[#A88442]" : "text-[#A88442]/90"
-                  }`}>
-                    Modern Indian Kitchen
-                  </span>
-                </motion.div>
               </Link>
             </div>
 
             {/* Desktop Right CTAs */}
-            <motion.div 
+            <motion.div
               variants={containerVariants}
               initial="hidden"
               animate="show"
@@ -165,19 +144,18 @@ export function Navbar() {
               <motion.div variants={buttonVariants} whileHover={{ y: -2 }} transition={{ duration: 0.3 }} className="flex items-center">
                 <Link
                   href="/#chapter-reservation"
-                  className={`flex items-center justify-center h-[42px] px-6 rounded-full text-[12px] tracking-[0.12em] font-medium uppercase font-sans whitespace-nowrap border transition-all duration-300 ease-in-out ${
-                    isDarkTheme 
-                      ? "border-[rgba(43,36,29,0.15)] text-[#2B241D] hover:bg-[#2B241D] hover:text-[#F5F0E6] hover:border-[#2B241D]" 
-                      : "border-[rgba(245,240,230,0.35)] text-[#F5F0E6] hover:bg-[#F5F0E6] hover:text-[#2B241D] hover:border-[#F5F0E6]"
-                  }`}
+                  className={`flex items-center justify-center h-[40px] px-6 rounded-full text-[11px] tracking-[0.12em] font-normal uppercase font-sans whitespace-nowrap border transition-all duration-300 ease-in-out ${isDarkTheme
+                    ? "border-[rgba(43,36,29,0.12)] text-[#2B241D]/70 hover:bg-[#2B241D] hover:text-[#F5F0E6] hover:border-[#2B241D]"
+                    : "border-[rgba(245,240,230,0.2)] text-[#F5F0E6]/60 hover:bg-[#F5F0E6] hover:text-[#2B241D] hover:border-[#F5F0E6]"
+                    }`}
                 >
-                  Reserve Table
+                  Reservations
                 </Link>
               </motion.div>
               <motion.div variants={buttonVariants} whileHover={{ y: -2 }} transition={{ duration: 0.3 }} className="flex items-center">
                 <Link
                   href="https://www.bombaybicyclechef.uk/locator"
-                  className="flex items-center justify-center h-[42px] px-6 rounded-full bg-[#5D0925] text-[#F5F0E6] text-[12px] tracking-[0.12em] font-medium uppercase font-sans whitespace-nowrap border border-[#5D0925] hover:bg-[#420616] hover:border-[#420616] transition-all duration-300"
+                  className="flex items-center justify-center h-[40px] px-6 rounded-full bg-[#5D0925] text-[#F5F0E6] text-[11px] tracking-[0.12em] font-normal uppercase font-sans whitespace-nowrap border border-[#5D0925] hover:bg-[#420616] hover:border-[#420616] transition-all duration-300"
                 >
                   Order Online
                 </Link>
@@ -185,7 +163,7 @@ export function Navbar() {
             </motion.div>
 
             {/* Mobile Menu Toggle Button */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5, duration: 0.6 }}
@@ -195,9 +173,8 @@ export function Navbar() {
                 onClick={toggleMobileMenu}
                 aria-expanded={isMobileMenuOpen}
                 aria-label="Toggle menu"
-                className={`p-2 focus:outline-none transition-colors duration-500 ${
-                  isDarkTheme ? "text-[#2B241D]" : "text-[#F5F0E6]"
-                }`}
+                className={`p-2 focus:outline-none transition-colors duration-500 ${isDarkTheme ? "text-[#2B241D]" : "text-[#F5F0E6]"
+                  }`}
               >
                 <Menu size={28} strokeWidth={1.5} />
               </button>
@@ -222,8 +199,8 @@ export function Navbar() {
 
               <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-max">
                 <Link href="/" className="flex flex-col items-center" onClick={toggleMobileMenu}>
-                  <div 
-                    className="w-[36px] h-[42px] bg-[#2B241D] mb-2"
+                  <div
+                    className="w-[60px] h-[70px] bg-[#2B241D] mb-2"
                     style={{
                       WebkitMaskImage: "url('/images/brand/logo.svg')",
                       maskImage: "url('/images/brand/logo.svg')",
@@ -239,9 +216,6 @@ export function Navbar() {
                   <div className="flex flex-col items-center text-center mt-1 w-max">
                     <span className="whitespace-nowrap font-serif text-[1rem] sm:text-[1.1rem] tracking-[0.15em] sm:tracking-[0.2em] uppercase leading-none text-[#2B241D]">
                       Bombay Bicycle Chef
-                    </span>
-                    <span className="whitespace-nowrap font-sans text-[0.55rem] sm:text-[0.6rem] tracking-[0.2em] sm:tracking-[0.25em] uppercase font-medium mt-1.5 text-[#A88442]">
-                      Modern Indian Kitchen
                     </span>
                   </div>
                 </Link>
@@ -280,7 +254,7 @@ export function Navbar() {
               </ul>
 
               {/* Mobile CTA Buttons */}
-              <motion.div 
+              <motion.div
                 className="mt-12 flex flex-col space-y-4 w-full max-w-[280px]"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
