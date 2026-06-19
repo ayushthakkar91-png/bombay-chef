@@ -51,21 +51,25 @@ export function MenuHero() {
         }}
       />
 
-      <div ref={textRef} className="relative z-10 text-center flex flex-col items-center">
-        <h1 className="text-[48px] sm:text-[64px] md:text-[80px] lg:text-[96px] font-serif text-[#F6F2EA] leading-none mb-8 tracking-wide">
-          THE MENU
+      <div ref={textRef} className="relative z-10 text-center flex flex-col items-center px-6">
+        <span className="text-[#C8A96B]/80 text-[10px] sm:text-[11px] tracking-[0.4em] font-normal uppercase mb-[4vh] sm:mb-[6vh] font-sans block">
+          Chapter V &middot; The Offerings
+        </span>
+        
+        <h1 className="text-[48px] sm:text-[64px] md:text-[80px] font-serif text-[#F3EEE8] leading-[1.1] mb-[4vh] sm:mb-[6vh] tracking-wide font-normal">
+          The Menu.
         </h1>
         
-        <p className="text-[18px] md:text-[20px] text-[#F6F2EA]/70 font-sans max-w-md mx-auto leading-[1.8] mb-16">
+        <p className="text-[#F3EEE8]/80 text-[16px] sm:text-[18px] italic tracking-[0.05em] font-light mb-[6vh] sm:mb-[10vh] block max-w-md mx-auto">
           A collection of dishes inspired by Bombay, crafted daily in London.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center gap-8 text-[#B08A3E] text-[12px] font-sans tracking-[0.2em] uppercase">
-          <span>Dine In</span>
-          <span className="hidden sm:block opacity-50">&bull;</span>
-          <span>Takeaway</span>
-          <span className="hidden sm:block opacity-50">&bull;</span>
-          <span>Private Dining</span>
+        <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-10 text-[#C8A96B] text-[10px] sm:text-[11px] font-sans tracking-[0.3em] uppercase">
+          <span className="hover:text-[#F3EEE8] transition-colors duration-300 cursor-pointer">Dine In</span>
+          <span className="hidden sm:block opacity-30 text-[#F3EEE8]">&bull;</span>
+          <span className="hover:text-[#F3EEE8] transition-colors duration-300 cursor-pointer">Takeaway</span>
+          <span className="hidden sm:block opacity-30 text-[#F3EEE8]">&bull;</span>
+          <span className="hover:text-[#F3EEE8] transition-colors duration-300 cursor-pointer">Private Dining</span>
         </div>
       </div>
     </section>

@@ -46,14 +46,14 @@ export function StickyMenuNav() {
   };
 
   return (
-    <div className="sticky top-[90px] lg:top-[110px] z-[40] w-full bg-[#F6F2EA]/95 backdrop-blur-md border-b border-[#2A211C]/10 block transition-all duration-500">
+    <div className="sticky top-[84px] lg:top-[88px] z-[40] w-full bg-[#F6F2EA]/95 backdrop-blur-md border-b border-[#2A211C]/10 block transition-all duration-500">
       <div className="max-w-[1200px] mx-auto px-4 md:px-6 h-[50px] md:h-[60px] flex items-center justify-start md:justify-center overflow-x-auto hide-scrollbar">
         <ul className="flex items-center gap-6 md:gap-8 lg:gap-12 w-max pr-6 md:pr-0">
           {SECTIONS.map((section) => (
             <li key={section.id} className="relative shrink-0">
               <button
                 onClick={() => scrollToSection(section.id)}
-                className={`text-[10px] md:text-[11px] font-sans tracking-[0.15em] uppercase transition-colors duration-300 ${
+                className={`cursor-pointer text-[10px] md:text-[11px] font-sans tracking-[0.15em] uppercase transition-colors duration-300 ${
                   activeId === section.id ? "text-[#B08A3E]" : "text-[#2A211C]/60 hover:text-[#2A211C]"
                 }`}
               >
