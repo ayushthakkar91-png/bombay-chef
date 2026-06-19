@@ -9,17 +9,20 @@ import { motion, AnimatePresence } from "framer-motion";
 const DISHES = [
   {
     title: "Black House Daal",
-    description: "Slow-cooked Black House Daal.",
+    description: "Slow-cooked for 24 hours over wood fire, enriched with cream and butter.",
+    whyItMatters: "A true labour of love. The rich, smoky depth of this daal represents the patience and tradition at the heart of our kitchen.",
     image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?q=80&w=2000&auto=format&fit=crop"
   },
   {
     title: "Tandoori Lamb Chops",
-    description: "Tandoori Lamb Chops kissed by charcoal.",
+    description: "Tender lamb cutlets marinated overnight in ginger, garlic, and Kashmiri chilli.",
+    whyItMatters: "Kissed by the intense heat of the tandoor charcoal. It perfectly balances robust spice with a delicate, melt-in-the-mouth texture.",
     image: "https://images.unsplash.com/photo-1544025162-811114cdb83b?q=80&w=2000&auto=format&fit=crop"
   },
   {
     title: "Bicycle Biryani",
-    description: "Biryanis layered with patience and spice.",
+    description: "Aromatic basmati rice layered with marinated meat, saffron, and slow-cooked in a sealed handi.",
+    whyItMatters: "Our ultimate tribute to celebration. The theatrical unsealing of the dough lid reveals aromas that immediately transport you to a Bombay feast.",
     image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?q=80&w=2000&auto=format&fit=crop"
   }
 ];
@@ -75,9 +78,15 @@ export function SignatureDishes() {
                 <h3 className="text-[28px] md:text-[36px] font-serif text-[#2B241D] mb-4 tracking-wide">
                   {dish.title}
                 </h3>
-                <p className="text-[16px] text-[#5E564D] leading-[1.9] max-w-md font-sans">
+                <p className="text-[15px] lg:text-[16px] text-[#5E564D] leading-[1.8] max-w-md font-sans mb-8">
                   {dish.description}
                 </p>
+                <div className="flex flex-col border-l border-[#B08A3E]/30 pl-6 max-w-md">
+                  <span className="text-[#A88442] text-[10px] tracking-[0.25em] uppercase font-medium mb-3 font-sans">Why It Matters</span>
+                  <p className="text-[16px] text-[#2B241D]/80 leading-[1.7] italic font-light">
+                    "{dish.whyItMatters}"
+                  </p>
+                </div>
               </div>
             ))}
 

@@ -99,7 +99,7 @@ export function Navbar() {
                 <motion.div key={link.name} variants={itemVariants} className="flex items-center">
                   <Link
                     href={link.href}
-                    className={`text-[13px] tracking-[0.14em] font-normal uppercase transition-colors duration-300 ease-in-out relative group whitespace-nowrap ${isDarkTheme ? "text-[#2B241D]/80 hover:text-[#2B241D]" : "text-[#F5F0E6]/70 hover:text-[#F5F0E6]"
+                    className={`text-[11px] tracking-[0.2em] font-medium uppercase transition-colors duration-300 ease-in-out relative group whitespace-nowrap ${isDarkTheme ? "text-[#2B241D]/70 hover:text-[#2B241D]" : "text-[#F5F0E6]/60 hover:text-[#F5F0E6]"
                       }`}
                   >
                     {link.name}
@@ -139,23 +139,23 @@ export function Navbar() {
               variants={containerVariants}
               initial="hidden"
               animate="show"
-              className="hidden lg:flex items-center justify-end space-x-5 flex-1"
+              className="hidden lg:flex items-center justify-end gap-6 xl:gap-8 flex-1 pr-4"
             >
-              <motion.div variants={buttonVariants} whileHover={{ y: -2 }} transition={{ duration: 0.3 }} className="flex items-center">
+              <motion.div variants={buttonVariants} className="flex items-center">
                 <Link
-                  href="/#chapter-reservation"
-                  className={`flex items-center justify-center h-[40px] px-6 rounded-full text-[11px] tracking-[0.12em] font-normal uppercase font-sans whitespace-nowrap border transition-all duration-300 ease-in-out ${isDarkTheme
-                    ? "border-[rgba(43,36,29,0.12)] text-[#2B241D]/70 hover:bg-[#2B241D] hover:text-[#F5F0E6] hover:border-[#2B241D]"
-                    : "border-[rgba(245,240,230,0.2)] text-[#F5F0E6]/60 hover:bg-[#F5F0E6] hover:text-[#2B241D] hover:border-[#F5F0E6]"
+                  href="/reservations"
+                  className={`flex items-center justify-center px-6 h-[40px] text-[10px] xl:text-[11px] tracking-[0.2em] font-medium uppercase font-sans whitespace-nowrap border transition-all duration-500 ease-in-out ${isDarkTheme
+                    ? "border-[rgba(43,36,29,0.2)] text-[#2B241D]/80 hover:bg-[#2B241D] hover:text-[#F5F0E6] hover:border-[#2B241D]"
+                    : "border-[rgba(245,240,230,0.3)] text-[#F5F0E6]/80 hover:bg-[#F5F0E6] hover:text-[#2B241D] hover:border-[#F5F0E6]"
                     }`}
                 >
-                  Reservations
+                  Reserve Table
                 </Link>
               </motion.div>
-              <motion.div variants={buttonVariants} whileHover={{ y: -2 }} transition={{ duration: 0.3 }} className="flex items-center">
+              <motion.div variants={buttonVariants} className="flex items-center">
                 <Link
                   href="https://www.bombaybicyclechef.uk/locator"
-                  className="flex items-center justify-center h-[40px] px-6 rounded-full bg-[#5D0925] text-[#F5F0E6] text-[11px] tracking-[0.12em] font-normal uppercase font-sans whitespace-nowrap border border-[#5D0925] hover:bg-[#420616] hover:border-[#420616] transition-all duration-300"
+                  className="flex items-center justify-center px-6 h-[40px] bg-[#5D0925] border border-[#5D0925] text-[#F8F4ED] text-[10px] xl:text-[11px] tracking-[0.2em] font-medium uppercase font-sans whitespace-nowrap hover:bg-[#420616] hover:border-[#420616] transition-all duration-500 ease-in-out"
                 >
                   Order Online
                 </Link>

@@ -123,16 +123,12 @@ export function Hero() {
           sizes="100vw"
         />
         {/* Cinematic treatments: Darken edges, vignette, and warmth */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/60 z-10" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/50 z-10" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0.6)_100%)] z-10 pointer-events-none" />
-        <div className="absolute inset-0 mix-blend-overlay bg-[#5D0925] opacity-20 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 z-10" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0.4)_100%)] z-10 pointer-events-none" />
+        <div className="absolute inset-0 mix-blend-overlay bg-[#5D0925] opacity-10 z-10" />
 
-        {/* Candle Flicker Overlay */}
-        <div className="absolute inset-0 bg-[#B08A3E] mix-blend-overlay z-10 pointer-events-none animate-flicker" />
 
-        {/* Subtle Glow Pulse */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_60%,rgba(168,132,66,0.12)_0%,rgba(0,0,0,0)_60%)] z-10 pointer-events-none animate-glow" />
 
         {/* Floating Dust Particles */}
         <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden mix-blend-screen">
@@ -155,28 +151,6 @@ export function Hero() {
 
         <style dangerouslySetInnerHTML={{
           __html: `
-          @keyframes warm-flicker {
-            0%, 100% { opacity: 0.04; }
-            10% { opacity: 0.08; }
-            20% { opacity: 0.03; }
-            30% { opacity: 0.07; }
-            40% { opacity: 0.04; }
-            50% { opacity: 0.09; }
-            60% { opacity: 0.05; }
-            70% { opacity: 0.11; }
-            80% { opacity: 0.04; }
-            90% { opacity: 0.07; }
-          }
-          .animate-flicker {
-            animation: warm-flicker 5s infinite;
-          }
-          @keyframes subtle-pulse {
-            0%, 100% { opacity: 0.5; transform: scale(1); }
-            50% { opacity: 0.9; transform: scale(1.05); }
-          }
-          .animate-glow {
-            animation: subtle-pulse 10s infinite ease-in-out;
-          }
           @keyframes float-up {
             0% { transform: translateY(0) translateX(0); opacity: 0; }
             20% { opacity: 0.5; }
@@ -227,8 +201,8 @@ export function Hero() {
           {/* Heading */}
           <h1
             ref={headlineRef}
-            className="font-serif text-[#F3EEE8] mb-[4vh] sm:mb-[6vh] tracking-wide font-normal max-w-[900px] flex flex-col space-y-2 sm:space-y-4"
-            style={{ fontSize: "clamp(1.75rem, 5.5vw, 5.8rem)", lineHeight: "1.15" }}
+            className="font-serif text-[#F3EEE8] mb-[4vh] sm:mb-[5vh] tracking-wide font-light flex flex-col space-y-3 sm:space-y-4"
+            style={{ fontSize: "clamp(1.5rem, 4vw, 3.8rem)", lineHeight: "1.2" }}
           >
             <span className="block">
               <span className="word inline-block">Every</span> <span className="word inline-block">City</span> <span className="word inline-block">Has</span> <span className="word inline-block">Its</span> <span className="word inline-block">Stories.</span>
@@ -241,7 +215,7 @@ export function Hero() {
           {/* Tagline */}
           <p
             ref={subtitleRef}
-            className="text-[13px] lg:text-[15px] text-[#C8A96B] max-w-[500px] mx-auto mb-[6vh] font-sans tracking-[0.2em] font-normal uppercase"
+            className="text-[13px] lg:text-[14px] text-[#C8A96B] max-w-[500px] mx-auto mb-[6vh] sm:mb-[6vh] font-sans tracking-[0.25em] font-normal uppercase"
             style={{ lineHeight: "2", opacity: 0 }}
           >
             Inspired By Bombay.<br className="sm:hidden" /> Made For London.
@@ -250,23 +224,35 @@ export function Hero() {
           {/* CTA */}
           <div
             ref={buttonsRef}
-            className="flex flex-col items-center justify-center gap-5 sm:gap-8 w-full sm:w-auto"
+            className="flex flex-col items-center justify-center gap-6 sm:gap-8 w-full sm:w-auto"
             style={{ opacity: 0 }}
           >
             <a
               href="#chapter-reservation"
-              className="flex items-center justify-center h-[40px] sm:h-[44px] px-8 sm:px-10 rounded-none bg-[#5D0925] border border-[#5D0925] text-[#F8F4ED] text-[10px] sm:text-[11px] tracking-[0.18em] font-normal uppercase font-sans hover:bg-[#420616] hover:border-[#420616] transition-all duration-500"
+              className="flex items-center justify-center h-[40px] sm:h-[44px] px-8 sm:px-12 rounded-none bg-[#5D0925] border border-[#5D0925] text-[#F8F4ED] text-[10px] sm:text-[11px] tracking-[0.2em] font-normal uppercase font-sans hover:bg-[#420616] hover:border-[#420616] transition-all duration-500"
             >
               Reserve A Table
             </a>
 
-            <a
-              href="#chapter-family-kitchen"
-              className="group flex flex-col items-center gap-2 text-[#C8A96B]/50 hover:text-[#F5F0E6]/70 transition-colors duration-500"
-            >
-              <span className="text-[9px] sm:text-[10px] tracking-[0.25em] uppercase font-sans font-normal">Explore The Story</span>
-              <span className="text-[11px] sm:text-[12px] group-hover:translate-y-1 transition-transform duration-300">↓</span>
-            </a>
+            <div className="flex items-center gap-6 sm:gap-10 mt-2">
+              <Link
+                href="/menu"
+                className="group flex flex-col items-center gap-2 text-[#C8A96B]/60 hover:text-[#F3EEE8]/90 transition-colors duration-500"
+              >
+                <span className="text-[9px] sm:text-[10px] tracking-[0.25em] uppercase font-sans font-normal">View Menu</span>
+                <span className="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity duration-300">&mdash;</span>
+              </Link>
+
+              <span className="text-[#C8A96B]/20 text-[10px]">&bull;</span>
+
+              <a
+                href="#chapter-family-kitchen"
+                className="group flex flex-col items-center gap-2 text-[#C8A96B]/60 hover:text-[#F3EEE8]/90 transition-colors duration-500"
+              >
+                <span className="text-[9px] sm:text-[10px] tracking-[0.25em] uppercase font-sans font-normal">Explore Story</span>
+                <span className="text-[10px] group-hover:translate-y-1 transition-transform duration-300">↓</span>
+              </a>
+            </div>
           </div>
         </div>
       </div>

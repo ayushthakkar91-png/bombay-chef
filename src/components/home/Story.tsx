@@ -48,26 +48,26 @@ export function Story() {
   }, []);
 
   return (
-    <section className="bg-[#F5F0E6] w-full pt-20 pb-20 lg:pt-[100px] lg:pb-[100px] px-6">
+    <section className="bg-[#F5F0E6] w-full pt-24 pb-24 lg:pt-[160px] lg:pb-[160px] px-6">
       <div className="max-w-[1200px] mx-auto">
         
         {/* Top Centered Intro */}
-        <div className="flex flex-col items-center text-center max-w-[900px] mx-auto mb-16 lg:mb-24">
-          <span className="text-[#A88442] text-[11px] tracking-[0.35em] font-normal uppercase mb-6 font-sans">
+        <div className="flex flex-col items-center text-center max-w-[900px] mx-auto mb-20 lg:mb-32">
+          <span className="text-[#C8A96B] text-[10px] sm:text-[11px] tracking-[0.35em] font-medium uppercase mb-8 font-sans">
             Chapter II &middot; The Family Kitchen
           </span>
 
-          <span className="text-[#2B241D]/60 text-[16px] tracking-[0.06em] font-light mb-8 italic">
+          <span className="text-[#2B241D]/60 text-[16px] tracking-[0.06em] font-light mb-6 italic">
             कुछ स्वाद कभी साथ नहीं छोड़ते
           </span>
 
-          <h2 ref={headlineRef} className="text-[36px] sm:text-[48px] md:text-[64px] font-serif text-[#2B241D] leading-[1.1] mb-10 tracking-[0.01em]">
+          <h2 ref={headlineRef} className="text-[36px] sm:text-[48px] md:text-[60px] font-serif text-[#1A1411] leading-[1.1] mb-12 tracking-wide font-light">
             Some Flavours<br />Never Leave You.
           </h2>
 
-          <div className="flex flex-col space-y-6 text-[#5E564D] font-serif text-[18px] md:text-[22px] lg:text-[24px] leading-[1.6] max-w-[800px]">
+          <div className="flex flex-col space-y-6 text-[#1A1411]/70 font-serif text-[18px] md:text-[22px] lg:text-[24px] leading-[1.6] max-w-[800px] italic">
             <p>Long before there was a restaurant, there was a family table.</p>
-            <p>There were recipes passed from one generation to the next. Spices measured by memory. Meals prepared slowly, shared generously, and remembered long after the plates were cleared.</p>
+            <p className="font-light">There were recipes passed from one generation to the next. Spices measured by memory. Meals prepared slowly, shared generously, and remembered long after the plates were cleared.</p>
           </div>
         </div>
 

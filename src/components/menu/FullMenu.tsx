@@ -15,38 +15,32 @@ export function FullMenu() {
           <div key={category.id} id={`menu-${category.id}`} className="mb-24 lg:mb-32">
             
             {/* Category Header */}
-            <h2 className="text-[32px] md:text-[40px] font-serif text-[#2B221D] mb-12 uppercase tracking-widest text-center">
+            <h2 className="text-[28px] md:text-[36px] font-serif text-[#1A1411] mb-12 lg:mb-16 uppercase tracking-[0.2em] text-center border-b border-[#1A1411]/5 pb-6">
               {category.title}
             </h2>
 
             {/* Menu Items */}
-            <div className="flex flex-col space-y-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 lg:gap-x-24 gap-y-12 lg:gap-y-16">
               {category.items.map((item, itemIdx) => (
                 <div key={itemIdx} className="flex flex-col group">
                   
                   {/* Title and Price Row */}
-                  <div className="flex items-end justify-between w-full mb-3">
-                    <h3 className="text-[20px] lg:text-[24px] font-serif text-[#2B221D] group-hover:text-[#B08A3E] transition-colors duration-300">
+                  <div className="flex items-start justify-between w-full mb-3 gap-6">
+                    <h3 className="text-[18px] lg:text-[22px] font-serif text-[#1A1411] leading-tight">
                       {item.name}
                     </h3>
                     
-                    {/* Dot Leader */}
-                    <div className="flex-grow border-b border-dotted border-[#2A211C]/20 mx-4 mb-2" />
-                    
-                    <span className="text-[18px] lg:text-[20px] font-serif text-[#2B221D]">
+                    <span className="text-[16px] lg:text-[18px] font-serif text-[#C8A96B] shrink-0 mt-1">
                       {item.price}
                     </span>
                   </div>
 
                   {/* Description */}
                   {item.description && (
-                    <p className="text-[15px] text-[#5A524B] font-sans leading-[1.8] max-w-[80%] lg:max-w-[60%]">
+                    <p className="text-[14px] text-[#1A1411]/60 font-sans font-light leading-[1.8] max-w-[90%]">
                       {item.description}
                     </p>
                   )}
-
-                  {/* Thin Divider */}
-                  <div className="w-full h-[1px] bg-[#2A211C]/5 mt-8" />
                 </div>
               ))}
             </div>

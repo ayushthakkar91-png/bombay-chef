@@ -6,23 +6,26 @@ import Link from "next/link";
 const LOCATIONS = [
   {
     name: "Balham",
-    address: "12-14 Bedford Hill, SW12 9RG",
-    phone: "020 8123 4567",
-    vibe: "Intimate, warm, and constantly buzzing. Our original dining room where the story began.",
+    address: "12-14 Bedford Hill, London SW12 9RG",
+    phone: "020 8673 3456",
+    hours: "Mon-Sun: 12pm - 11pm",
+    atmosphere: "Intimate, warm, and constantly buzzing. Our original dining room where the story began, featuring vintage Irani café mirrors and dark wood panelling.",
     image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2000&auto=format&fit=crop"
   },
   {
     name: "Battersea",
-    address: "89 Northcote Road, SW11 6PL",
-    phone: "020 8123 4568",
-    vibe: "High ceilings, large tables, perfect for Sunday gatherings and evening celebrations.",
+    address: "89 Northcote Road, London SW11 6PL",
+    phone: "020 7228 1122",
+    hours: "Mon-Sun: 12pm - 11pm",
+    atmosphere: "High ceilings, large tables, perfect for Sunday gatherings and evening celebrations. The air smells of charred tandoor and celebration.",
     image: "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?q=80&w=2000&auto=format&fit=crop"
   },
   {
     name: "Kilburn",
-    address: "244 High Road, NW6 2BS",
-    phone: "020 8123 4569",
-    vibe: "Cozy booths and a lively bar serving spice-infused cocktails late into the night.",
+    address: "244 High Road, London NW6 2BS",
+    phone: "020 7624 3322",
+    hours: "Mon-Sun: 12pm - 11.30pm",
+    atmosphere: "Cozy leather booths and a lively brass bar serving spice-infused cocktails late into the night. A vibrant escape from the High Road.",
     image: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=2000&auto=format&fit=crop"
   }
 ];
@@ -34,13 +37,13 @@ export function Locations() {
 
         {/* Heading */}
         <div className="text-center max-w-[900px] mx-auto mb-20 lg:mb-32">
-          <span className="text-[#A88442] text-[11px] tracking-[0.35em] font-normal uppercase mb-8 block font-sans">
+          <span className="text-[#C8A96B] text-[10px] sm:text-[11px] tracking-[0.35em] font-normal uppercase mb-8 block font-sans">
             Chapter VI &middot; London Locations
           </span>
-          <h2 className="text-[36px] sm:text-[48px] md:text-[56px] lg:text-[72px] font-serif text-[#F5F0E6] leading-[1.1] mb-8">
+          <h2 className="text-[36px] sm:text-[48px] md:text-[56px] lg:text-[72px] font-serif text-[#F3EEE8] leading-[1.1] mb-8">
             Three Neighbourhoods.<br/>One Bombay Spirit.
           </h2>
-          <p className="text-[18px] lg:text-[20px] text-[#EFE6D8]/70 max-w-[700px] mx-auto leading-[1.9] font-sans">
+          <p className="text-[16px] lg:text-[18px] text-[#F3EEE8]/70 max-w-[700px] mx-auto leading-[1.9] font-sans font-light">
             Each dining room carries the same spirit, shaped by its own street.
           </p>
         </div>
@@ -74,23 +77,28 @@ export function Locations() {
 
                 {/* Text Side */}
                 <div className="w-full lg:w-1/2 flex flex-col justify-center">
-                  <span className="text-[#A88442] text-[12px] font-sans tracking-[0.2em] uppercase mb-4">
+                  <span className="text-[#C8A96B] text-[10px] font-sans tracking-[0.3em] uppercase mb-4 block">
                     Destination {index + 1}
                   </span>
-                  <h3 className="text-[40px] lg:text-[56px] font-serif text-[#F5F0E6] leading-[1.1] mb-6">
+                  <h3 className="text-[40px] lg:text-[56px] font-serif text-[#F3EEE8] leading-[1.1] mb-8">
                     {loc.name}
                   </h3>
-                  <p className="text-[#EFE6D8]/60 text-[14px] font-sans uppercase tracking-[0.15em] mb-6">
-                    {loc.address}
-                  </p>
-                  <p className="text-[#EFE6D8]/80 text-[18px] lg:text-[20px] font-sans leading-[1.9] mb-10 max-w-md">
-                    {loc.vibe}
-                  </p>
                   
-                  <div>
+                  <p className="text-[#F3EEE8]/80 text-[16px] lg:text-[18px] font-light font-serif leading-[1.8] mb-10 max-w-md italic">
+                    "{loc.atmosphere}"
+                  </p>
+
+                  <div className="flex flex-col space-y-2 mb-10">
+                    <p className="text-[#C8A96B] text-[10px] font-sans uppercase tracking-[0.25em] mb-2">Details</p>
+                    <p className="text-[#F3EEE8]/60 text-[13px] font-sans font-light tracking-wide">{loc.address}</p>
+                    <p className="text-[#F3EEE8]/60 text-[13px] font-sans font-light tracking-wide">{loc.phone}</p>
+                    <p className="text-[#F3EEE8]/60 text-[13px] font-sans font-light tracking-wide">{loc.hours}</p>
+                  </div>
+                  
+                  <div className="flex items-center gap-6">
                     <Link 
-                      href="#chapter-reservation"
-                      className="inline-flex items-center justify-center h-[52px] px-8 border border-[rgba(245,240,230,0.2)] text-[#F5F0E6] text-[12px] tracking-[0.15em] font-medium uppercase hover:bg-[#F5F0E6] hover:text-[#2B241D] transition-colors duration-500"
+                      href="/reservations"
+                      className="inline-flex items-center justify-center h-[44px] px-10 border border-[#C8A96B]/30 text-[#C8A96B] text-[10px] tracking-[0.2em] uppercase font-sans hover:border-[#C8A96B] hover:text-[#F3EEE8] transition-all duration-500"
                     >
                       Book {loc.name}
                     </Link>
