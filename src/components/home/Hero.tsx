@@ -15,98 +15,107 @@ export function Hero() {
   const buttonsRef = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
-    // Cinematic background drift and infinite breathing
-    const bgTimeline = gsap.timeline();
-    bgTimeline.fromTo(
-      bgRef.current,
-      { scale: 1.08 },
-      { scale: 1, duration: 20, ease: "none" }
-    ).to(bgRef.current, {
-      scale: 1.02,
-      duration: 15,
-      ease: "sine.inOut",
-      yoyo: true,
-      repeat: -1
-    });
+    const mm = gsap.matchMedia();
 
-    // ═══ Cinematic Reveal Sequence ═══
-    const reveal = gsap.timeline({ delay: 0.4 });
+    // All motion lives inside the no-preference branch. Every element renders
+    // visible by default (no opacity:0 in markup), so a no-JS render, a crawler,
+    // a failed GSAP load, or a reduced-motion visitor all see the full hero —
+    // including the "Reserve A Table" CTA. GSAP only applies the hidden "from"
+    // state below, before paint, when motion is actually allowed.
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      // Cinematic background drift and infinite breathing
+      const bgTimeline = gsap.timeline();
+      bgTimeline.fromTo(
+        bgRef.current,
+        { scale: 1.08 },
+        { scale: 1, duration: 20, ease: "none" }
+      ).to(bgRef.current, {
+        scale: 1.02,
+        duration: 15,
+        ease: "sine.inOut",
+        yoyo: true,
+        repeat: -1
+      });
 
-    // 1. Hindi line — fade in first, emotional prologue
-    if (hindiRef.current) {
-      reveal.fromTo(
-        hindiRef.current,
-        { opacity: 0, y: 15 },
-        { opacity: 0.8, y: 0, duration: 1.8, ease: "power2.out" }
-      );
-    }
+      // ═══ Cinematic Reveal Sequence ═══
+      const reveal = gsap.timeline({ delay: 0.4 });
 
-    // 2. Chapter label — fade in second, subtle marker
-    if (chapterRef.current) {
-      reveal.fromTo(
-        chapterRef.current,
-        { opacity: 0, y: 10 },
-        { opacity: 0.6, y: 0, duration: 1.4, ease: "power2.out" },
-        "-=1.0"
-      );
-    }
+      // 1. Hindi line — fade in first, emotional prologue
+      if (hindiRef.current) {
+        reveal.fromTo(
+          hindiRef.current,
+          { opacity: 0, y: 15 },
+          { opacity: 0.85, y: 0, duration: 1.8, ease: "power2.out" }
+        );
+      }
 
-    // 3. Main headline — split text reveal
-    if (headlineRef.current) {
-      const words = headlineRef.current.querySelectorAll('.word');
-      reveal.fromTo(
-        words,
-        { y: 120, opacity: 0 },
-        { y: 0, opacity: 1, duration: 1.4, stagger: 0.06, ease: "power4.out" },
-        "-=0.6"
-      );
-    }
+      // 2. Chapter label — fade in second, subtle marker
+      if (chapterRef.current) {
+        reveal.fromTo(
+          chapterRef.current,
+          { opacity: 0, y: 10 },
+          { opacity: 1, y: 0, duration: 1.4, ease: "power2.out" },
+          "-=1.0"
+        );
+      }
 
-    // 4. Tagline — fade up
-    if (subtitleRef.current) {
-      reveal.fromTo(
-        subtitleRef.current,
-        { opacity: 0, y: 20 },
-        { opacity: 0.9, y: 0, duration: 1.2, ease: "power2.out" },
-        "-=0.6"
-      );
-    }
+      // 3. Main headline — split text reveal
+      if (headlineRef.current) {
+        const words = headlineRef.current.querySelectorAll('.word');
+        reveal.fromTo(
+          words,
+          { y: 120, opacity: 0 },
+          { y: 0, opacity: 1, duration: 1.4, stagger: 0.06, ease: "power4.out" },
+          "-=0.6"
+        );
+      }
 
-    // 5. CTA — appear last
-    if (buttonsRef.current) {
-      reveal.fromTo(
-        buttonsRef.current,
-        { opacity: 0, y: 15 },
-        { opacity: 1, y: 0, duration: 1.0, ease: "power2.out" },
-        "-=0.4"
-      );
-    }
+      // 4. Tagline — fade up
+      if (subtitleRef.current) {
+        reveal.fromTo(
+          subtitleRef.current,
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 1.2, ease: "power2.out" },
+          "-=0.6"
+        );
+      }
 
-    // Cinematic scroll away when Chapter 2 enters
-    if (contentRef.current) {
-      gsap.to(contentRef.current, {
-        y: -100,
-        opacity: 0,
-        scale: 0.95,
+      // 5. CTA — appear last
+      if (buttonsRef.current) {
+        reveal.fromTo(
+          buttonsRef.current,
+          { opacity: 0, y: 15 },
+          { opacity: 1, y: 0, duration: 1.0, ease: "power2.out" },
+          "-=0.4"
+        );
+      }
+
+      // Cinematic scroll away when Chapter 2 enters
+      if (contentRef.current) {
+        gsap.to(contentRef.current, {
+          y: -100,
+          opacity: 0,
+          scale: 0.95,
+          scrollTrigger: {
+            trigger: "#chapter-family-kitchen", // Next section
+            start: "top bottom", // When Chapter 2 touches the bottom of screen
+            end: "top 40%", // When Chapter 2 is 40% up
+            scrub: 1,
+          }
+        });
+      }
+
+      // Background transition as Chapter 2 enters
+      gsap.to(bgRef.current, {
+        scale: 1.1,
+        opacity: 0.3,
         scrollTrigger: {
-          trigger: "#chapter-family-kitchen", // Next section
-          start: "top bottom", // When Chapter 2 touches the bottom of screen
-          end: "top 40%", // When Chapter 2 is 40% up
-          scrub: 1,
+          trigger: "#chapter-family-kitchen",
+          start: "top bottom",
+          end: "top top",
+          scrub: true,
         }
       });
-    }
-
-    // Background transition as Chapter 2 enters
-    gsap.to(bgRef.current, {
-      scale: 1.1,
-      opacity: 0.3,
-      scrollTrigger: {
-        trigger: "#chapter-family-kitchen",
-        start: "top bottom",
-        end: "top top",
-        scrub: true,
-      }
     });
   }, []);
 
@@ -116,7 +125,7 @@ export function Hero() {
       <div ref={bgRef} className="absolute inset-0 z-0">
         <Image
           src="/images/hero/hero-bg.png"
-          alt="Bombay Bicycle Chef Interior"
+          alt="The lamplit dining room at Bombay Bicycle Chef, tables set for the evening"
           fill
           priority
           className="object-cover object-center"
@@ -143,27 +152,10 @@ export function Hero() {
                 top: (Math.abs(Math.sin(i * 98.76)) * 100) + '%',
                 animationDuration: (Math.abs(Math.sin(i * 24.68)) * 12 + 15) + 's',
                 animationDelay: (Math.abs(Math.sin(i * 13.57)) * -20) + 's',
-                opacity: 0,
               }}
             />
           ))}
         </div>
-
-        <style dangerouslySetInnerHTML={{
-          __html: `
-          @keyframes float-up {
-            0% { transform: translateY(0) translateX(0); opacity: 0; }
-            20% { opacity: 0.5; }
-            80% { opacity: 0.5; }
-            100% { transform: translateY(-120px) translateX(20px); opacity: 0; }
-          }
-          .dust-particle {
-            position: absolute;
-            background: radial-gradient(circle, rgba(245,240,230,0.5) 0%, rgba(245,240,230,0) 80%);
-            border-radius: 50%;
-            animation: float-up linear infinite;
-          }
-        `}} />
       </div>
 
       {/* Subtle dark gradient at the bottom */}
@@ -183,8 +175,9 @@ export function Hero() {
           {/* Hindi Script (Prologue) */}
           <span
             ref={hindiRef}
-            className="text-[#F3EEE8]/80 text-[15px] italic tracking-[0.08em] font-light mb-[3vh] block"
-            style={{ opacity: 0 }}
+            lang="hi"
+            className="text-[#F3EEE8]/85 text-[15px] italic tracking-[0.08em] font-light mb-[3vh] block"
+            style={{ textShadow: "0 1px 14px rgba(0,0,0,0.5)" }}
           >
             कहानियाँ वहीं शुरू होती हैं<br className="sm:hidden" /> जहाँ लोग साथ बैठते हैं
           </span>
@@ -192,8 +185,8 @@ export function Hero() {
           {/* Chapter Label (Marker) */}
           <span
             ref={chapterRef}
-            className="text-[#C8A96B]/80 text-[10px] tracking-[0.4em] font-normal uppercase mb-[5vh] font-sans block"
-            style={{ opacity: 0 }}
+            className="text-[#C8A96B] text-[10px] tracking-[0.4em] font-normal uppercase mb-[5vh] font-sans block"
+            style={{ textShadow: "0 1px 12px rgba(0,0,0,0.55)" }}
           >
             Chapter I &middot; The Arrival
           </span>
@@ -201,8 +194,8 @@ export function Hero() {
           {/* Heading */}
           <h1
             ref={headlineRef}
-            className="font-serif text-[#F3EEE8] mb-[4vh] sm:mb-[5vh] tracking-wide font-light flex flex-col space-y-3 sm:space-y-4"
-            style={{ fontSize: "clamp(1.5rem, 4vw, 3.8rem)", lineHeight: "1.2" }}
+            className="font-serif text-[#F3EEE8] mb-[4vh] sm:mb-[5vh] font-light text-balance flex flex-col space-y-3 sm:space-y-4"
+            style={{ fontSize: "clamp(1.75rem, 4.5vw, 5rem)", lineHeight: "1.2", textShadow: "0 2px 24px rgba(0,0,0,0.4)" }}
           >
             <span className="block">
               <span className="word inline-block">Every</span> <span className="word inline-block">City</span> <span className="word inline-block">Has</span> <span className="word inline-block">Its</span> <span className="word inline-block">Stories.</span>
@@ -216,7 +209,7 @@ export function Hero() {
           <p
             ref={subtitleRef}
             className="text-[13px] lg:text-[14px] text-[#C8A96B] max-w-[500px] mx-auto mb-[6vh] sm:mb-[6vh] font-sans tracking-[0.25em] font-normal uppercase"
-            style={{ lineHeight: "2", opacity: 0 }}
+            style={{ lineHeight: "2", textShadow: "0 1px 12px rgba(0,0,0,0.55)" }}
           >
             Inspired By Bombay.<br className="sm:hidden" /> Made For London.
           </p>
@@ -225,11 +218,10 @@ export function Hero() {
           <div
             ref={buttonsRef}
             className="flex flex-col items-center justify-center gap-6 sm:gap-8 w-full sm:w-auto"
-            style={{ opacity: 0 }}
           >
             <a
               href="#chapter-reservation"
-              className="flex items-center justify-center h-[40px] sm:h-[44px] px-8 sm:px-12 rounded-none bg-[#5D0925] border border-[#5D0925] text-[#F8F4ED] text-[10px] sm:text-[11px] tracking-[0.2em] font-normal uppercase font-sans hover:bg-[#420616] hover:border-[#420616] transition-all duration-500"
+              className="flex items-center justify-center h-[48px] sm:h-[52px] px-8 sm:px-12 rounded-none bg-[#5D0925] border border-[#5D0925] text-[#F8F4ED] text-[11px] sm:text-[12px] tracking-[0.2em] font-normal uppercase font-sans hover:bg-[#420616] hover:border-[#420616] transition-all duration-500"
             >
               Reserve A Table
             </a>
@@ -237,19 +229,21 @@ export function Hero() {
             <div className="flex items-center gap-6 sm:gap-10 mt-2">
               <Link
                 href="/menu"
-                className="group flex flex-col items-center gap-2 text-[#C8A96B]/60 hover:text-[#F3EEE8]/90 transition-colors duration-500"
+                className="group flex min-h-[44px] flex-col items-center justify-center gap-2 px-2 py-2 text-[#C8A96B]/85 hover:text-[#F3EEE8] transition-colors duration-500"
+                style={{ textShadow: "0 1px 12px rgba(0,0,0,0.55)" }}
               >
-                <span className="text-[9px] sm:text-[10px] tracking-[0.25em] uppercase font-sans font-normal">View Menu</span>
+                <span className="text-[10px] sm:text-[11px] tracking-[0.25em] uppercase font-sans font-normal">View Menu</span>
                 <span className="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity duration-300">&mdash;</span>
               </Link>
 
-              <span className="text-[#C8A96B]/20 text-[10px]">&bull;</span>
+              <span className="text-[#C8A96B]/30 text-[10px]">&bull;</span>
 
               <a
                 href="#chapter-family-kitchen"
-                className="group flex flex-col items-center gap-2 text-[#C8A96B]/60 hover:text-[#F3EEE8]/90 transition-colors duration-500"
+                className="group flex min-h-[44px] flex-col items-center justify-center gap-2 px-2 py-2 text-[#C8A96B]/85 hover:text-[#F3EEE8] transition-colors duration-500"
+                style={{ textShadow: "0 1px 12px rgba(0,0,0,0.55)" }}
               >
-                <span className="text-[9px] sm:text-[10px] tracking-[0.25em] uppercase font-sans font-normal">Explore Story</span>
+                <span className="text-[10px] sm:text-[11px] tracking-[0.25em] uppercase font-sans font-normal">Explore Story</span>
                 <span className="text-[10px] group-hover:translate-y-1 transition-transform duration-300">↓</span>
               </a>
             </div>

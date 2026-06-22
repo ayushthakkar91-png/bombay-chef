@@ -50,3 +50,25 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Hero atmosphere: floating dust motes.
+   Base state is invisible and static; the drift only runs when the visitor
+   has not requested reduced motion. */
+.dust-particle {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245, 240, 230, 0.5) 0%, rgba(245, 240, 230, 0) 80%);
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes float-up {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    20% { opacity: 0.5; }
+    80% { opacity: 0.5; }
+    100% { transform: translateY(-120px) translateX(20px); opacity: 0; }
+  }
+  .dust-particle {
+    animation: float-up linear infinite;
+  }
+}
