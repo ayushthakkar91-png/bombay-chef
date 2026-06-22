@@ -27,7 +27,7 @@ export function StepConfirm({ state, prevStep }: Props) {
         <span className="text-[#B08A3E] text-[13px] tracking-[0.2em] font-semibold uppercase mb-6 block font-sans">
           Review Booking
         </span>
-        <h2 className="text-[40px] md:text-[64px] font-serif text-[#F6F2EA] leading-none mb-16">
+        <h2 className="text-[36px] md:text-[56px] lg:text-[64px] font-serif text-[#F6F2EA] leading-[1.1] mb-12 font-light tracking-wide">
           Your Table Awaits
         </h2>
 

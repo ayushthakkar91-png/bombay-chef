@@ -35,7 +35,7 @@ export function StepGuests({ state, updateState, nextStep, prevStep }: Props) {
     <div className="w-full flex flex-col pt-8 max-w-[800px] mx-auto">
       
       <div className="text-center mb-16">
-        <h2 className="text-[40px] md:text-[56px] font-serif text-[#2B221D] leading-none mb-6">
+        <h2 className="text-[36px] md:text-[48px] lg:text-[56px] font-serif text-[#2B221D] leading-[1.1] mb-6 font-light tracking-wide">
           Party Size
         </h2>
         <p className="text-[#5A524B] text-[16px] font-sans">

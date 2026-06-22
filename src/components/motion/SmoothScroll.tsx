@@ -1,11 +1,20 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { ReactLenis } from "lenis/react";
 import gsap from "gsap";
 
 export function SmoothScroll({ children }: { children: React.ReactNode }) {
   const lenisRef = useRef<any>(null);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    // Reset scroll to top instantly when the route changes
+    if (lenisRef.current?.lenis) {
+      lenisRef.current.lenis.scrollTo(0, { immediate: true });
+    }
+  }, [pathname]);
 
   useEffect(() => {
     function update(time: number) {
@@ -13,6 +22,7 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
     }
 
     gsap.ticker.add(update);
+    gsap.ticker.lagSmoothing(0);
 
     return () => {
       gsap.ticker.remove(update);
@@ -25,13 +35,8 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
       autoRaf={false}
       root
       options={{ 
-        lerp: 0.05, 
-        duration: 1.5, 
+        lerp: 0.07, 
         smoothWheel: true,
-        orientation: 'vertical',
-        gestureOrientation: 'vertical',
-        wheelMultiplier: 1,
-        touchMultiplier: 2
       }}
     >
       {children}

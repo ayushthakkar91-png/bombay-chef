@@ -19,7 +19,7 @@ const STEPS = [
 
 export function BookingProgress({ currentStep, onStepClick }: Props) {
   return (
-    <div className="sticky top-[90px] lg:top-[110px] z-40 w-full bg-[#F6F2EA] border-b border-[#2A211C]/10 py-4 shadow-sm">
+    <div className="sticky top-[84px] lg:top-[88px] z-40 w-full bg-[#F6F2EA] border-b border-[#2A211C]/10 py-4 shadow-sm">
       <div className="max-w-[1200px] mx-auto px-6 overflow-x-auto hide-scrollbar">
         <div className="flex items-center min-w-max">
           
