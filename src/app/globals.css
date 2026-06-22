@@ -8,7 +8,12 @@
   --body: #5E564D;
   --primary: #5D0925;
   --primary-dark: #420616;
+  /* Brass has two tuned values by surface: the deeper --brass for light/cream
+     backgrounds, the lighter --brass-light for dark/photographic sections. */
   --brass: #A88442;
+  --brass-light: #C8A96B;
+  /* Light ink for type set on dark or photographic surfaces. */
+  --on-dark: #F3EEE8;
 }
 
 @theme inline {
@@ -20,6 +25,8 @@
   --color-primary: var(--primary);
   --color-primary-dark: var(--primary-dark);
   --color-brass: var(--brass);
+  --color-brass-light: var(--brass-light);
+  --color-on-dark: var(--on-dark);
   --font-sans: var(--font-sans);
   --font-serif: var(--font-serif);
 }

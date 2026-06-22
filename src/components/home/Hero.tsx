@@ -13,6 +13,7 @@ export function Hero() {
   const contentRef = useRef<HTMLDivElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const buttonsRef = useRef<HTMLDivElement>(null);
+  const curtainRef = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
     const mm = gsap.matchMedia();
@@ -23,19 +24,30 @@ export function Hero() {
     // including the "Reserve A Table" CTA. GSAP only applies the hidden "from"
     // state below, before paint, when motion is actually allowed.
     mm.add("(prefers-reduced-motion: no-preference)", () => {
-      // Cinematic background drift and infinite breathing
+      // Cinematic background: a slow Ken Burns that decelerates into place,
+      // then an endless, almost-imperceptible breath.
       const bgTimeline = gsap.timeline();
       bgTimeline.fromTo(
         bgRef.current,
-        { scale: 1.08 },
-        { scale: 1, duration: 20, ease: "none" }
+        { scale: 1.12 },
+        { scale: 1, duration: 22, ease: "power1.out" }
       ).to(bgRef.current, {
-        scale: 1.02,
-        duration: 15,
+        scale: 1.03,
+        duration: 16,
         ease: "sine.inOut",
         yoyo: true,
         repeat: -1
       });
+
+      // Curtain lift — the scene rises out of shadow as the hero opens.
+      // Markup default is opacity-0, so reduced-motion / no-JS never see a veil.
+      if (curtainRef.current) {
+        gsap.fromTo(
+          curtainRef.current,
+          { opacity: 0.55 },
+          { opacity: 0, duration: 1.7, ease: "power2.out" }
+        );
+      }
 
       // ═══ Cinematic Reveal Sequence ═══
       const reveal = gsap.timeline({ delay: 0.4 });
@@ -45,7 +57,7 @@ export function Hero() {
         reveal.fromTo(
           hindiRef.current,
           { opacity: 0, y: 15 },
-          { opacity: 0.85, y: 0, duration: 1.8, ease: "power2.out" }
+          { opacity: 0.85, y: 0, duration: 1.8, ease: "expo.out" }
         );
       }
 
@@ -54,8 +66,8 @@ export function Hero() {
         reveal.fromTo(
           chapterRef.current,
           { opacity: 0, y: 10 },
-          { opacity: 1, y: 0, duration: 1.4, ease: "power2.out" },
-          "-=1.0"
+          { opacity: 1, y: 0, duration: 1.6, ease: "expo.out" },
+          "-=1.2"
         );
       }
 
@@ -64,9 +76,9 @@ export function Hero() {
         const words = headlineRef.current.querySelectorAll('.word');
         reveal.fromTo(
           words,
-          { y: 120, opacity: 0 },
-          { y: 0, opacity: 1, duration: 1.4, stagger: 0.06, ease: "power4.out" },
-          "-=0.6"
+          { y: 30, opacity: 0 },
+          { y: 0, opacity: 1, duration: 1.8, stagger: 0.06, ease: "expo.out" },
+          "-=1.0"
         );
       }
 
@@ -75,8 +87,8 @@ export function Hero() {
         reveal.fromTo(
           subtitleRef.current,
           { opacity: 0, y: 20 },
-          { opacity: 1, y: 0, duration: 1.2, ease: "power2.out" },
-          "-=0.6"
+          { opacity: 1, y: 0, duration: 1.6, ease: "expo.out" },
+          "-=1.2"
         );
       }
 
@@ -85,8 +97,8 @@ export function Hero() {
         reveal.fromTo(
           buttonsRef.current,
           { opacity: 0, y: 15 },
-          { opacity: 1, y: 0, duration: 1.0, ease: "power2.out" },
-          "-=0.4"
+          { opacity: 1, y: 0, duration: 1.4, ease: "expo.out" },
+          "-=1.0"
         );
       }
 
@@ -120,7 +132,7 @@ export function Hero() {
   }, []);
 
   return (
-    <section className="relative h-screen w-full flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-[100dvh] w-full flex items-center justify-center overflow-hidden">
       {/* Background Image */}
       <div ref={bgRef} className="absolute inset-0 z-0">
         <Image
@@ -128,6 +140,7 @@ export function Hero() {
           alt="The lamplit dining room at Bombay Bicycle Chef, tables set for the evening"
           fill
           priority
+          unoptimized
           className="object-cover object-center"
           sizes="100vw"
         />
@@ -135,12 +148,12 @@ export function Hero() {
         <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40 z-10" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/30 z-10" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,0,0,0)_0%,rgba(0,0,0,0.4)_100%)] z-10 pointer-events-none" />
-        <div className="absolute inset-0 mix-blend-overlay bg-[#5D0925] opacity-10 z-10" />
+        <div className="absolute inset-0 bg-primary opacity-20 z-10" />
 
 
 
         {/* Floating Dust Particles */}
-        <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden mix-blend-screen">
+        <div aria-hidden="true" className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
           {Array.from({ length: 18 }).map((_, i) => (
             <div
               key={i}
@@ -166,17 +179,37 @@ export function Hero() {
         }}
       />
 
+      {/* Center scrim: the existing vignette is transparent at center — exactly
+          where the text sits — so this floors background luminance behind the
+          headline and the small brass labels, keeping them legible over any
+          region of the photo. */}
+      <div
+        className="absolute inset-0 z-20 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse 70% 60% at 50% 44%, rgba(16,12,8,0.6) 0%, rgba(16,12,8,0.32) 48%, transparent 78%)"
+        }}
+      />
+
+      {/* Cinematic curtain: the scene lifts out of shadow on load. Opacity-only
+          and motion-gated (default opacity-0 below), so reduced-motion and no-JS
+          renders never show a dark veil. */}
+      <div
+        ref={curtainRef}
+        className="absolute inset-0 z-20 bg-[#0B0805] opacity-0 pointer-events-none"
+      />
+
       {/* Content */}
       <div
         ref={contentRef}
-        className="relative z-30 w-full max-w-[1200px] mx-auto px-5 sm:px-8 md:px-12 pt-[6vh] sm:pt-[12vh] lg:pt-[24vh] pb-[3vh] sm:pb-[5vh] text-center flex flex-col items-center"
+        className="relative z-30 w-full max-w-[1200px] mx-auto px-5 sm:px-8 md:px-12 pt-[16vh] sm:pt-[18vh] pb-8 text-center flex flex-col items-center"
       >
         <div className="flex flex-col items-center">
           {/* Hindi Script (Prologue) */}
           <span
             ref={hindiRef}
             lang="hi"
-            className="text-[#F3EEE8]/85 text-[15px] italic tracking-[0.08em] font-light mb-[3vh] block"
+            className="text-[#F3EEE8]/85 text-[15px] italic tracking-[0.08em] font-light mb-4 sm:mb-[2vh] block"
             style={{ textShadow: "0 1px 14px rgba(0,0,0,0.5)" }}
           >
             कहानियाँ वहीं शुरू होती हैं<br className="sm:hidden" /> जहाँ लोग साथ बैठते हैं
@@ -185,7 +218,7 @@ export function Hero() {
           {/* Chapter Label (Marker) */}
           <span
             ref={chapterRef}
-            className="text-[#C8A96B] text-[10px] tracking-[0.4em] font-normal uppercase mb-[5vh] font-sans block"
+            className="text-brass-light text-[10px] tracking-[0.4em] font-normal uppercase mb-6 sm:mb-[3vh] font-sans block"
             style={{ textShadow: "0 1px 12px rgba(0,0,0,0.55)" }}
           >
             Chapter I &middot; The Arrival
@@ -194,7 +227,7 @@ export function Hero() {
           {/* Heading */}
           <h1
             ref={headlineRef}
-            className="font-serif text-[#F3EEE8] mb-[4vh] sm:mb-[5vh] font-light text-balance flex flex-col space-y-3 sm:space-y-4"
+            className="font-serif text-[#F3EEE8] mb-6 sm:mb-[4vh] font-light text-balance flex flex-col space-y-3 sm:space-y-4"
             style={{ fontSize: "clamp(1.75rem, 4.5vw, 5rem)", lineHeight: "1.2", textShadow: "0 2px 24px rgba(0,0,0,0.4)" }}
           >
             <span className="block">
@@ -208,7 +241,7 @@ export function Hero() {
           {/* Tagline */}
           <p
             ref={subtitleRef}
-            className="text-[13px] lg:text-[14px] text-[#C8A96B] max-w-[500px] mx-auto mb-[6vh] sm:mb-[6vh] font-sans tracking-[0.25em] font-normal uppercase"
+            className="text-[13px] lg:text-[14px] text-brass-light max-w-[500px] mx-auto mb-8 sm:mb-[5vh] font-sans tracking-[0.25em] font-normal uppercase"
             style={{ lineHeight: "2", textShadow: "0 1px 12px rgba(0,0,0,0.55)" }}
           >
             Inspired By Bombay.<br className="sm:hidden" /> Made For London.
@@ -221,7 +254,7 @@ export function Hero() {
           >
             <a
               href="#chapter-reservation"
-              className="flex items-center justify-center h-[48px] sm:h-[52px] px-8 sm:px-12 rounded-none bg-[#5D0925] border border-[#5D0925] text-[#F8F4ED] text-[11px] sm:text-[12px] tracking-[0.2em] font-normal uppercase font-sans hover:bg-[#420616] hover:border-[#420616] transition-all duration-500"
+              className="flex items-center justify-center h-[48px] sm:h-[52px] px-8 sm:px-12 rounded-none bg-primary border border-primary text-[#F3EEE8] text-[11px] sm:text-[12px] tracking-[0.2em] font-normal uppercase font-sans hover:bg-primary-dark hover:border-primary-dark transition-all duration-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-dark focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A130D]"
             >
               Reserve A Table
             </a>
@@ -229,18 +262,18 @@ export function Hero() {
             <div className="flex items-center gap-6 sm:gap-10 mt-2">
               <Link
                 href="/menu"
-                className="group flex min-h-[44px] flex-col items-center justify-center gap-2 px-2 py-2 text-[#C8A96B]/85 hover:text-[#F3EEE8] transition-colors duration-500"
+                className="group flex min-h-[44px] flex-col items-center justify-center gap-2 px-2 py-2 text-brass-light/85 hover:text-[#F3EEE8] transition-colors duration-500 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-dark"
                 style={{ textShadow: "0 1px 12px rgba(0,0,0,0.55)" }}
               >
                 <span className="text-[10px] sm:text-[11px] tracking-[0.25em] uppercase font-sans font-normal">View Menu</span>
                 <span className="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity duration-300">&mdash;</span>
               </Link>
 
-              <span className="text-[#C8A96B]/30 text-[10px]">&bull;</span>
+              <span className="text-brass-light/30 text-[10px]">&bull;</span>
 
               <a
                 href="#chapter-family-kitchen"
-                className="group flex min-h-[44px] flex-col items-center justify-center gap-2 px-2 py-2 text-[#C8A96B]/85 hover:text-[#F3EEE8] transition-colors duration-500"
+                className="group flex min-h-[44px] flex-col items-center justify-center gap-2 px-2 py-2 text-brass-light/85 hover:text-[#F3EEE8] transition-colors duration-500 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-dark"
                 style={{ textShadow: "0 1px 12px rgba(0,0,0,0.55)" }}
               >
                 <span className="text-[10px] sm:text-[11px] tracking-[0.25em] uppercase font-sans font-normal">Explore Story</span>

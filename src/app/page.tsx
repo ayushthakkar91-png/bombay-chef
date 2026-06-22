@@ -14,7 +14,7 @@ export default function Home() {
       <ChapterIndicator />
       
       {/* Chapter 1: The Arrival (Sticky to allow overlap) */}
-      <div id="chapter-arrival" className="sticky top-0 z-0 w-full h-screen">
+      <div id="chapter-arrival" className="sticky top-0 z-0 w-full h-[100dvh]">
         <Hero />
       </div>
       

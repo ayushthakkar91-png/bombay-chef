@@ -1,17 +1,19 @@
 "use client";
 
-import { MENU_DATA } from "@/data/menu";
+import type { MenuCategory } from "@/data/menu";
 
-// Filter out Signature and Drinks from the main list as they have their own sections
-const EDITORIAL_MENU = MENU_DATA.filter(cat => cat.id !== 'signatures' && cat.id !== 'desserts'); 
-// Wait, user says Desserts and Drinks are part of the menu. I'll include Desserts. Only remove signatures.
+// Signature and Drinks render in their own dedicated sections, so they're
+// excluded from the main editorial list here.
+export function FullMenu({ categories }: { categories: MenuCategory[] }) {
+  const visibleCategories = categories.filter(
+    (cat) => cat.id !== "signatures" && cat.id !== "drinks"
+  );
 
-export function FullMenu() {
   return (
     <section className="bg-[#F6F2EA] w-full pt-10 pb-32 lg:pb-[160px] px-6">
       <div className="max-w-[1000px] mx-auto">
-        
-        {MENU_DATA.filter(cat => cat.id !== 'signatures' && cat.id !== 'drinks').map((category, index) => (
+
+        {visibleCategories.map((category) => (
           <div key={category.id} id={`menu-${category.id}`} className="mb-24 lg:mb-32">
             
             {/* Category Header */}
