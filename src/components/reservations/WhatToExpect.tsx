@@ -24,23 +24,26 @@ export function WhatToExpect() {
   const itemsRef = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
-    if (itemsRef.current) {
-      gsap.fromTo(
-        itemsRef.current.children,
-        { opacity: 0, y: 40 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 1.2,
-          stagger: 0.2,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: containerRef.current,
-            start: "top 70%",
+    const mm = gsap.matchMedia();
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      if (itemsRef.current) {
+        gsap.fromTo(
+          itemsRef.current.children,
+          { opacity: 0, y: 40 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 1.2,
+            stagger: 0.2,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: containerRef.current,
+              start: "top 70%",
+            }
           }
-        }
-      );
-    }
+        );
+      }
+    });
   }, []);
 
   return (

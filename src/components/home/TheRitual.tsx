@@ -9,26 +9,31 @@ export function TheRitual() {
   const textRef = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
-    if (textRef.current) {
-      const elements = textRef.current.children;
-      
-      gsap.fromTo(elements,
-        { y: 40, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 1.2,
-          stagger: 0.2,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: containerRef.current,
-            start: "top 60%",
-            end: "center center",
-            toggleActions: "play none none reverse",
+    // Text renders visible by default; the staggered reveal only runs when the
+    // visitor hasn't requested reduced motion.
+    const mm = gsap.matchMedia();
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      if (textRef.current) {
+        const elements = textRef.current.children;
+
+        gsap.fromTo(elements,
+          { y: 40, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 1.2,
+            stagger: 0.2,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: containerRef.current,
+              start: "top 60%",
+              end: "center center",
+              toggleActions: "play none none reverse",
+            }
           }
-        }
-      );
-    }
+        );
+      }
+    });
   }, []);
 
   return (

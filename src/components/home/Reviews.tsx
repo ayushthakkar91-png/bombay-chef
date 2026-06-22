@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, Variants } from "framer-motion";
+import { motion, Variants, useReducedMotion } from "framer-motion";
 
 const TESTIMONIALS = [
   {
@@ -26,6 +26,7 @@ const fade: Variants = {
 };
 
 export function Reviews() {
+  const reduceMotion = useReducedMotion();
   return (
     <section className="bg-[#2B241D] w-full pt-20 pb-20 lg:pt-[90px] lg:pb-[90px] px-6">
       <div className="max-w-[1200px] mx-auto">
@@ -45,12 +46,12 @@ export function Reviews() {
 
         {/* Testimonials */}
         <motion.div
-          initial="hidden"
+          initial={reduceMotion ? "show" : "hidden"}
           whileInView="show"
           viewport={{ once: true, margin: "-10%" }}
           variants={{
             hidden: { opacity: 0 },
-            show: { opacity: 1, transition: { staggerChildren: 0.2 } }
+            show: { opacity: 1, transition: { staggerChildren: reduceMotion ? 0 : 0.2 } }
           }}
           className="grid grid-cols-1 md:grid-cols-3 gap-16 lg:gap-24"
         >

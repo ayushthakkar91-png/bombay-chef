@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { gsap, ScrollTrigger } from "@/utils/gsap";
 import { useGSAP } from "@gsap/react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 
 const SIGNATURES = [
   {
@@ -33,6 +33,7 @@ export function MenuSignature() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const dishRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const reduceMotion = useReducedMotion();
 
   useGSAP(() => {
     dishRefs.current.forEach((dish, index) => {
@@ -78,13 +79,13 @@ export function MenuSignature() {
 
         {/* Right Side: Pinned Cinematic Image */}
         <div className="lg:col-span-7 relative w-full h-[60vh] lg:h-[85vh] lg:sticky lg:top-[7.5vh] overflow-hidden bg-[#2A211C]">
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={activeIndex}
-              initial={{ opacity: 0, scale: 1.05 }}
+              initial={{ opacity: 0, scale: reduceMotion ? 1 : 1.05 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 1.2, ease: "easeInOut" }}
+              transition={{ duration: reduceMotion ? 0 : 1.2, ease: "easeInOut" }}
               className="absolute inset-0 w-full h-full"
             >
               <Image

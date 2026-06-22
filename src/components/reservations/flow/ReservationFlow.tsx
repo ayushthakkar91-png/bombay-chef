@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence, Variants } from "framer-motion";
+import { motion, AnimatePresence, Variants, useReducedMotion } from "framer-motion";
 import { BookingState, BookingStep } from "./types";
 import { BookingProgress } from "./BookingProgress";
 import { StepLocation } from "./StepLocation";
@@ -12,6 +12,8 @@ import { StepDetails } from "./StepDetails";
 import { StepConfirm } from "./StepConfirm";
 
 export function ReservationFlow() {
+  const reduceMotion = useReducedMotion();
+
   const [state, setState] = useState<BookingState>({
     step: 1,
     location: null,
@@ -46,19 +48,19 @@ export function ReservationFlow() {
 
   // Framer Motion variants for smooth slide transitions
   const variants: Variants = {
-    initial: { opacity: 0, y: 30 },
-    enter: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } },
-    exit: { opacity: 0, y: -30, transition: { duration: 0.5, ease: "easeOut" } }
+    initial: { opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : 30 },
+    enter: { opacity: 1, y: 0, transition: { duration: reduceMotion ? 0 : 0.8, ease: "easeOut" } },
+    exit: { opacity: reduceMotion ? 1 : 0, y: reduceMotion ? 0 : -30, transition: { duration: reduceMotion ? 0 : 0.5, ease: "easeOut" } }
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F2EA] flex flex-col relative pt-[90px] lg:pt-[110px]">
+    <div className="min-h-screen bg-[#F6F2EA] flex flex-col relative pt-[84px] lg:pt-[88px]">
       
       {/* Fixed Progress Indicator */}
       <BookingProgress currentStep={state.step} onStepClick={jumpToStep} />
 
       <div className="flex-1 w-full max-w-[1200px] mx-auto px-6 py-12 lg:py-20 relative">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={state.step}
             variants={variants}

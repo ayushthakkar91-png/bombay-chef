@@ -9,11 +9,16 @@ export function ReservationCTA() {
   const bgRef = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
-    gsap.to(bgRef.current, {
-      backgroundPosition: "120px 120px",
-      duration: 30,
-      ease: "none",
-      repeat: -1,
+    // The slow infinite grain drift only runs when the visitor hasn't requested
+    // reduced motion; the texture stays in place otherwise.
+    const mm = gsap.matchMedia();
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      gsap.to(bgRef.current, {
+        backgroundPosition: "120px 120px",
+        duration: 30,
+        ease: "none",
+        repeat: -1,
+      });
     });
   }, []);
 

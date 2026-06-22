@@ -18,33 +18,38 @@ export function Story() {
   const headlineRef = useRef<HTMLHeadingElement>(null);
 
   useGSAP(() => {
-    gsap.to(imageRef.current, {
-      yPercent: 15,
-      ease: "none",
-      scrollTrigger: {
-        trigger: containerRef.current,
-        start: "top bottom",
-        end: "bottom top",
-        scrub: true,
-      },
-    });
+    // Content renders visible by default; motion (parallax + headline reveal)
+    // only runs when the visitor hasn't requested reduced motion.
+    const mm = gsap.matchMedia();
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      gsap.to(imageRef.current, {
+        yPercent: 15,
+        ease: "none",
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: "top bottom",
+          end: "bottom top",
+          scrub: true,
+        },
+      });
 
-    if (headlineRef.current) {
-      gsap.fromTo(
-        headlineRef.current,
-        { y: 60, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          scrollTrigger: {
-            trigger: "#chapter-family-kitchen",
-            start: "top 80%",
-            end: "top 30%",
-            scrub: 1,
+      if (headlineRef.current) {
+        gsap.fromTo(
+          headlineRef.current,
+          { y: 60, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            scrollTrigger: {
+              trigger: "#chapter-family-kitchen",
+              start: "top 80%",
+              end: "top 30%",
+              scrub: 1,
+            }
           }
-        }
-      );
-    }
+        );
+      }
+    });
   }, []);
 
   return (

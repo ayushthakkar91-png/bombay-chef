@@ -10,30 +10,33 @@ export function MenuHero() {
   const grainRef = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
-    // Grain animation
-    gsap.to(grainRef.current, {
-      backgroundPosition: "200px 200px",
-      duration: 8,
-      ease: "none",
-      repeat: -1,
-    });
+    const mm = gsap.matchMedia();
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      // Grain animation
+      gsap.to(grainRef.current, {
+        backgroundPosition: "200px 200px",
+        duration: 8,
+        ease: "none",
+        repeat: -1,
+      });
 
-    // Text reveal
-    if (textRef.current) {
-      const elements = textRef.current.children;
-      gsap.fromTo(
-        elements,
-        { opacity: 0, y: 40 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 1.5,
-          stagger: 0.2,
-          ease: "power3.out",
-          delay: 0.2
-        }
-      );
-    }
+      // Text reveal
+      if (textRef.current) {
+        const elements = textRef.current.children;
+        gsap.fromTo(
+          elements,
+          { opacity: 0, y: 40 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 1.5,
+            stagger: 0.2,
+            ease: "power3.out",
+            delay: 0.2
+          }
+        );
+      }
+    });
   }, []);
 
   return (

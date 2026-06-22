@@ -18,23 +18,28 @@ export function MenuPreview() {
   const contentRef = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
-    if (contentRef.current) {
-      gsap.fromTo(
-        contentRef.current.children,
-        { opacity: 0, y: 30 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 1.2,
-          stagger: 0.15,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: containerRef.current,
-            start: "top 70%",
+    // Content renders visible by default; the staggered reveal only runs when
+    // the visitor hasn't requested reduced motion.
+    const mm = gsap.matchMedia();
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      if (contentRef.current) {
+        gsap.fromTo(
+          contentRef.current.children,
+          { opacity: 0, y: 30 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 1.2,
+            stagger: 0.15,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: containerRef.current,
+              start: "top 70%",
+            }
           }
-        }
-      );
-    }
+        );
+      }
+    });
   }, []);
 
   return (

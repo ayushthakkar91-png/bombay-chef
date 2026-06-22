@@ -11,22 +11,25 @@ export function PrivateDining() {
   const bgRef = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
-    if (bgRef.current && containerRef.current) {
-      gsap.fromTo(
-        bgRef.current,
-        { y: "-15%" },
-        {
-          y: "15%",
-          ease: "none",
-          scrollTrigger: {
-            trigger: containerRef.current,
-            start: "top bottom",
-            end: "bottom top",
-            scrub: true,
+    const mm = gsap.matchMedia();
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      if (bgRef.current && containerRef.current) {
+        gsap.fromTo(
+          bgRef.current,
+          { y: "-15%" },
+          {
+            y: "15%",
+            ease: "none",
+            scrollTrigger: {
+              trigger: containerRef.current,
+              start: "top bottom",
+              end: "bottom top",
+              scrub: true,
+            }
           }
-        }
-      );
-    }
+        );
+      }
+    });
   }, []);
 
   return (

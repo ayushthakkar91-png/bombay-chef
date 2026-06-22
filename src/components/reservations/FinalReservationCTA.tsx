@@ -9,11 +9,14 @@ export function FinalReservationCTA() {
   const bgRef = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
-    gsap.to(bgRef.current, {
-      backgroundPosition: "200px 200px",
-      duration: 10,
-      ease: "none",
-      repeat: -1,
+    const mm = gsap.matchMedia();
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      gsap.to(bgRef.current, {
+        backgroundPosition: "200px 200px",
+        duration: 10,
+        ease: "none",
+        repeat: -1,
+      });
     });
   }, []);
 

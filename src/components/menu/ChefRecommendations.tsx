@@ -17,23 +17,26 @@ export function ChefRecommendations() {
   const listRef = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
-    if (listRef.current) {
-      gsap.fromTo(
-        listRef.current.children,
-        { opacity: 0, x: -30 },
-        {
-          opacity: 1,
-          x: 0,
-          duration: 1.2,
-          stagger: 0.2,
-          ease: "power3.out",
-          scrollTrigger: {
-            trigger: containerRef.current,
-            start: "top 60%",
+    const mm = gsap.matchMedia();
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      if (listRef.current) {
+        gsap.fromTo(
+          listRef.current.children,
+          { opacity: 0, x: -30 },
+          {
+            opacity: 1,
+            x: 0,
+            duration: 1.2,
+            stagger: 0.2,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: containerRef.current,
+              start: "top 60%",
+            }
           }
-        }
-      );
-    }
+        );
+      }
+    });
   }, []);
 
   return (
