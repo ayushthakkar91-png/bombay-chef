@@ -16,12 +16,13 @@ export function ReservationFlow() {
 
   const [state, setState] = useState<BookingState>({
     step: 1,
+    mode: "reservation",
     location: null,
     experience: null,
     date: null,
     time: null,
     guests: null,
-    details: { name: "", email: "", phone: "", requests: "" }
+    details: { name: "", email: "", phone: "", occasion: null, requests: "" }
   });
 
   const nextStep = () => {

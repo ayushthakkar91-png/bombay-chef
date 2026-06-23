@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
-import { Navbar } from "@/components/Navbar";
-import { Footer } from "@/components/Footer";
-import { SmoothScroll } from "@/components/motion/SmoothScroll";
-import { MobileBottomBar } from "@/components/common/MobileBottomBar";
+import { PublicChrome } from "@/components/layout/PublicChrome";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-serif",
@@ -36,31 +33,10 @@ export default function RootLayout({
       className={`${cormorant.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans bg-[#F5F0E6]">
-        <SmoothScroll>
-          {/* Global Atmosphere: Cinematic Grain & Depth.
-              No blend mode: a fixed, viewport-sized mix-blend layer forces the
-              GPU to re-composite against the whole scrolling page every frame,
-              which is the main cause of scroll jank. translateZ(0) promotes this
-              to its own layer so the noise rasterizes once and the compositor
-              just keeps it pinned while you scroll. */}
-          <div
-            className="pointer-events-none fixed inset-0 z-[100] opacity-[0.06]"
-            style={{ transform: "translateZ(0)" }}
-          >
-            <svg className="w-full h-full opacity-60" xmlns="http://www.w3.org/2000/svg">
-              <filter id="noise">
-                <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch" />
-              </filter>
-              <rect width="100%" height="100%" filter="url(#noise)" />
-            </svg>
-          </div>
-          <div className="pointer-events-none fixed inset-0 z-[90] bg-[radial-gradient(circle_at_top_right,rgba(168,132,66,0.06),transparent_50%),radial-gradient(circle_at_bottom_left,rgba(93,9,37,0.04),transparent_50%)]" />
-
-          <Navbar />
-          <main className="flex-grow">{children}</main>
-          <Footer />
-          <MobileBottomBar />
-        </SmoothScroll>
+        {/* Public marketing chrome (smooth scroll, grain, navbar, footer) wraps
+            every route except /admin, which renders on a bare canvas. The public
+            site is unchanged. */}
+        <PublicChrome>{children}</PublicChrome>
       </body>
     </html>
   );

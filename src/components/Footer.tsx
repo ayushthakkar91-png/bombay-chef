@@ -126,10 +126,11 @@ export function Footer() {
               </a>
             ))}
           </div>
-          <div className="flex items-center gap-8 text-[#F3EEE8]/30 text-[10px] font-sans tracking-[0.15em] uppercase">
+          <div className="flex flex-wrap items-center gap-4 md:gap-8 text-[#F3EEE8]/30 text-[10px] font-sans tracking-[0.15em] uppercase">
             <Link href="/privacy" className="hover:text-[#F3EEE8]/60 transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-[#F3EEE8]/60 transition-colors">Terms</Link>
             <span>&copy; {new Date().getFullYear()} Bombay Bicycle Chef</span>
+            <span>Powered by <a href="https://digipi.uk" target="_blank" rel="noopener noreferrer" className="hover:text-[#F3EEE8]/60 transition-colors">digipi.uk</a></span>
           </div>
         </div>
 

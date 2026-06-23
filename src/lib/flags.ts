@@ -11,6 +11,19 @@ export const flags = {
    * back to the external locator below.
    */
   ordering: process.env.NEXT_PUBLIC_FEATURE_ORDERING === "true",
+
+  /**
+   * Backend-wired reservations (live availability, waitlist, confirmation &
+   * reminder notifications). While OFF, the existing reservation flow renders
+   * but submits to the interim handler. See docs/SYSTEM_ARCHITECTURE.md (P3).
+   */
+  reservationsV2: process.env.NEXT_PUBLIC_FEATURE_RESERVATIONS_V2 === "true",
+
+  /** Customer accounts: loyalty, referrals, favourites, saved addresses (P5). */
+  loyalty: process.env.NEXT_PUBLIC_FEATURE_LOYALTY === "true",
+
+  /** CRM + email marketing: ESP sync, segments, lifecycle automations (P6). */
+  marketing: process.env.NEXT_PUBLIC_FEATURE_MARKETING === "true",
 } as const;
 
 /** Interim external ordering destination, used while `flags.ordering` is off. */

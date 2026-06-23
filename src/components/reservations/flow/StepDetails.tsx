@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { BookingState } from "./types";
+import { OCCASIONS } from "@/lib/reservations/constants";
 
 interface Props {
   state: BookingState;
@@ -116,8 +117,36 @@ export function StepDetails({ state, updateState, nextStep, prevStep }: Props) {
         </div>
 
         <div className="relative flex flex-col group">
-          <label 
-            htmlFor="requests" 
+          <label
+            htmlFor="occasion"
+            className={`text-[12px] uppercase tracking-[0.15em] font-medium transition-colors duration-300 mb-2 ${focusedField === "occasion" ? "text-[#B08A3E]" : "text-[#5A524B]"}`}
+          >
+            Occasion
+          </label>
+          <select
+            id="occasion"
+            value={state.details.occasion ?? ""}
+            onChange={(e) => updateState({ details: { ...state.details, occasion: e.target.value || null } })}
+            onFocus={() => handleFocus("occasion")}
+            onBlur={handleBlur}
+            className="w-full bg-transparent border-b border-[#2A211C]/20 py-2 text-[18px] text-[#2B221D] font-serif focus:outline-none transition-colors appearance-none rounded-none cursor-pointer"
+          >
+            <option value="">Select an occasion (optional)</option>
+            {OCCASIONS.map((o) => (
+              <option key={o.id} value={o.id}>{o.label}</option>
+            ))}
+          </select>
+          <motion.div
+            className="absolute bottom-0 left-0 h-[1px] bg-[#B08A3E]"
+            initial={{ width: 0 }}
+            animate={{ width: focusedField === "occasion" ? "100%" : 0 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          />
+        </div>
+
+        <div className="relative flex flex-col group">
+          <label
+            htmlFor="requests"
             className={`text-[12px] uppercase tracking-[0.15em] font-medium transition-colors duration-300 mb-2 ${focusedField === "requests" ? "text-[#B08A3E]" : "text-[#5A524B]"}`}
           >
             Special Requests
