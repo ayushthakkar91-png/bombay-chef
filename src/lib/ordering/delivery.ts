@@ -13,6 +13,41 @@ export type DeliveryCheck = {
   error?: string;
 };
 
+export type BranchSuggestion = { slug: string; name: string; feePence: number; minOrderPence: number; etaMin: number; outcode: string; servesExact: boolean };
+
+type ZoneLoc = { slug: string; name: string; is_active: boolean; delivery_enabled: boolean; delivery_fee_pence: number; min_order_pence: number; prep_time_min: number; delivery_time_min: number };
+const oneLoc = (j: unknown): ZoneLoc | null => { const x = j as ZoneLoc | ZoneLoc[] | null; return (Array.isArray(x) ? x[0] : x) ?? null; };
+
+/**
+ * Suggest the nearest branch for a postcode, using existing delivery zones only
+ * (no geocoding): first a branch whose active zone covers the exact outcode
+ * (cheapest delivery wins), else a branch serving the same postcode area (e.g.
+ * "SW…"). Returns null when nothing is close. Future-proof for multi-branch.
+ */
+export async function suggestNearestBranch(rawPostcode: string): Promise<BranchSuggestion | null> {
+  const outcode = outcodeOf(rawPostcode);
+  if (!outcode) return null;
+  const supabase = getServiceClient();
+  if (!supabase) return null;
+
+  const SEL = "outcode, locations!inner(slug, name, is_active, delivery_enabled, delivery_fee_pence, min_order_pence, prep_time_min, delivery_time_min)";
+  const toSuggestion = (l: ZoneLoc, exact: boolean): BranchSuggestion => ({ slug: l.slug, name: l.name, feePence: l.delivery_fee_pence, minOrderPence: l.min_order_pence, etaMin: l.prep_time_min + l.delivery_time_min, outcode, servesExact: exact });
+
+  // 1) Exact outcode coverage — cheapest delivery wins.
+  const { data: exactZones } = await supabase.from("delivery_zones").select(SEL).eq("outcode", outcode).eq("is_active", true);
+  const exact = (exactZones ?? []).map((z) => oneLoc(z.locations)).filter((l): l is ZoneLoc => Boolean(l && l.is_active && l.delivery_enabled)).sort((a, b) => a.delivery_fee_pence - b.delivery_fee_pence);
+  if (exact[0]) return toSuggestion(exact[0], true);
+
+  // 2) Same postcode area (letters prefix, e.g. "SW").
+  const area = outcode.match(/^[A-Z]+/)?.[0];
+  if (area) {
+    const { data: areaZones } = await supabase.from("delivery_zones").select(SEL).ilike("outcode", `${area}%`).eq("is_active", true);
+    const near = (areaZones ?? []).map((z) => oneLoc(z.locations)).filter((l): l is ZoneLoc => Boolean(l && l.is_active)).sort((a, b) => a.delivery_fee_pence - b.delivery_fee_pence);
+    if (near[0]) return toSuggestion(near[0], false);
+  }
+  return null;
+}
+
 /**
  * Is a postcode within a location's delivery area? Validates format, extracts
  * the outcode, and checks it against `delivery_zones`. Returns the fee/minimum/

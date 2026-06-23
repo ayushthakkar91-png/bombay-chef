@@ -2,7 +2,7 @@
 
 import { getServiceClient } from "@/lib/supabase/clients";
 import { priceCart, type PriceResult } from "@/lib/ordering/pricing";
-import { checkDelivery, type DeliveryCheck } from "@/lib/ordering/delivery";
+import { checkDelivery, suggestNearestBranch, type DeliveryCheck, type BranchSuggestion } from "@/lib/ordering/delivery";
 import { isStripeConfigured, createCheckoutSession } from "@/lib/stripe/client";
 import { planRedemption } from "@/lib/giftcards/service";
 import { confirmPaidOrder } from "@/lib/ordering/confirm";
@@ -25,6 +25,11 @@ async function locationIdFromSlug(slug: string): Promise<string | null> {
 /** Postcode → delivery availability + fee/min/ETA. */
 export async function checkDeliveryAction(locationSlug: string, postcode: string): Promise<DeliveryCheck> {
   return checkDelivery(locationSlug, postcode);
+}
+
+/** Postcode → nearest branch that can serve it (multi-branch routing). */
+export async function suggestBranchAction(postcode: string): Promise<BranchSuggestion | null> {
+  return suggestNearestBranch(postcode);
 }
 
 /** Live, server-authoritative cart totals for the basket + checkout review. */

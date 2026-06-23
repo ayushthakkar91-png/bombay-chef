@@ -38,6 +38,8 @@ export type OrderLocation = {
   deliveryEnabled: boolean;
   minOrderPence: number;
   deliveryFeePence: number;
+  prepTimeMin: number;
+  deliveryTimeMin: number;
 };
 
 /** Active locations with their ordering config, for the start screen. */
@@ -46,7 +48,7 @@ export async function getOrderLocations(): Promise<OrderLocation[]> {
   if (!supabase) return [];
   const { data } = await supabase
     .from("locations")
-    .select("slug, name, address, collection_enabled, delivery_enabled, min_order_pence, delivery_fee_pence, sort_order")
+    .select("slug, name, address, collection_enabled, delivery_enabled, min_order_pence, delivery_fee_pence, prep_time_min, delivery_time_min, sort_order")
     .eq("is_active", true)
     .order("sort_order");
   return (data ?? []).map((l) => ({
@@ -57,6 +59,8 @@ export async function getOrderLocations(): Promise<OrderLocation[]> {
     deliveryEnabled: l.delivery_enabled as boolean,
     minOrderPence: l.min_order_pence as number,
     deliveryFeePence: l.delivery_fee_pence as number,
+    prepTimeMin: (l.prep_time_min as number) ?? 25,
+    deliveryTimeMin: (l.delivery_time_min as number) ?? 15,
   }));
 }
 

@@ -24,7 +24,17 @@ export const flags = {
 
   /** CRM + email marketing: ESP sync, segments, lifecycle automations (P6). */
   marketing: process.env.NEXT_PUBLIC_FEATURE_MARKETING === "true",
+
+  /** Multi-tenant SaaS platform / operator console at /platform (P13). OFF by
+   *  default — when off, the nav entry is hidden and /platform redirects away. */
+  platform: process.env.NEXT_PUBLIC_FEATURE_PLATFORM === "true",
 } as const;
 
 /** Interim external ordering destination, used while `flags.ordering` is off. */
 export const EXTERNAL_ORDER_URL = "https://www.bombaybicyclechef.uk/locator";
+
+/**
+ * Where every public "Order online" CTA points. When in-house ordering is on it's
+ * the on-site flow (`/order`); otherwise it falls back to the external locator.
+ */
+export const ORDER_URL = flags.ordering ? "/order" : EXTERNAL_ORDER_URL;

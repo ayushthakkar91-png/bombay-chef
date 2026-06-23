@@ -5,10 +5,11 @@ import { gsap } from "@/utils/gsap";
 import { useGSAP } from "@gsap/react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { ORDER_URL } from "@/lib/flags";
 
 const MENUS = [
   { name: "Dine-In Menu", description: "Our signature dishes, meant to be shared.", link: "/menu" },
-  { name: "Takeaway Menu", description: "The Bombay experience, enjoyed at home.", link: "https://www.bombaybicyclechef.uk/locator" },
+  { name: "Takeaway Menu", description: "The Bombay experience, enjoyed at home.", link: ORDER_URL },
   { name: "Private Dining", description: "Bespoke feasting for intimate gatherings.", link: "/reservations" },
   { name: "Catering", description: "Bringing our fire to your events.", link: "/contact" }
 ];

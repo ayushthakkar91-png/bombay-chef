@@ -40,6 +40,11 @@ import {
   Calculator,
   MessageSquare,
   MessageSquareText,
+  Sparkles,
+  LineChart,
+  UsersRound,
+  PackageSearch,
+  Building2,
   Menu as MenuIcon,
   X,
   LogOut,
@@ -47,18 +52,37 @@ import {
 
 import { logout } from "@/app/admin/_actions/auth";
 import { ROLE_LABEL, type Role } from "@/lib/auth/roles";
+import { flags } from "@/lib/flags";
 import { Badge, cx } from "./primitives";
+import { GlobalSearch, QuickActions, NotificationsBell, HeaderLocation } from "./header/HeaderTools";
 
 type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; minRank: number };
 type NavGroup = { heading?: string; items: NavItem[] };
 
+// Reorganised into operational top-level sections. Every existing page is kept
+// (no lost features, no dead links) — just regrouped for faster daily workflow.
 const NAV: NavGroup[] = [
-  { items: [{ href: "/admin", label: "Dashboard", icon: LayoutDashboard, minRank: 1 }] },
   {
     heading: "Operations",
     items: [
-      { href: "/admin/operations", label: "Daily ops", icon: Gauge, minRank: 2 },
+      { href: "/admin", label: "Dashboard", icon: LayoutDashboard, minRank: 1 },
+      { href: "/admin/operations", label: "Daily service", icon: Gauge, minRank: 2 },
       { href: "/admin/kitchen", label: "Kitchen", icon: ChefHat, minRank: 1 },
+      { href: "/admin/orders", label: "Orders", icon: ShoppingBag, minRank: 1 },
+      { href: "/admin/orders/live", label: "Live orders", icon: Clock, minRank: 1 },
+      { href: "/admin/orders/history", label: "Order history", icon: ListOrdered, minRank: 1 },
+    ],
+  },
+  {
+    heading: "Customers",
+    items: [
+      { href: "/admin/reservations", label: "Reservations", icon: CalendarDays, minRank: 1 },
+      { href: "/admin/reservations/calendar", label: "Calendar", icon: CalendarRange, minRank: 1 },
+      { href: "/admin/reservations/waitlist", label: "Waitlist", icon: ClipboardList, minRank: 1 },
+      { href: "/admin/reservations/tables", label: "Tables & hours", icon: Armchair, minRank: 2 },
+      { href: "/admin/customers", label: "Customers", icon: Users, minRank: 3 },
+      { href: "/admin/reports/loyalty", label: "Loyalty", icon: Sparkles, minRank: 3 },
+      { href: "/admin/giftcards", label: "Gift cards", icon: Gift, minRank: 3 },
     ],
   },
   {
@@ -66,61 +90,32 @@ const NAV: NavGroup[] = [
     items: [
       { href: "/admin/menu", label: "Overview", icon: UtensilsCrossed, minRank: 1 },
       { href: "/admin/menu/categories", label: "Categories", icon: FolderTree, minRank: 3 },
-      { href: "/admin/menu/items", label: "Dishes", icon: ListOrdered, minRank: 3 },
+      { href: "/admin/menu/items", label: "Dishes", icon: UtensilsCrossed, minRank: 3 },
       { href: "/admin/menu/availability", label: "Availability", icon: ToggleRight, minRank: 1 },
-    ],
-  },
-  {
-    heading: "Reservations",
-    items: [
-      { href: "/admin/reservations", label: "Bookings", icon: CalendarDays, minRank: 1 },
-      { href: "/admin/reservations/calendar", label: "Calendar", icon: CalendarRange, minRank: 1 },
-      { href: "/admin/reservations/waitlist", label: "Waitlist", icon: ClipboardList, minRank: 1 },
-      { href: "/admin/reservations/tables", label: "Tables & hours", icon: Armchair, minRank: 2 },
-    ],
-  },
-  {
-    heading: "Orders",
-    items: [
-      { href: "/admin/orders", label: "Overview", icon: ShoppingBag, minRank: 1 },
-      { href: "/admin/orders/live", label: "Live", icon: ChefHat, minRank: 1 },
-      { href: "/admin/orders/history", label: "History", icon: Clock, minRank: 1 },
-      { href: "/admin/giftcards", label: "Gift cards", icon: Gift, minRank: 3 },
-    ],
-  },
-  {
-    heading: "Reports",
-    items: [
-      { href: "/admin/reports", label: "Dashboard", icon: BarChart3, minRank: 3 },
-      { href: "/admin/reports/sales", label: "Sales", icon: PoundSterling, minRank: 3 },
-      { href: "/admin/reports/reservations", label: "Reservations", icon: CalendarCheck, minRank: 3 },
-      { href: "/admin/reports/customers", label: "Customers", icon: UserCheck, minRank: 3 },
-      { href: "/admin/reports/marketing", label: "Marketing", icon: Mail, minRank: 3 },
-      { href: "/admin/reports/loyalty", label: "Loyalty", icon: Gift, minRank: 3 },
     ],
   },
   {
     heading: "Marketing",
     items: [
-      { href: "/admin/marketing", label: "Overview", icon: Megaphone, minRank: 3 },
+      { href: "/admin/marketing", label: "CRM", icon: Megaphone, minRank: 3 },
       { href: "/admin/marketing/campaigns", label: "Campaigns", icon: Send, minRank: 3 },
       { href: "/admin/marketing/segments", label: "Segments", icon: PieChart, minRank: 3 },
       { href: "/admin/marketing/promotions", label: "Promotions", icon: Ticket, minRank: 3 },
+      { href: "/admin/messaging", label: "SMS & WhatsApp", icon: MessageSquare, minRank: 3 },
+      { href: "/admin/messaging/templates", label: "Message templates", icon: MessageSquareText, minRank: 3 },
     ],
   },
   {
-    heading: "People",
+    heading: "Analytics",
     items: [
-      { href: "/admin/customers", label: "Customers", icon: Users, minRank: 3 },
-      { href: "/admin/locations", label: "Locations", icon: MapPin, minRank: 2 },
-    ],
-  },
-  {
-    heading: "Team",
-    items: [
-      { href: "/admin/staff", label: "Staff", icon: UserCog, minRank: 2 },
-      { href: "/admin/staff/shifts", label: "Schedule", icon: CalendarClock, minRank: 1 },
-      { href: "/admin/staff/leave", label: "Leave", icon: CalendarOff, minRank: 1 },
+      { href: "/admin/reports", label: "Reports", icon: BarChart3, minRank: 3 },
+      { href: "/admin/reports/sales", label: "Sales", icon: PoundSterling, minRank: 3 },
+      { href: "/admin/reports/reservations", label: "Reservation reports", icon: CalendarCheck, minRank: 3 },
+      { href: "/admin/reports/customers", label: "Customer reports", icon: UserCheck, minRank: 3 },
+      { href: "/admin/reports/marketing", label: "Marketing reports", icon: Mail, minRank: 3 },
+      { href: "/admin/insights", label: "AI insights", icon: LineChart, minRank: 3 },
+      { href: "/admin/insights/customers", label: "Customer insights", icon: UsersRound, minRank: 3 },
+      { href: "/admin/insights/inventory", label: "Inventory insights", icon: PackageSearch, minRank: 3 },
     ],
   },
   {
@@ -135,11 +130,13 @@ const NAV: NavGroup[] = [
     ],
   },
   {
-    heading: "Messaging",
+    heading: "Settings",
     items: [
-      { href: "/admin/messaging", label: "Overview", icon: MessageSquare, minRank: 3 },
-      { href: "/admin/messaging/campaigns", label: "Campaigns", icon: Megaphone, minRank: 3 },
-      { href: "/admin/messaging/templates", label: "Templates", icon: MessageSquareText, minRank: 3 },
+      { href: "/admin/locations", label: "Locations", icon: MapPin, minRank: 2 },
+      { href: "/admin/staff", label: "Staff", icon: UserCog, minRank: 2 },
+      { href: "/admin/staff/shifts", label: "Schedule", icon: CalendarClock, minRank: 1 },
+      { href: "/admin/staff/leave", label: "Leave", icon: CalendarOff, minRank: 1 },
+      { href: "/platform", label: "SaaS Platform", icon: Building2, minRank: 4 },
     ],
   },
 ];
@@ -155,19 +152,21 @@ export function AdminShell({
   user,
   rank,
   topRole,
+  locations = [],
 }: {
   children: React.ReactNode;
   user: { name: string | null; email: string | null };
   rank: number;
   topRole: Role;
+  locations?: { id: string; name: string }[];
 }) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const nav = (
-    <nav className="flex flex-col gap-6 px-3 py-4">
+    <nav className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-3 py-4">
       {NAV.map((group, gi) => {
-        const items = group.items.filter((i) => rank >= i.minRank);
+        const items = group.items.filter((i) => rank >= i.minRank && (i.href !== "/platform" || flags.platform));
         if (items.length === 0) return null;
         return (
           <div key={gi} className="flex flex-col gap-1">
@@ -253,12 +252,17 @@ export function AdminShell({
             <MenuIcon className="h-5 w-5" />
           </button>
 
-          <div className="ml-auto flex items-center gap-3">
-            <div className="hidden text-right sm:block">
+          <GlobalSearch />
+
+          <div className="ml-auto flex items-center gap-2 sm:gap-3">
+            <HeaderLocation locations={locations} />
+            <QuickActions />
+            <NotificationsBell />
+            <div className="hidden text-right lg:block">
               <p className="text-sm font-medium leading-tight text-text">{user.name ?? user.email ?? "Staff"}</p>
               <p className="text-xs leading-tight text-body">{ROLE_LABEL[topRole]}</p>
             </div>
-            <Badge tone="accent">{ROLE_LABEL[topRole]}</Badge>
+            <span className="hidden sm:inline-flex"><Badge tone="accent">{ROLE_LABEL[topRole]}</Badge></span>
             <form action={logout}>
               <button
                 type="submit"

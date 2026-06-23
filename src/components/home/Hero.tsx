@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
-import { gsap, ScrollTrigger } from "@/utils/gsap";
+import { gsap } from "@/utils/gsap";
 import { useGSAP } from "@gsap/react";
 export function Hero() {
   const bgRef = useRef<HTMLDivElement>(null);
@@ -23,112 +23,62 @@ export function Hero() {
     // a failed GSAP load, or a reduced-motion visitor all see the full hero —
     // including the "Reserve A Table" CTA. GSAP only applies the hidden "from"
     // state below, before paint, when motion is actually allowed.
-    mm.add("(prefers-reduced-motion: no-preference)", () => {
-      // Cinematic background: a slow Ken Burns that decelerates into place,
-      // then an endless, almost-imperceptible breath.
-      const bgTimeline = gsap.timeline();
-      bgTimeline.fromTo(
-        bgRef.current,
-        { scale: 1.12 },
-        { scale: 1, duration: 22, ease: "power1.out" }
-      ).to(bgRef.current, {
-        scale: 1.03,
-        duration: 16,
-        ease: "sine.inOut",
-        yoyo: true,
-        repeat: -1
-      });
+    // Split desktop / mobile so the heavy, continuous effects (infinite Ken-Burns
+    // breath + scroll-scrubbed parallax) run on desktop only. The fast reveal runs
+    // on both. Reduced-motion still sees the full hero (markup is visible by default).
+    mm.add(
+      {
+        isDesktop: "(min-width: 769px) and (prefers-reduced-motion: no-preference)",
+        isMobile: "(max-width: 768px) and (prefers-reduced-motion: no-preference)",
+      },
+      (context) => {
+        const isDesktop = Boolean((context.conditions as { isDesktop?: boolean } | undefined)?.isDesktop);
 
-      // Curtain lift — the scene rises out of shadow as the hero opens.
-      // Markup default is opacity-0, so reduced-motion / no-JS never see a veil.
-      if (curtainRef.current) {
-        gsap.fromTo(
-          curtainRef.current,
-          { opacity: 0.55 },
-          { opacity: 0, duration: 1.7, ease: "power2.out" }
-        );
-      }
-
-      // ═══ Cinematic Reveal Sequence ═══
-      const reveal = gsap.timeline({ delay: 0.4 });
-
-      // 1. Hindi line — fade in first, emotional prologue
-      if (hindiRef.current) {
-        reveal.fromTo(
-          hindiRef.current,
-          { opacity: 0, y: 15 },
-          { opacity: 0.85, y: 0, duration: 1.8, ease: "expo.out" }
-        );
-      }
-
-      // 2. Chapter label — fade in second, subtle marker
-      if (chapterRef.current) {
-        reveal.fromTo(
-          chapterRef.current,
-          { opacity: 0, y: 10 },
-          { opacity: 1, y: 0, duration: 1.6, ease: "expo.out" },
-          "-=1.2"
-        );
-      }
-
-      // 3. Main headline — split text reveal
-      if (headlineRef.current) {
-        const words = headlineRef.current.querySelectorAll('.word');
-        reveal.fromTo(
-          words,
-          { y: 30, opacity: 0 },
-          { y: 0, opacity: 1, duration: 1.8, stagger: 0.06, ease: "expo.out" },
-          "-=1.0"
-        );
-      }
-
-      // 4. Tagline — fade up
-      if (subtitleRef.current) {
-        reveal.fromTo(
-          subtitleRef.current,
-          { opacity: 0, y: 20 },
-          { opacity: 1, y: 0, duration: 1.6, ease: "expo.out" },
-          "-=1.2"
-        );
-      }
-
-      // 5. CTA — appear last
-      if (buttonsRef.current) {
-        reveal.fromTo(
-          buttonsRef.current,
-          { opacity: 0, y: 15 },
-          { opacity: 1, y: 0, duration: 1.4, ease: "expo.out" },
-          "-=1.0"
-        );
-      }
-
-      // Cinematic scroll away when Chapter 2 enters
-      if (contentRef.current) {
-        gsap.to(contentRef.current, {
-          y: -100,
-          opacity: 0,
-          scale: 0.95,
-          scrollTrigger: {
-            trigger: "#chapter-family-kitchen", // Next section
-            start: "top bottom", // When Chapter 2 touches the bottom of screen
-            end: "top 40%", // When Chapter 2 is 40% up
-            scrub: 1,
-          }
-        });
-      }
-
-      // Background transition as Chapter 2 enters
-      gsap.to(bgRef.current, {
-        scale: 1.1,
-        opacity: 0.3,
-        scrollTrigger: {
-          trigger: "#chapter-family-kitchen",
-          start: "top bottom",
-          end: "top top",
-          scrub: true,
+        // Background settle. The endless "breath" loop is desktop-only.
+        gsap.fromTo(bgRef.current, { scale: isDesktop ? 1.12 : 1.06 }, { scale: 1, duration: isDesktop ? 20 : 8, ease: "power1.out" });
+        if (isDesktop) {
+          gsap.to(bgRef.current, { scale: 1.03, duration: 16, ease: "sine.inOut", yoyo: true, repeat: -1, delay: 20 });
         }
-      });
-    });
+
+        // Curtain lift — quick.
+        if (curtainRef.current) {
+          gsap.fromTo(curtainRef.current, { opacity: 0.55 }, { opacity: 0, duration: 0.8, ease: "power2.out" });
+        }
+
+        // ═══ Fast cinematic reveal — first line by ~0.6s, complete by ~1.5s ═══
+        const reveal = gsap.timeline({ delay: 0.15 });
+        if (hindiRef.current) {
+          reveal.fromTo(hindiRef.current, { opacity: 0, y: 12 }, { opacity: 0.85, y: 0, duration: 0.6, ease: "expo.out" });
+        }
+        if (chapterRef.current) {
+          reveal.fromTo(chapterRef.current, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, "-=0.4");
+        }
+        if (headlineRef.current) {
+          const words = headlineRef.current.querySelectorAll('.word');
+          reveal.fromTo(words, { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, stagger: 0.04, ease: "expo.out" }, "-=0.35");
+        }
+        if (subtitleRef.current) {
+          reveal.fromTo(subtitleRef.current, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.55, ease: "expo.out" }, "-=0.45");
+        }
+        if (buttonsRef.current) {
+          reveal.fromTo(buttonsRef.current, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: "expo.out" }, "-=0.35");
+        }
+
+        // Scroll-scrubbed parallax — desktop only (heavy on mobile).
+        if (isDesktop && contentRef.current) {
+          gsap.to(contentRef.current, {
+            y: -100, opacity: 0, scale: 0.95,
+            scrollTrigger: { trigger: "#chapter-family-kitchen", start: "top bottom", end: "top 40%", scrub: 1 },
+          });
+        }
+        if (isDesktop) {
+          gsap.to(bgRef.current, {
+            scale: 1.1, opacity: 0.3,
+            scrollTrigger: { trigger: "#chapter-family-kitchen", start: "top bottom", end: "top top", scrub: true },
+          });
+        }
+      },
+    );
   }, []);
 
   return (

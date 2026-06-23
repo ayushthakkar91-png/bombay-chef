@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 
 import { requireStaff } from "@/lib/auth/dal";
 import { ROLE_RANK, ROLES, type Role } from "@/lib/auth/roles";
+import { scopedLocationIds, filterScoped } from "@/lib/auth/scope";
+import { listLocations } from "@/lib/repositories/admin-locations";
 import { AdminShell } from "@/components/admin/AdminShell";
 
 export const metadata: Metadata = {
@@ -19,8 +21,10 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     "staff" as Role,
   );
 
+  const locations = filterScoped(await listLocations(false), scopedLocationIds(ctx)).map((l) => ({ id: l.id, name: l.name }));
+
   return (
-    <AdminShell user={{ name: ctx.fullName, email: ctx.email }} rank={ctx.rank} topRole={topRole}>
+    <AdminShell user={{ name: ctx.fullName, email: ctx.email }} rank={ctx.rank} topRole={topRole} locations={locations}>
       {children}
     </AdminShell>
   );

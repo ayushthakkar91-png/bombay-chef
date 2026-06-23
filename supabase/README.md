@@ -101,6 +101,20 @@ Twilio status + inbound webhooks at `/api/webhooks/twilio`. Consent-gated; obser
 orders/reservations/rewards without modifying them. Tools at `/admin/messaging/*`.
 See [`../docs/MESSAGING_PHASE11.md`](../docs/MESSAGING_PHASE11.md).
 
+**AI Business Intelligence (Phase 12):** no migration — read-only insights over
+existing data at `/admin/insights/*` (restaurant_manager). Every figure/forecast/
+recommendation is computed deterministically with confidence scores; an optional
+`ANTHROPIC_API_KEY` adds an LLM executive narrative (templated fallback otherwise).
+See [`../docs/INSIGHTS_PHASE12.md`](../docs/INSIGHTS_PHASE12.md).
+
+**Multi-tenant SaaS (Phase 13):** run
+[`0017_saas_platform.sql`](./migrations/0017_saas_platform.sql) — adds tenants,
+plans, subscriptions, white-label settings, membership, platform operators + audit,
+and **seeds the existing restaurant as tenant #1** (mapping current super-admins as
+platform operators). Operator console at `/platform/*`. Billing is optional
+(`STRIPE_PRICE_*` + `/api/webhooks/stripe-billing`); tenants run on manual plans
+otherwise. See [`../docs/SAAS_PHASE13.md`](../docs/SAAS_PHASE13.md).
+
 ## 4. Seed the menu
 In the SQL Editor, paste and run [`seed.sql`](./seed.sql). It loads the current
 menu into the tables (safe to re-run). After that, edit the menu from the

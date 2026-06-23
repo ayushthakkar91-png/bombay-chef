@@ -25,7 +25,8 @@ function isPublicAuthPath(pathname: string): boolean {
 }
 
 function loginFor(pathname: string): string {
-  return pathname.startsWith("/admin") ? "/admin/login" : "/account/login";
+  // Platform operators authenticate through the admin login.
+  return pathname.startsWith("/admin") || pathname.startsWith("/platform") ? "/admin/login" : "/account/login";
 }
 
 export async function proxy(request: NextRequest) {
@@ -80,6 +81,6 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Admin + account only — the public marketing site is deliberately untouched.
-  matcher: ["/admin/:path*", "/account/:path*"],
+  // Admin + account + platform only — the public marketing site is untouched.
+  matcher: ["/admin/:path*", "/account/:path*", "/platform/:path*"],
 };

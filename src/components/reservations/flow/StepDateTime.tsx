@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { BookingState, toDateISO } from "./types";
 import { motion, AnimatePresence } from "framer-motion";
 import { BOOKING_HORIZON_DAYS } from "@/lib/reservations/constants";
+import { ORDER_URL } from "@/lib/flags";
 
 interface Props {
   state: BookingState;
@@ -15,10 +16,16 @@ interface Props {
 export function StepDateTime({ state, updateState, nextStep, prevStep }: Props) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  // Availability is keyed by a signature of (location, date, experience). Loading
-  // and the visible times are DERIVED from whether the cached signature matches
-  // the current one — so the effect only setState()s in its async callback.
-  const sig = state.date && state.location ? `${state.location}|${toDateISO(state.date)}|${state.experience ?? ""}` : "";
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  // Default to TODAY so available times appear immediately — no "select a date" gate.
+  const effectiveDate = state.date ?? today;
+  const isTodaySelected = effectiveDate.toDateString() === today.toDateString();
+
+  // Availability is DERIVED from a (location|date|experience) signature; the effect
+  // only setState()s inside its async callback.
+  const sig = state.location ? `${state.location}|${toDateISO(effectiveDate)}|${state.experience ?? ""}` : "";
   const [avail, setAvail] = useState<{ sig: string; times: string[] }>({ sig: "", times: [] });
   const loadingTimes = sig !== "" && avail.sig !== sig;
   const times = avail.sig === sig ? avail.times : [];
@@ -28,12 +35,7 @@ export function StepDateTime({ state, updateState, nextStep, prevStep }: Props) 
   const month = currentMonth.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0 = Sunday
-
-  // Adjust so Monday is first (1 = Mon, 0 = Sun -> 6)
   const startingDayOffset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
   const horizon = new Date(today);
   horizon.setDate(horizon.getDate() + BOOKING_HORIZON_DAYS);
 
@@ -51,7 +53,7 @@ export function StepDateTime({ state, updateState, nextStep, prevStep }: Props) 
   };
 
   const handleTimeSelect = (time: string) => {
-    updateState({ time, mode: "reservation" });
+    updateState({ date: effectiveDate, time, mode: "reservation" });
     setTimeout(() => {
       nextStep();
     }, 400);
@@ -62,12 +64,14 @@ export function StepDateTime({ state, updateState, nextStep, prevStep }: Props) 
     nextStep();
   };
 
-  // Fetch real availability whenever the date / location / experience changes.
+  // Fetch real availability whenever the signature changes (location|date|experience
+  // is all encoded in `sig`, so this is the single, stable dependency).
   useEffect(() => {
-    if (!state.date || !state.location) return;
+    if (!sig) return;
+    const [location, dateISO, experience] = sig.split("|");
     const controller = new AbortController();
-    const params = new URLSearchParams({ location: state.location, date: toDateISO(state.date) });
-    if (state.experience) params.set("experience", state.experience);
+    const params = new URLSearchParams({ location, date: dateISO });
+    if (experience) params.set("experience", experience);
     fetch(`/api/reservations/availability?${params.toString()}`, { signal: controller.signal })
       .then((r) => r.json())
       .then((d: { times?: string[] }) => setAvail({ sig, times: d.times ?? [] }))
@@ -75,16 +79,10 @@ export function StepDateTime({ state, updateState, nextStep, prevStep }: Props) 
         if (e.name !== "AbortError") setAvail({ sig, times: [] });
       });
     return () => controller.abort();
-  }, [state.date, state.location, state.experience, sig]);
+  }, [sig]);
 
-  const isSelectedDate = (day: number) => {
-    if (!state.date) return false;
-    return (
-      state.date.getDate() === day &&
-      state.date.getMonth() === month &&
-      state.date.getFullYear() === year
-    );
-  };
+  const isSelectedDate = (day: number) =>
+    effectiveDate.getDate() === day && effectiveDate.getMonth() === month && effectiveDate.getFullYear() === year;
 
   const isToday = (day: number) => {
     const t = new Date();
@@ -163,31 +161,36 @@ export function StepDateTime({ state, updateState, nextStep, prevStep }: Props) 
 
         {/* Time Selection */}
         <AnimatePresence>
-          {state.date && (
+          {(
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
+              key={toDateISO(effectiveDate)}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25 }}
               className="border-t border-[#2A211C]/10 pt-8"
             >
-              <h4 className="text-center text-[#2B221D] text-[18px] font-serif mb-6">
-                Available Times for {state.date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+              <h4 className="text-center text-[#2B221D] text-[20px] font-serif mb-1.5">
+                {isTodaySelected ? "Today — Available" : effectiveDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
               </h4>
+              {!loadingTimes && times.length > 0 && (
+                <p className="text-center text-[#B08A3E] text-[11px] tracking-[0.15em] uppercase font-sans font-semibold mb-6">{times.length} slots available · tap to continue</p>
+              )}
 
               {loadingTimes ? (
-                <p className="text-center text-[#5A524B] text-[14px] font-sans py-6 animate-pulse">
-                  Checking availability…
-                </p>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 py-2">
+                  {Array.from({ length: 8 }).map((_, i) => <div key={i} className="h-[56px] bg-[#2A211C]/5 animate-pulse" />)}
+                </div>
               ) : times.length > 0 ? (
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                   {times.map((time) => (
                     <button
                       key={time}
                       onClick={() => handleTimeSelect(time)}
-                      className={`h-[44px] text-[13px] font-sans transition-all duration-300 border
+                      className={`h-[56px] text-[16px] font-serif transition-all duration-300 border
                         ${state.time === time
-                          ? "bg-[#2A211C] border-[#2A211C] text-[#F6F2EA]"
-                          : "border-[#2A211C]/20 text-[#2B221D] hover:border-[#B08A3E] hover:text-[#B08A3E]"}`}
+                          ? "bg-[#2A211C] border-[#2A211C] text-[#F6F2EA] shadow-[0_4px_14px_rgba(42,33,28,0.25)]"
+                          : "border-[#2A211C]/20 text-[#2B221D] hover:border-[#B08A3E] hover:bg-[#B08A3E]/5 hover:text-[#B08A3E] hover:-translate-y-0.5"}`}
                     >
                       {time}
                     </button>
@@ -195,15 +198,22 @@ export function StepDateTime({ state, updateState, nextStep, prevStep }: Props) 
                 </div>
               ) : (
                 <div className="text-center py-4">
-                  <p className="text-[#5A524B] text-[15px] font-sans mb-6">
-                    This date is fully booked. We&apos;d love to welcome you another way.
-                  </p>
-                  <button
-                    onClick={handleJoinWaitlist}
-                    className="inline-flex items-center justify-center h-[48px] px-8 bg-[#B08A3E] text-[#2A211C] text-[12px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-[#2A211C] hover:text-[#F6F2EA] transition-colors duration-500"
-                  >
-                    Join the Waitlist
-                  </button>
+                  <p className="text-[#2B221D] text-[18px] font-serif mb-1.5">Fully booked for this date</p>
+                  <p className="text-[#5A524B] text-[15px] font-sans mb-7">We&apos;d still love to welcome you — join the waitlist, or enjoy us at home tonight.</p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <button
+                      onClick={handleJoinWaitlist}
+                      className="inline-flex items-center justify-center h-[52px] px-8 bg-[#B08A3E] text-[#2A211C] text-[12px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-[#2A211C] hover:text-[#F6F2EA] transition-colors duration-500"
+                    >
+                      Join the Waitlist
+                    </button>
+                    <a
+                      href={ORDER_URL}
+                      className="inline-flex items-center justify-center h-[52px] px-8 border border-[#5D0925] text-[#5D0925] text-[12px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-[#5D0925] hover:text-[#F6F2EA] transition-colors duration-500"
+                    >
+                      Order Online
+                    </a>
+                  </div>
                 </div>
               )}
             </motion.div>

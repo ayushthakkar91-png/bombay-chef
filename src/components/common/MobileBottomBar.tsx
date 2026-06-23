@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRef } from "react";
+import { ORDER_URL } from "@/lib/flags";
 import { gsap, ScrollTrigger } from "@/utils/gsap";
 import { useGSAP } from "@gsap/react";
 
@@ -37,7 +38,7 @@ export function MobileBottomBar() {
         </Link>
         
         <Link
-          href="https://www.bombaybicyclechef.uk/locator"
+          href={ORDER_URL}
           className="flex-1 flex items-center justify-center bg-[#7A0E2E] text-[#F6F2EA] text-[12px] font-medium tracking-[0.15em] uppercase active:bg-[#5D0925] sm:hover:bg-[#5D0925] transition-colors"
         >
           Order Online

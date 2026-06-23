@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { X, ShoppingBag, Flame } from "lucide-react";
 
@@ -9,12 +8,13 @@ import type { OrderingMenu, OrderMenuItem } from "@/lib/repositories/ordering-me
 import { useOrder } from "./OrderProvider";
 import { ItemModal } from "./ItemModal";
 import { CartContents } from "./CartContents";
+import { OrderBar } from "./OrderBar";
 
 const money = (p: number) => `£${(p / 100).toFixed(2)}`;
 
-export function MenuBrowser({ menu, locationSlug, favouriteIds = [] }: { menu: OrderingMenu; locationSlug: string; favouriteIds?: string[] }) {
+export function MenuBrowser({ menu, locationSlug, branches = [], favouriteIds = [] }: { menu: OrderingMenu; locationSlug: string; branches?: { slug: string; name: string }[]; favouriteIds?: string[] }) {
   const router = useRouter();
-  const { fulfilment, lines, itemCount, setLocation, locationSlug: ctxSlug } = useOrder();
+  const { lines, itemCount, setLocation, locationSlug: ctxSlug } = useOrder();
   const [modalItem, setModalItem] = useState<OrderMenuItem | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -27,19 +27,9 @@ export function MenuBrowser({ menu, locationSlug, favouriteIds = [] }: { menu: O
   const goCheckout = () => router.push(`/order/checkout?loc=${locationSlug}`);
 
   return (
-    <main className="min-h-screen bg-[#F6F2EA] pt-[92px] lg:pt-[104px] pb-28 lg:pb-12">
-      <div className="max-w-[1200px] mx-auto px-5 lg:px-8">
-        {/* Header */}
-        <div className="flex items-end justify-between mb-8 border-b border-[#2A211C]/10 pb-5">
-          <div>
-            <h1 className="font-serif text-[34px] lg:text-[44px] text-[#2B221D] font-light leading-none">{menu.locationName}</h1>
-            <p className="text-[#5A524B] text-[14px] font-sans mt-1.5 capitalize">
-              {fulfilment} · ready in ~{fulfilment === "delivery" ? menu.prepTimeMin + menu.deliveryTimeMin : menu.prepTimeMin} min
-            </p>
-          </div>
-          <Link href="/order" className="text-[#2B221D] text-[12px] uppercase tracking-[0.15em] font-sans hover:text-[#B08A3E] transition-colors">Change</Link>
-        </div>
-
+    <main className="min-h-screen bg-[#F6F2EA] pt-[84px] pb-28 lg:pt-[88px] lg:pb-12">
+      <OrderBar menu={menu} branches={branches} locationSlug={locationSlug} />
+      <div className="max-w-[1200px] mx-auto px-5 lg:px-8 pt-7">
         <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-10">
           {/* Menu */}
           <div>
@@ -74,7 +64,7 @@ export function MenuBrowser({ menu, locationSlug, favouriteIds = [] }: { menu: O
 
           {/* Sticky cart (desktop) */}
           <aside className="hidden lg:block">
-            <div className="sticky top-[104px] bg-white border border-[#2A211C]/10 p-6">
+            <div className="sticky top-[164px] bg-white border border-[#2A211C]/10 p-6">
               <h2 className="font-serif text-[22px] text-[#2B221D] mb-3">Your basket</h2>
               <CartContents menu={menu} locationSlug={locationSlug} onCheckout={goCheckout} />
             </div>
