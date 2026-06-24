@@ -122,7 +122,7 @@ export function Navbar() {
 
             {/* Center Brand Lockup — Logo mark only */}
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
-              <Link href="/" className="group flex items-center cursor-pointer">
+              <Link href="/" aria-label="Bombay Bicycle Chef — home" className="group flex items-center cursor-pointer">
                 <motion.div
                   variants={logoVariants}
                   initial="hidden"
@@ -208,7 +208,7 @@ export function Navbar() {
               <div className="flex-1" />
 
               <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center w-max">
-                <Link href="/" className="flex flex-col items-center" onClick={toggleMobileMenu}>
+                <Link href="/" aria-label="Bombay Bicycle Chef — home" className="flex flex-col items-center" onClick={toggleMobileMenu}>
                   <div
                     className="w-[60px] h-[70px] bg-[#2B241D] mb-2"
                     style={{
@@ -235,7 +235,7 @@ export function Navbar() {
                 <button
                   onClick={toggleMobileMenu}
                   aria-label="Close menu"
-                  className="p-2 text-[#2B241D] hover:text-[#A88442] transition-colors duration-300 focus:outline-none -mr-2"
+                  className="p-2 text-[#2B241D] hover:text-[#806515] transition-colors duration-300 focus:outline-none -mr-2"
                 >
                   <X size={28} strokeWidth={1} />
                 </button>
@@ -255,7 +255,7 @@ export function Navbar() {
                     <Link
                       href={link.href}
                       onClick={toggleMobileMenu}
-                      className="text-[22px] font-serif tracking-[0.15em] uppercase text-[#2B241D] hover:text-[#A88442] transition-colors duration-300 ease-in-out"
+                      className="text-[22px] font-serif tracking-[0.15em] uppercase text-[#2B241D] hover:text-[#806515] transition-colors duration-300 ease-in-out"
                     >
                       {link.name}
                     </Link>

@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     siteName: "Bombay Bicycle Chef",
     type: "website",
     locale: "en_GB",
-    images: [{ url: "/images/hero/hero-bg.png", width: 1200, height: 630, alt: "Bombay Bicycle Chef" }],
+    images: [{ url: "/images/hero/hero-bg.jpg", width: 1200, height: 630, alt: "Bombay Bicycle Chef" }],
   },
   twitter: { card: "summary_large_image" },
   robots: { index: true, follow: true },

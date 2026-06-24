@@ -86,11 +86,11 @@ export function Hero() {
       {/* Background Image */}
       <div ref={bgRef} className="absolute inset-0 z-0">
         <Image
-          src="/images/hero/hero-bg.png"
+          src="/images/hero/hero-bg.jpg"
           alt="The lamplit dining room at Bombay Bicycle Chef, tables set for the evening"
           fill
           priority
-          unoptimized
+          quality={75}
           className="object-cover object-center"
           sizes="100vw"
         />

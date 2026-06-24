@@ -102,7 +102,7 @@ export function GoogleReviews({ reviewCount }: { reviewCount?: number }) {
             type="button"
             onClick={() => go(index - 1)}
             aria-label="Previous review"
-            className="grid h-8 w-8 place-items-center rounded-full border border-[#2A211C]/15 text-[#2B221D] transition-colors hover:border-[#B08A3E] hover:text-[#B08A3E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B08A3E]"
+            className="grid h-11 w-11 place-items-center rounded-full border border-[#2A211C]/15 text-[#2B221D] transition-colors hover:border-[#806515] hover:text-[#806515] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#806515]"
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
@@ -114,17 +114,21 @@ export function GoogleReviews({ reviewCount }: { reviewCount?: number }) {
                 onClick={() => go(i)}
                 aria-label={`Show review ${i + 1} of ${count}`}
                 aria-current={i === index}
-                className={`h-1.5 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B08A3E] ${
-                  i === index ? "w-5 bg-[#5D0925]" : "w-1.5 bg-[#2A211C]/20 hover:bg-[#2A211C]/40"
-                }`}
-              />
+                className="group grid h-11 place-items-center rounded-full px-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#806515]"
+              >
+                <span
+                  className={`block h-1.5 rounded-full transition-all duration-300 ${
+                    i === index ? "w-5 bg-[#5D0925]" : "w-1.5 bg-[#2A211C]/20 group-hover:bg-[#2A211C]/40"
+                  }`}
+                />
+              </button>
             ))}
           </div>
           <button
             type="button"
             onClick={() => go(index + 1)}
             aria-label="Next review"
-            className="grid h-8 w-8 place-items-center rounded-full border border-[#2A211C]/15 text-[#2B221D] transition-colors hover:border-[#B08A3E] hover:text-[#B08A3E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B08A3E]"
+            className="grid h-11 w-11 place-items-center rounded-full border border-[#2A211C]/15 text-[#2B221D] transition-colors hover:border-[#806515] hover:text-[#806515] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#806515]"
           >
             <ChevronRight className="h-4 w-4" />
           </button>

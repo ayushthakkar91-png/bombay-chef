@@ -37,7 +37,7 @@ export function ReservationCTA() {
       />
 
       <div className="relative z-10 max-w-[900px] mx-auto text-center flex flex-col items-center">
-        <span className="text-[#A88442] text-[11px] tracking-[0.35em] font-normal uppercase mb-6 font-sans block">
+        <span className="text-[#806515] text-[11px] tracking-[0.35em] font-normal uppercase mb-6 font-sans block">
           Chapter VII &middot; Reserve Your Table
         </span>
         <h2 className="text-[32px] sm:text-[36px] md:text-[48px] lg:text-[56px] font-serif text-[#F5F0E6] leading-[1.15] mb-5">
@@ -51,7 +51,7 @@ export function ReservationCTA() {
         <div className="flex flex-col sm:flex-row items-center gap-4">
           <Link
             href="/reservations"
-            className="inline-flex items-center justify-center h-[56px] px-10 border border-[#A88442] text-[#F5F0E6] text-[14px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-[#A88442] hover:text-[#2B241D] transition-colors duration-500"
+            className="inline-flex items-center justify-center h-[56px] px-10 border border-[#806515] text-[#F5F0E6] text-[14px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-[#806515] hover:text-[#2B241D] transition-colors duration-500"
           >
             Find a Table
           </Link>

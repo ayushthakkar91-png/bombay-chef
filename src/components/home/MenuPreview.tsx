@@ -47,7 +47,7 @@ export function MenuPreview() {
     <section ref={containerRef} className="bg-[#F5F0E6] w-full pt-20 pb-20 lg:pt-[140px] lg:pb-[140px] px-6 border-t border-[rgba(43,36,29,0.05)]">
       <div className="max-w-[1000px] mx-auto text-center" ref={contentRef}>
         
-        <span className="text-[#A88442] text-[11px] tracking-[0.35em] font-normal uppercase mb-8 font-sans block">
+        <span className="text-[#806515] text-[11px] tracking-[0.35em] font-normal uppercase mb-8 font-sans block">
           Chapter V &middot; The Dining Experience
         </span>
         
@@ -64,13 +64,13 @@ export function MenuPreview() {
               transition={{ duration: 0.4, ease: "easeOut" }}
             >
               <Link href={menu.link} className="flex flex-col h-full">
-                <h3 className="text-2xl lg:text-3xl font-serif text-[#2B241D] mb-3 group-hover:text-[#A88442] transition-colors duration-300">
+                <h3 className="text-2xl lg:text-3xl font-serif text-[#2B241D] mb-3 group-hover:text-[#806515] transition-colors duration-300">
                   {menu.name}
                 </h3>
                 <p className="text-[16px] text-[#5E564D] font-sans leading-[1.7] mb-6">
                   {menu.description}
                 </p>
-                <div className="mt-auto text-[#2B241D] text-[12px] tracking-[0.15em] font-bold uppercase font-sans flex items-center group-hover:text-[#A88442] transition-colors duration-300">
+                <div className="mt-auto text-[#2B241D] text-[12px] tracking-[0.15em] font-bold uppercase font-sans flex items-center group-hover:text-[#806515] transition-colors duration-300">
                   Explore <span className="ml-2">→</span>
                 </div>
               </Link>

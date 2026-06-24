@@ -54,7 +54,7 @@ export default async function LocationLandingPage({ params }: { params: Promise<
           </div>
 
           <div className="relative aspect-[4/3] overflow-hidden">
-            <Image src={b.image} alt={`Bombay Bicycle Chef ${b.name}`} fill unoptimized className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" />
+            <Image src={b.image} alt={`Bombay Bicycle Chef ${b.name}`} fill quality={78} className="object-cover" sizes="(max-width: 1024px) 100vw, 50vw" />
           </div>
         </div>
 

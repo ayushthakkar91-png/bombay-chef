@@ -52,7 +52,7 @@ export function SignatureDishes() {
         
         {/* Left Side: Story & Menu */}
         <div className="lg:col-span-6 flex flex-col lg:pr-12 py-10 z-10">
-          <span className="text-[#A88442] text-[11px] tracking-[0.35em] font-normal uppercase mb-6 font-sans">
+          <span className="text-[#806515] text-[11px] tracking-[0.35em] font-normal uppercase mb-6 font-sans">
             Chapter IV &middot; The Signature Dishes
           </span>
 
@@ -83,7 +83,7 @@ export function SignatureDishes() {
                   {dish.description}
                 </p>
                 <div className="flex flex-col border-l border-[#B08A3E]/30 pl-6 max-w-md">
-                  <span className="text-[#A88442] text-[10px] tracking-[0.25em] uppercase font-medium mb-3 font-sans">Why It Matters</span>
+                  <span className="text-[#806515] text-[10px] tracking-[0.25em] uppercase font-medium mb-3 font-sans">Why It Matters</span>
                   <p className="text-[16px] text-[#2B241D]/80 leading-[1.7] italic font-light">
                     &ldquo;{dish.whyItMatters}&rdquo;
                   </p>

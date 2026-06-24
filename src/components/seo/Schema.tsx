@@ -25,7 +25,7 @@ export function OrganizationSchema() {
     alternateName: "Bombay Bicycle Chef London",
     url: SITE,
     logo: LOGO_URL,
-    image: `${SITE}/images/hero/hero-bg.png`,
+    image: `${SITE}/images/hero/hero-bg.jpg`,
     description: "Modern Indian restaurant group in London — Balham, Battersea and Kilburn. Dine-in, collection and delivery.",
   };
   return <Json data={data} />;
@@ -44,7 +44,7 @@ export function RestaurantSchema() {
     servesCuisine: "Indian",
     priceRange: "££",
     url: SITE,
-    image: `${SITE}/images/hero/hero-bg.png`,
+    image: `${SITE}/images/hero/hero-bg.jpg`,
     telephone: main.phone,
     hasMenu: `${SITE}/menu`,
     acceptsReservations: "True",

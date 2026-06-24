@@ -5,7 +5,6 @@ import { SignatureDishes } from "@/components/home/SignatureDishes";
 import { MenuPreview } from "@/components/home/MenuPreview";
 import { Locations } from "@/components/home/LocationsPreview";
 import { ReservationCTA } from "@/components/home/ReservationCTA";
-import { ChapterIndicator } from "@/components/motion/ChapterIndicator";
 import { DineInTakeaway } from "@/components/menu/DineInTakeaway";
 import { GoogleReviews } from "@/components/home/GoogleReviews";
 import { RestaurantSchema } from "@/components/seo/Schema";
@@ -21,8 +20,7 @@ export default function Home() {
   return (
     <div className="w-full relative bg-[#F5F0E6]">
       <RestaurantSchema />
-      <ChapterIndicator />
-      
+
       {/* Chapter 1: The Arrival (Sticky to allow overlap) */}
       <div id="chapter-arrival" className="sticky top-0 z-0 w-full h-[100dvh]">
         <Hero />

@@ -112,7 +112,7 @@ export function Story() {
             <div className="flex flex-col space-y-5 pt-12 border-t border-[rgba(43,36,29,0.1)]">
               {TIMELINE.map((item, index) => (
                 <div key={index} className="flex items-baseline space-x-6">
-                  <span className="text-[#A88442] font-serif tracking-wider whitespace-nowrap min-w-[50px]">
+                  <span className="text-[#806515] font-serif tracking-wider whitespace-nowrap min-w-[50px]">
                     {item.year}
                   </span>
                   <span className="text-[#2B241D]/20 text-xs">—</span>

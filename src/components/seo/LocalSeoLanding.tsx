@@ -38,7 +38,7 @@ export function LocalSeoLanding({ branch }: { branch: Branch }) {
         </div>
 
         <div className="relative mt-12 aspect-[16/7] overflow-hidden">
-          <Image src={branch.image} alt={`Bombay Bicycle Chef — Indian restaurant in ${c}`} fill unoptimized className="object-cover" sizes="(max-width: 1024px) 100vw, 1000px" />
+          <Image src={branch.image} alt={`Bombay Bicycle Chef — Indian restaurant in ${c}`} fill quality={78} className="object-cover" sizes="(max-width: 1024px) 100vw, 1000px" />
         </div>
 
         {/* Keyword-rich, genuinely useful sections */}
