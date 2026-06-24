@@ -272,7 +272,7 @@ export function Navbar() {
                 transition={{ delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
               >
                 <Link
-                  href="/#chapter-reservation"
+                  href="/reservations"
                   onClick={toggleMobileMenu}
                   className="w-full h-[46px] flex items-center justify-center border border-[rgba(43,36,29,0.15)] text-[#2B241D] text-[12px] tracking-[0.12em] font-medium uppercase hover:bg-[#2B241D] hover:text-[#F5F0E6] transition-all duration-300 ease-in-out"
                 >
