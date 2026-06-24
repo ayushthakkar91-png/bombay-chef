@@ -5,7 +5,8 @@ import { MapPin, Clock, Phone, UtensilsCrossed, CalendarDays, Bike, ArrowRight }
 
 import { BRANCHES, branchBySlug } from "@/data/locations";
 import { BranchSchema, BreadcrumbSchema } from "@/components/seo/Schema";
-import { ORDER_URL } from "@/lib/flags";
+import { OpeningHours } from "@/components/locations/OpeningHours";
+import { ORDER_URL, RESERVATIONS_ONLINE } from "@/lib/flags";
 
 export function generateStaticParams() {
   return BRANCHES.map((b) => ({ slug: b.slug }));
@@ -28,6 +29,9 @@ export default async function LocationLandingPage({ params }: { params: Promise<
   const b = branchBySlug(slug);
   if (!b) notFound();
 
+  const canBookOnline = RESERVATIONS_ONLINE && b.reservable;
+  const telHref = `tel:${b.phone.replace(/\s/g, "")}`;
+
   return (
     <main className="min-h-screen bg-[#F6F2EA] pt-[110px] selection:bg-[#B08A3E] selection:text-[#F6F2EA]">
       <BranchSchema branch={b} />
@@ -49,7 +53,11 @@ export default async function LocationLandingPage({ params }: { params: Promise<
               {b.orderingEnabled && (
                 <a href={ORDER_URL} className="inline-flex h-[54px] items-center justify-center gap-2 bg-[#5D0925] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#F6F2EA] transition-colors hover:bg-[#420616]"><Bike className="h-4 w-4" /> Order Online</a>
               )}
-              <Link href="/reservations" className="inline-flex h-[54px] items-center justify-center gap-2 border border-[#2B221D] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#2B221D] transition-colors hover:bg-[#2B221D] hover:text-[#F6F2EA]"><CalendarDays className="h-4 w-4" /> Reserve a Table</Link>
+              {b.reservable && (canBookOnline ? (
+                <Link href="/reservations" className="inline-flex h-[54px] items-center justify-center gap-2 border border-[#2B221D] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#2B221D] transition-colors hover:bg-[#2B221D] hover:text-[#F6F2EA]"><CalendarDays className="h-4 w-4" /> Reserve a Table</Link>
+              ) : (
+                <a href={telHref} className="inline-flex h-[54px] items-center justify-center gap-2 border border-[#2B221D] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#2B221D] transition-colors hover:bg-[#2B221D] hover:text-[#F6F2EA]"><Phone className="h-4 w-4" /> Call to Book · {b.phone}</a>
+              ))}
               <Link href="/menu" className="inline-flex h-[54px] items-center justify-center gap-2 px-4 font-sans text-[12px] uppercase tracking-[0.15em] text-[#2B221D] transition-colors hover:text-[#B08A3E]"><UtensilsCrossed className="h-4 w-4" /> View Menu</Link>
             </div>
           </div>
@@ -62,7 +70,7 @@ export default async function LocationLandingPage({ params }: { params: Promise<
         {/* Details */}
         <div className="mt-12 grid gap-6 border-t border-[#2A211C]/10 pt-12 sm:grid-cols-3">
           <Detail icon={MapPin} label="Find us">{b.street}<br />{b.locality} {b.postcode}</Detail>
-          <Detail icon={Clock} label="Opening hours">{b.hoursLabel}</Detail>
+          <Detail icon={Clock} label="Opening hours"><OpeningHours services={b.hours} /></Detail>
           <Detail icon={Phone} label="Call us"><a href={`tel:${b.phone.replace(/\s/g, "")}`} className="hover:text-[#B08A3E]">{b.phone}</a></Detail>
         </div>
 

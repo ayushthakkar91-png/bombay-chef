@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { ORDER_URL } from "@/lib/flags";
+import { branchBySlug } from "@/data/locations";
+import { OpeningHours } from "@/components/locations/OpeningHours";
 
 const FOOTER_NAV = [
   { name: "Menu", href: "/menu" },
@@ -13,23 +15,20 @@ const FOOTER_NAV = [
 const LOCATIONS_DATA = [
   {
     name: "Balham",
-    address: "12-14 Bedford Hill\nLondon SW12 9RG",
-    phone: "020 8673 3456",
-    hours: "Mon-Sun: 12pm - 11pm",
+    address: "88 Balham High Rd\nLondon SW12 9AG",
+    phone: "020 8772 3222",
     href: "/locations"
   },
   {
     name: "Battersea",
-    address: "89 Northcote Road\nLondon SW11 6PL",
-    phone: "020 7228 1122",
-    hours: "Mon-Sun: 12pm - 11pm",
+    address: "28 Queenstown Rd\nLondon SW8 3RX",
+    phone: "020 7720 0500",
     href: "/locations"
   },
   {
     name: "Kilburn",
-    address: "244 High Road\nLondon NW6 2BS",
-    phone: "020 7624 3322",
-    hours: "Mon-Sun: 12pm - 11.30pm",
+    address: "24 Willesden Ln\nLondon NW6 7ST",
+    phone: "020 7624 0300",
     href: "/locations"
   }
 ];
@@ -115,8 +114,10 @@ export function Footer() {
               </Link>
               <div className="flex flex-col space-y-4 text-[#F3EEE8]/60 text-[13px] font-sans font-light leading-[1.8]">
                 <p className="whitespace-pre-line">{loc.address}</p>
-                <p className="hover:text-[#F3EEE8] transition-colors cursor-pointer">{loc.phone}</p>
-                <p className="text-[#F3EEE8]/40">{loc.hours}</p>
+                <a href={`tel:${loc.phone.replace(/\s/g, "")}`} className="hover:text-[#F3EEE8] transition-colors">{loc.phone}</a>
+                {branchBySlug(loc.name.toLowerCase()) && (
+                  <OpeningHours services={branchBySlug(loc.name.toLowerCase())!.hours} className="text-[#F3EEE8]/40" />
+                )}
               </div>
             </div>
           ))}

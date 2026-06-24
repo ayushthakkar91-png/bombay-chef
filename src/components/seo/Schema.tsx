@@ -1,7 +1,6 @@
 import { BRANCHES, type Branch } from "@/data/locations";
 import { SITE_URL as SITE, LOGO_URL } from "@/lib/site";
-
-const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+import { weeklyToSchema } from "@/lib/hours";
 
 function Json({ data }: { data: object }) {
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />;
@@ -10,8 +9,9 @@ function Json({ data }: { data: object }) {
 function address(b: Branch) {
   return { "@type": "PostalAddress", streetAddress: b.street, addressLocality: b.locality, addressRegion: b.region, postalCode: b.postcode, addressCountry: "GB" };
 }
+/** Per-day opening hours from the dine-in (primary) service. */
 function hours(b: Branch) {
-  return { "@type": "OpeningHoursSpecification", dayOfWeek: DAYS, opens: b.opens, closes: b.closes };
+  return weeklyToSchema(b.hours[0].weekly);
 }
 
 /** Organization + logo — helps Google associate the brand with its logo. Render

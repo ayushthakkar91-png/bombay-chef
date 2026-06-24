@@ -8,21 +8,21 @@ const LOCATIONS = [
   {
     id: "balham",
     name: "Balham",
-    address: "12-14 Bedford Hill, SW12 9RG",
+    address: "88 Balham High Rd, SW12 9AG",
     hours: "Mon-Sun: 12pm - 11pm",
     image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=1000&auto=format&fit=crop"
   },
   {
     id: "battersea",
     name: "Battersea",
-    address: "89 Northcote Road, SW11 6PL",
+    address: "28 Queenstown Rd, SW8 3RX",
     hours: "Mon-Sun: 12pm - 11pm",
     image: "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?q=80&w=1000&auto=format&fit=crop"
   },
   {
     id: "kilburn",
     name: "Kilburn",
-    address: "244 High Road, NW6 2BS",
+    address: "24 Willesden Ln, NW6 7ST",
     hours: "Mon-Sun: 12pm - 11.30pm",
     image: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1000&auto=format&fit=crop"
   }

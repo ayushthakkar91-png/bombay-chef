@@ -1,8 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
 import Image from "next/image";
 import { BookingState } from "./types";
+import { branchBySlug } from "@/data/locations";
 
 interface Props {
   state: BookingState;
@@ -15,24 +15,28 @@ const LOCATIONS = [
     id: "balham",
     name: "Balham",
     desc: "A neighbourhood favourite.",
-    address: "12-14 Bedford Hill, SW12 9RG",
+    address: "88 Balham High Rd, SW12 9AG",
     image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=1000&auto=format&fit=crop"
   },
   {
     id: "battersea",
     name: "Battersea",
     desc: "Our flagship dining room.",
-    address: "89 Northcote Road, SW11 6PL",
+    address: "28 Queenstown Rd, SW8 3RX",
     image: "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?q=80&w=1000&auto=format&fit=crop"
   },
   {
     id: "kilburn",
     name: "Kilburn",
     desc: "Warm hospitality and late evenings.",
-    address: "244 High Road, NW6 2BS",
+    address: "24 Willesden Ln, NW6 7ST",
     image: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=1000&auto=format&fit=crop"
   }
 ];
+
+// Only branches that take online table bookings (today: Balham). Others book by phone.
+const BOOKABLE = LOCATIONS.filter((loc) => branchBySlug(loc.id)?.reservable);
+const SINGLE = BOOKABLE.length === 1;
 
 export function StepLocation({ state, updateState, nextStep }: Props) {
   const handleSelect = (id: string) => {
@@ -48,15 +52,15 @@ export function StepLocation({ state, updateState, nextStep }: Props) {
       
       <div className="text-center mb-16">
         <h2 className="text-[36px] md:text-[48px] lg:text-[56px] font-serif text-[#2B221D] leading-[1.1] mb-6 font-light tracking-wide">
-          Choose Your Location
+          {SINGLE ? "Reserve Your Table" : "Choose Your Location"}
         </h2>
         <p className="text-[#5A524B] text-[16px] font-sans">
-          Three London neighbourhoods. One Bombay spirit.
+          {SINGLE ? "Online table booking at our Balham kitchen." : "Three London neighbourhoods. One Bombay spirit."}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-12">
-        {LOCATIONS.map((loc) => {
+      <div className={`grid gap-8 lg:gap-12 ${SINGLE ? "max-w-[420px] mx-auto grid-cols-1" : "grid-cols-1 md:grid-cols-3"}`}>
+        {BOOKABLE.map((loc) => {
           const isSelected = state.location === loc.id;
           
           return (

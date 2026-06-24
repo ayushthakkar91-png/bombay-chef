@@ -35,8 +35,8 @@ export function Maintenance() {
       </p>
 
       <div className="mt-12 flex flex-col items-center gap-4 font-sans text-[13px] tracking-[0.05em] text-[#F5F0E6]/80">
-        <a href="tel:+442086733456" className="transition-colors hover:text-[#C8A96B]">
-          Balham &middot; 020 8673 3456
+        <a href="tel:+442087723222" className="transition-colors hover:text-[#C8A96B]">
+          Balham &middot; 020 8772 3222
         </a>
         <a href="mailto:hello@bombay-bicycle-chef.com" className="transition-colors hover:text-[#C8A96B]">
           hello@bombay-bicycle-chef.com

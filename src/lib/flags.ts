@@ -40,6 +40,15 @@ export const flags = {
  */
 export const SITE_ENABLED = process.env.NEXT_PUBLIC_SITE_ENABLED !== "false";
 
+/**
+ * Online table booking is gated on the backend-wired reservations system
+ * (`reservationsV2`). When it's ON, the /reservations page takes bookings
+ * on-site with live availability. When OFF (NEXT_PUBLIC_FEATURE_RESERVATIONS_V2
+ * unset or "false"), the page and every booking CTA fall back to "call us to
+ * reserve a table" showing the restaurant phone number — no slots, no form.
+ */
+export const RESERVATIONS_ONLINE = flags.reservationsV2;
+
 /** Interim external ordering destination, used while `flags.ordering` is off. */
 export const EXTERNAL_ORDER_URL = "https://www.bombaybicyclechef.uk/locator";
 

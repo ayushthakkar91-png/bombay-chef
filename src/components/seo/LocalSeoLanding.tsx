@@ -4,12 +4,15 @@ import { MapPin, Clock, Phone, UtensilsCrossed, CalendarDays, Bike, Star } from 
 
 import type { Branch } from "@/data/locations";
 import { BranchSchema } from "./Schema";
-import { ORDER_URL } from "@/lib/flags";
+import { OpeningHours } from "@/components/locations/OpeningHours";
+import { ORDER_URL, RESERVATIONS_ONLINE } from "@/lib/flags";
 
 /** Keyword-targeted local SEO landing for "Indian restaurant {city}" searches.
  *  Premium copy, real links, LocalBusiness schema — built to rank + convert. */
 export function LocalSeoLanding({ branch }: { branch: Branch }) {
   const c = branch.name;
+  const canBookOnline = RESERVATIONS_ONLINE && branch.reservable;
+  const telHref = `tel:${branch.phone.replace(/\s/g, "")}`;
   return (
     <main className="min-h-screen bg-[#F6F2EA] pt-[110px] selection:bg-[#B08A3E] selection:text-[#F6F2EA]">
       <BranchSchema branch={branch} />
@@ -33,7 +36,11 @@ export function LocalSeoLanding({ branch }: { branch: Branch }) {
           {branch.orderingEnabled && (
             <a href={ORDER_URL} className="inline-flex h-[54px] items-center justify-center gap-2 bg-[#5D0925] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#F6F2EA] transition-colors hover:bg-[#420616]"><Bike className="h-4 w-4" /> Order Online</a>
           )}
-          <Link href="/reservations" className="inline-flex h-[54px] items-center justify-center gap-2 border border-[#2B221D] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#2B221D] transition-colors hover:bg-[#2B221D] hover:text-[#F6F2EA]"><CalendarDays className="h-4 w-4" /> Reserve a Table</Link>
+          {branch.reservable && (canBookOnline ? (
+            <Link href="/reservations" className="inline-flex h-[54px] items-center justify-center gap-2 border border-[#2B221D] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#2B221D] transition-colors hover:bg-[#2B221D] hover:text-[#F6F2EA]"><CalendarDays className="h-4 w-4" /> Reserve a Table</Link>
+          ) : (
+            <a href={telHref} className="inline-flex h-[54px] items-center justify-center gap-2 border border-[#2B221D] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#2B221D] transition-colors hover:bg-[#2B221D] hover:text-[#F6F2EA]"><Phone className="h-4 w-4" /> Call to Book · {branch.phone}</a>
+          ))}
           <Link href="/menu" className="inline-flex h-[54px] items-center justify-center gap-2 px-4 font-sans text-[12px] uppercase tracking-[0.15em] text-[#2B221D] transition-colors hover:text-[#B08A3E]"><UtensilsCrossed className="h-4 w-4" /> View Menu</Link>
         </div>
 
@@ -57,7 +64,7 @@ export function LocalSeoLanding({ branch }: { branch: Branch }) {
           <Block title="Find us & opening hours">
             <span className="flex flex-col gap-1.5 not-italic">
               <span className="flex items-center gap-2"><MapPin className="h-4 w-4 text-[#B08A3E]" /> {branch.street}, {branch.locality} {branch.postcode}</span>
-              <span className="flex items-center gap-2"><Clock className="h-4 w-4 text-[#B08A3E]" /> {branch.hoursLabel}</span>
+              <span className="flex items-start gap-2"><Clock className="mt-0.5 h-4 w-4 shrink-0 text-[#B08A3E]" /> <OpeningHours services={branch.hours} className="w-full max-w-[260px]" /></span>
               <span className="flex items-center gap-2"><Phone className="h-4 w-4 text-[#B08A3E]" /> <a href={`tel:${branch.phone.replace(/\s/g, "")}`} className="hover:text-[#B08A3E]">{branch.phone}</a></span>
             </span>
           </Block>
@@ -67,7 +74,11 @@ export function LocalSeoLanding({ branch }: { branch: Branch }) {
           <p className="font-serif text-[24px] text-[#2B221D]">Hungry for Indian food in {c}?</p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             {branch.orderingEnabled && <a href={ORDER_URL} className="inline-flex h-[52px] items-center justify-center bg-[#5D0925] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#F6F2EA] transition-colors hover:bg-[#420616]">Order Online</a>}
-            <Link href="/reservations" className="inline-flex h-[52px] items-center justify-center border border-[#2B221D] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#2B221D] transition-colors hover:bg-[#2B221D] hover:text-[#F6F2EA]">Book a Table</Link>
+            {branch.reservable && (canBookOnline ? (
+              <Link href="/reservations" className="inline-flex h-[52px] items-center justify-center border border-[#2B221D] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#2B221D] transition-colors hover:bg-[#2B221D] hover:text-[#F6F2EA]">Book a Table</Link>
+            ) : (
+              <a href={telHref} className="inline-flex h-[52px] items-center justify-center border border-[#2B221D] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#2B221D] transition-colors hover:bg-[#2B221D] hover:text-[#F6F2EA]">Call to Book · {branch.phone}</a>
+            ))}
           </div>
         </div>
       </div>
