@@ -27,7 +27,7 @@ export default async function OrderHistoryPage({
   if (scoped.length === 0) {
     return (<><PageHeader title="Order history" /><p className="text-sm text-body">No locations are assigned to your account yet.</p></>);
   }
-  const locId = scoped.find((l) => l.id === sp.loc)?.id ?? scoped[0].id;
+  const locId = scoped.find((l) => (l.slug === sp.loc || l.id === sp.loc))?.id ?? scoped[0].id;
   const filter = FILTERS.find((f) => f.value === sp.status) ?? FILTERS[0];
   const orders = await listOrders(locId, { statuses: filter.statuses, limit: 200 });
 

@@ -4,10 +4,12 @@ import { redirect } from "next/navigation";
 
 import { getUserClient, getServiceClient } from "@/lib/supabase/clients";
 import { subscribeContact } from "@/lib/marketing/contacts";
+import { earnForOrder } from "@/lib/loyalty/service";
 import { type ActionState, fail, ok, str } from "@/lib/admin/validation";
 import { rateLimit } from "@/lib/ratelimit";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const REVENUE_STATUSES = new Set(["paid", "accepted", "preparing", "ready_for_collection", "out_for_delivery", "completed"]);
 
 function safeNext(next: string): string {
   return next.startsWith("/account") ? next : "/account";
@@ -25,8 +27,15 @@ async function linkAndEnsure(userId: string, email: string | null, marketing: bo
 
   await service.from("customers").upsert({ id: userId }, { onConflict: "id", ignoreDuplicates: true });
 
-  await service.from("orders").update({ customer_id: userId }).is("customer_id", null).ilike("contact_email", email);
+  // Claim prior guest orders/reservations placed with this (now verified) email.
+  const { data: linkedOrders } = await service.from("orders").update({ customer_id: userId }).is("customer_id", null).ilike("contact_email", email).select("id, status");
   await service.from("reservations").update({ customer_id: userId }).is("customer_id", null).ilike("guest_email", email);
+
+  // Back-credit loyalty for the now-linked paid orders. earnForOrder was a no-op
+  // while they had no customer, and it dedups on order_id ÔÇö so this is safe to re-run.
+  for (const o of linkedOrders ?? []) {
+    if (REVENUE_STATUSES.has(o.status as string)) await earnForOrder(o.id as string);
+  }
 
   if (marketing) {
     await service.from("consents").insert({ customer_id: userId, purpose: "marketing_email", granted: true, source: "register" });

@@ -53,7 +53,7 @@ function CreatePromo() {
   return (
     <form action={action} className="rounded-lg border border-sand bg-surface p-5">
       <Banner state={state} />
-      <div className="mt-2 grid gap-4 sm:grid-cols-5 sm:items-end">
+      <div className="mt-2 grid gap-4 sm:grid-cols-5 sm:items-start">
         <Field label="Code" htmlFor="code" error={state.errors?.code}><TextInput id="code" name="code" placeholder="SUMMER10" defaultValue={state.values?.code} className="uppercase" /></Field>
         <Field label="Type" htmlFor="kind">
           <Select id="kind" name="kind" defaultValue="percent">

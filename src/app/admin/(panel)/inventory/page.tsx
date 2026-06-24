@@ -16,7 +16,7 @@ export default async function InventoryOverviewPage({ searchParams }: { searchPa
   const scoped = filterScoped(await listLocations(false), scopedLocationIds(ctx));
   if (scoped.length === 0) return (<><PageHeader title="Inventory" /><p className="text-sm text-body">No locations assigned.</p></>);
 
-  const locId = scoped.find((l) => l.id === sp.loc)?.id ?? scoped[0].id;
+  const locId = scoped.find((l) => (l.slug === sp.loc || l.id === sp.loc))?.id ?? scoped[0].id;
   // eslint-disable-next-line react-hooks/purity -- request-time boundary in a Server Component
   const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString();
   const [stats, stock] = await Promise.all([getInventoryStats(locId, monthAgo), listStock(locId)]);

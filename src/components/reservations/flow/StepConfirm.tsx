@@ -5,10 +5,12 @@ import Link from "next/link";
 import { BookingState, toDateISO } from "./types";
 import { submitReservation, joinWaitlist, type BookingInput } from "@/app/reservations/actions";
 import { EXPERIENCES, OCCASIONS } from "@/lib/reservations/constants";
+import { PostPurchaseAccount } from "@/components/account/PostPurchaseAccount";
 
 interface Props {
   state: BookingState;
   prevStep: () => void;
+  isLoggedIn?: boolean;
 }
 
 type Outcome =
@@ -33,7 +35,7 @@ function Frame({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function StepConfirm({ state, prevStep }: Props) {
+export function StepConfirm({ state, prevStep, isLoggedIn = false }: Props) {
   const { location, experience, date, time, guests, details, mode } = state;
   const [pending, startTransition] = useTransition();
   const [outcome, setOutcome] = useState<Outcome | null>(null);
@@ -80,24 +82,31 @@ export function StepConfirm({ state, prevStep }: Props) {
   /* ---- Success states ---- */
   if (outcome?.kind === "confirmed") {
     return (
-      <Frame>
-        <span className={`${GOLD} text-[13px] tracking-[0.2em] font-semibold uppercase mb-6 block font-sans`}>Confirmed</span>
-        <h2 className="text-[36px] md:text-[56px] lg:text-[64px] font-serif text-[#F6F2EA] leading-[1.1] mb-8 font-light tracking-wide">
-          We&apos;ll See You Soon
-        </h2>
-        <p className="text-[#F6F2EA]/70 font-sans text-[15px] max-w-[460px] mb-2">
-          A confirmation is on its way to <span className="text-[#F6F2EA]">{details.email}</span>.
-        </p>
-        <p className="text-[#F6F2EA]/70 font-sans text-[14px] mb-10">
-          Your reference is <span className={`${GOLD} font-semibold tracking-wide`}>{outcome.reference}</span>
-        </p>
-        <Link
-          href={`/reservations/manage/${outcome.token}`}
-          className="inline-flex items-center justify-center h-[56px] px-12 bg-[#B08A3E] text-[#2A211C] text-[13px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-[#F6F2EA] transition-colors duration-500"
-        >
-          View or Change Booking
-        </Link>
-      </Frame>
+      <>
+        <Frame>
+          <span className={`${GOLD} text-[13px] tracking-[0.2em] font-semibold uppercase mb-6 block font-sans`}>Confirmed</span>
+          <h2 className="text-[36px] md:text-[56px] lg:text-[64px] font-serif text-[#F6F2EA] leading-[1.1] mb-8 font-light tracking-wide">
+            We&apos;ll See You Soon
+          </h2>
+          <p className="text-[#F6F2EA]/70 font-sans text-[15px] max-w-[460px] mb-2">
+            A confirmation is on its way to <span className="text-[#F6F2EA]">{details.email}</span>.
+          </p>
+          <p className="text-[#F6F2EA]/70 font-sans text-[14px] mb-10">
+            Your reference is <span className={`${GOLD} font-semibold tracking-wide`}>{outcome.reference}</span>
+          </p>
+          <Link
+            href={`/reservations/manage/${outcome.token}`}
+            className="inline-flex items-center justify-center h-[56px] px-12 bg-[#B08A3E] text-[#2A211C] text-[13px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-[#F6F2EA] transition-colors duration-500"
+          >
+            View or Change Booking
+          </Link>
+        </Frame>
+        {!isLoggedIn && details.email && (
+          <div className="mx-auto max-w-[820px] px-5 pb-20">
+            <PostPurchaseAccount email={details.email} name={details.name} />
+          </div>
+        )}
+      </>
     );
   }
 

@@ -21,7 +21,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     "staff" as Role,
   );
 
-  const locations = filterScoped(await listLocations(false), scopedLocationIds(ctx)).map((l) => ({ id: l.id, name: l.name }));
+  const locations = filterScoped(await listLocations(false), scopedLocationIds(ctx)).map((l) => ({ id: l.id, slug: l.slug, name: l.name }));
 
   return (
     <AdminShell user={{ name: ctx.fullName, email: ctx.email }} rank={ctx.rank} topRole={topRole} locations={locations}>

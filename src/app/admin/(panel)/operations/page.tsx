@@ -18,7 +18,7 @@ export default async function OperationsPage({ searchParams }: { searchParams: P
   const scoped = filterScoped(await listLocations(false), scopedLocationIds(ctx));
   if (scoped.length === 0) return (<><PageHeader title="Operations" /><p className="text-sm text-body">No locations assigned.</p></>);
 
-  const locId = scoped.find((l) => l.id === sp.loc)?.id ?? scoped[0].id;
+  const locId = scoped.find((l) => (l.slug === sp.loc || l.id === sp.loc))?.id ?? scoped[0].id;
   const today = londonDateISO(new Date());
   const dayStart = dateTimeToInstant(today, 0, 0);
   const dayEnd = new Date(dayStart);

@@ -78,12 +78,12 @@ export function ItemModal({ item, onClose, isFavourite }: { item: OrderMenuItem;
       ref={ref}
       onClose={onClose}
       onClick={(e) => { if (e.target === ref.current) onClose(); }}
-      className="m-auto w-[min(34rem,calc(100vw-1.5rem))] bg-[#F6F2EA] text-[#2B221D] p-0 backdrop:bg-black/50"
+      className="m-0 flex h-[100dvh] max-h-none w-full max-w-none flex-col bg-[#F6F2EA] p-0 text-[#2B221D] backdrop:bg-black/50 sm:m-auto sm:h-auto sm:max-h-[90vh] sm:w-[min(34rem,calc(100vw-1.5rem))]"
     >
-      <div className="relative">
+      <div className="relative shrink-0">
         {item.imageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.imageUrl} alt={item.name} className="w-full h-44 object-cover" />
+          <img src={item.imageUrl} alt={item.name} className="h-52 w-full object-cover sm:h-44" />
         )}
         <button onClick={onHeart} aria-label={fav ? "Remove favourite" : "Save favourite"} aria-pressed={fav} className="absolute top-3 left-3 bg-[#F6F2EA] rounded-full p-1.5 text-[#5D0925] hover:bg-white">
           <Heart className={`h-5 w-5 ${fav ? "fill-[#5D0925]" : ""}`} />
@@ -93,7 +93,7 @@ export function ItemModal({ item, onClose, isFavourite }: { item: OrderMenuItem;
         </button>
       </div>
 
-      <div className={`p-6 ${item.imageUrl ? "" : "pt-14"} max-h-[60vh] overflow-y-auto`}>
+      <div className={`flex-1 overflow-y-auto p-6 ${item.imageUrl ? "" : "pt-14"}`}>
         <div className="flex items-center gap-2 mb-1">
           <h2 className="font-serif text-[28px] text-[#2B221D]">{item.name}</h2>
           {item.spiceLevel ? (
@@ -144,7 +144,7 @@ export function ItemModal({ item, onClose, isFavourite }: { item: OrderMenuItem;
         </div>
       </div>
 
-      <div className="flex items-center gap-3 p-5 border-t border-[#2A211C]/10 bg-[#F6F2EA] sticky bottom-0">
+      <div className="flex shrink-0 items-center gap-3 border-t border-[#2A211C]/10 bg-[#F6F2EA] px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="flex items-center border border-[#2A211C]/20">
           <button onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="Decrease" className="px-3 py-3 hover:text-[#B08A3E]"><Minus className="h-4 w-4" /></button>
           <span className="w-8 text-center font-sans text-[16px] tabular-nums">{qty}</span>

@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { X, ShoppingBag, Flame } from "lucide-react";
+import { X, Flame } from "lucide-react";
 
 import type { OrderingMenu, OrderMenuItem } from "@/lib/repositories/ordering-menu";
 import { useOrder } from "./OrderProvider";
 import { ItemModal } from "./ItemModal";
 import { CartContents } from "./CartContents";
 import { OrderBar } from "./OrderBar";
+import { MenuCategoryNav } from "./MenuCategoryNav";
 
 const money = (p: number) => `£${(p / 100).toFixed(2)}`;
 
@@ -29,31 +30,33 @@ export function MenuBrowser({ menu, locationSlug, branches = [], favouriteIds = 
   return (
     <main className="min-h-screen bg-[#F6F2EA] pt-[84px] pb-28 lg:pt-[88px] lg:pb-12">
       <OrderBar menu={menu} branches={branches} locationSlug={locationSlug} />
-      <div className="max-w-[1200px] mx-auto px-5 lg:px-8 pt-7">
+      <MenuCategoryNav categories={menu.categories.map((c) => ({ id: c.id, title: c.title }))} />
+      <div className="max-w-[1200px] mx-auto px-5 lg:px-8 pt-6 lg:pt-7">
         <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-10">
           {/* Menu */}
           <div>
             {menu.categories.map((cat) => (
-              <section key={cat.id} className="mb-10">
-                <h2 className="font-serif text-[26px] text-[#2B221D] mb-4">{cat.title}</h2>
-                <div className="grid sm:grid-cols-2 gap-4">
+              <section key={cat.id} id={`cat-${cat.id}`} className="mb-10 scroll-mt-[140px] lg:scroll-mt-0">
+                <h2 className="mb-4 font-serif text-[24px] text-[#2B221D] sm:text-[26px]">{cat.title}</h2>
+                {/* Phones: a typography-first divided list. Tablet/desktop keep the card grid (unchanged). */}
+                <div className="divide-y divide-[#2A211C]/10 sm:grid sm:grid-cols-2 sm:gap-4 sm:divide-y-0">
                   {cat.items.map((item) => (
                     <button
                       key={item.id}
                       onClick={() => setModalItem(item)}
-                      className="text-left flex gap-3 p-4 bg-white/50 border border-[#2A211C]/10 hover:border-[#B08A3E]/50 transition-colors duration-300"
+                      className="flex w-full items-start gap-4 py-5 text-left transition-colors duration-300 sm:gap-3 sm:border sm:border-[#2A211C]/10 sm:bg-white/50 sm:p-4 sm:py-4 sm:hover:border-[#B08A3E]/50"
                     >
-                      <div className="flex-1 min-w-0">
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
-                          <h3 className="font-serif text-[18px] text-[#2B221D]">{item.name}</h3>
-                          {item.spiceLevel ? <Flame className="h-3.5 w-3.5 text-[#5D0925]" /> : null}
+                          <h3 className="font-serif text-[17px] text-[#2B221D] sm:text-[18px]">{item.name}</h3>
+                          {item.spiceLevel ? <Flame className="h-3.5 w-3.5 shrink-0 text-[#5D0925]" /> : null}
                         </div>
-                        {item.description && <p className="text-[#5A524B] text-[13px] font-sans line-clamp-2 mt-1">{item.description}</p>}
-                        <p className="text-[#2B221D] font-sans text-[15px] mt-2">{money(item.pricePence)}</p>
+                        {item.description && <p className="mt-1 line-clamp-2 font-sans text-[13px] leading-relaxed text-[#5A524B]">{item.description}</p>}
+                        <p className="mt-2 font-sans text-[15px] tracking-wide text-[#2B221D]">{money(item.pricePence)}</p>
                       </div>
                       {item.imageUrl && (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={item.imageUrl} alt={item.name} className="w-20 h-20 object-cover shrink-0" />
+                        <img src={item.imageUrl} alt={item.name} className="h-[68px] w-[68px] shrink-0 object-cover sm:h-20 sm:w-20" />
                       )}
                     </button>
                   ))}
@@ -72,19 +75,17 @@ export function MenuBrowser({ menu, locationSlug, branches = [], favouriteIds = 
         </div>
       </div>
 
-      {/* Mobile bottom bar */}
+      {/* Persistent bottom cart bar (mobile) — edge-to-edge, one-handed, safe-area aware */}
       {itemCount > 0 && (
-        <button
-          onClick={() => setDrawerOpen(true)}
-          className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[#2B221D] text-[#F6F2EA] flex items-center justify-between px-5 py-4"
-        >
-          <span className="flex items-center gap-2.5 text-[14px] font-sans">
-            <ShoppingBag className="h-5 w-5" />
-            <span className="bg-[#B08A3E] text-[#2A211C] rounded-full px-2 py-0.5 text-[12px] font-semibold">{itemCount}</span>
-            View basket
-          </span>
-          <span className="font-sans text-[15px] tabular-nums">{money(subtotal)}</span>
-        </button>
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#B08A3E]/30 bg-[#2B221D] pb-[env(safe-area-inset-bottom)] lg:hidden">
+          <button onClick={() => setDrawerOpen(true)} className="flex w-full items-center justify-between gap-3 px-5 py-4 text-[#F6F2EA] active:bg-[#5D0925]">
+            <span className="flex items-center gap-2.5 font-sans text-[14px] tracking-[0.05em]">
+              <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-[#B08A3E] px-1.5 text-[12px] font-semibold text-[#2A211C]">{itemCount}</span>
+              View basket
+            </span>
+            <span className="font-serif text-[19px] tabular-nums">{money(subtotal)}</span>
+          </button>
+        </div>
       )}
 
       {/* Mobile drawer */}

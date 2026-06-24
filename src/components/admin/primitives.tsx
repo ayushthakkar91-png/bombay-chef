@@ -4,9 +4,10 @@ import { useFormStatus } from "react-dom";
 import { type ReactNode } from "react";
 import type { ActionState } from "@/lib/admin/validation";
 
-export function cx(...parts: (string | false | null | undefined)[]): string {
-  return parts.filter(Boolean).join(" ");
-}
+// cx lives in a non-client module so server components can use it too; import it
+// for local use and re-export for the many client components that import it here.
+import { cx } from "./cx";
+export { cx };
 
 /* ---- Buttons ---------------------------------------------------------- */
 

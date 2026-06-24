@@ -26,7 +26,7 @@ export default async function TablesPage({
     );
   }
 
-  const locId = scoped.find((l) => l.id === sp.loc)?.id ?? scoped[0].id;
+  const locId = scoped.find((l) => (l.slug === sp.loc || l.id === sp.loc))?.id ?? scoped[0].id;
   const [tables, slots, blocks] = await Promise.all([
     listTables(locId),
     listSlots(locId),

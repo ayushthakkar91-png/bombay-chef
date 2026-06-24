@@ -11,7 +11,7 @@ import { StepGuests } from "./StepGuests";
 import { StepDetails } from "./StepDetails";
 import { StepConfirm } from "./StepConfirm";
 
-export function ReservationFlow() {
+export function ReservationFlow({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
   const reduceMotion = useReducedMotion();
 
   const [state, setState] = useState<BookingState>({
@@ -86,7 +86,7 @@ export function ReservationFlow() {
               <StepDetails state={state} updateState={updateState} nextStep={nextStep} prevStep={prevStep} />
             )}
             {state.step === 6 && (
-              <StepConfirm state={state} prevStep={prevStep} />
+              <StepConfirm state={state} prevStep={prevStep} isLoggedIn={isLoggedIn} />
             )}
           </motion.div>
         </AnimatePresence>

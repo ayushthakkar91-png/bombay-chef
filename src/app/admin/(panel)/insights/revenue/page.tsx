@@ -15,7 +15,7 @@ export default async function RevenueInsightsPage({ searchParams }: { searchPara
   const sp = await searchParams;
   const range = parseRange(sp.days);
   const locations = await listLocations(false);
-  const locId = locations.find((l) => l.id === sp.loc)?.id;
+  const locId = locations.find((l) => (l.slug === sp.loc || l.id === sp.loc))?.id;
   const r = await getRevenueInsights(range, locId);
 
   return (

@@ -52,7 +52,7 @@ export default async function GiftCardViewPage({ params }: { params: Promise<{ t
           </div>
         </div>
 
-        <p className="text-center text-[#5A524B] font-sans text-[14px] mt-6 print:hidden">Redeem the code at checkout when ordering online at bombaybicyclechef.uk.</p>
+        <p className="text-center text-[#5A524B] font-sans text-[14px] mt-6 print:hidden">Redeem the code at checkout when ordering online at bombay-bicycle-chef.com.</p>
 
         <div className="flex justify-center gap-4 mt-6 print:hidden">
           <PrintButton />

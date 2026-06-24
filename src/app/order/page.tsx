@@ -4,6 +4,10 @@ import { Phone, CalendarDays } from "lucide-react";
 
 import { getOrderLocations } from "@/lib/repositories/ordering-menu";
 
+// Which branches are online can change at runtime (admin toggles), so this
+// redirect must be evaluated per request, not frozen at build time.
+export const dynamic = "force-dynamic";
+
 export default async function OrderPage() {
   const orderable = (await getOrderLocations()).filter((l) => l.collectionEnabled || l.deliveryEnabled);
 

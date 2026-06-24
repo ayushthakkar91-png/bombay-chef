@@ -9,7 +9,7 @@ import "server-only";
  * Env:
  *   EMAIL_PROVIDER       'brevo' | 'console' (default: brevo if BREVO_API_KEY set)
  *   BREVO_API_KEY        Brevo transactional API key
- *   EMAIL_FROM_ADDRESS   e.g. reservations@bombaybicyclechef.uk
+ *   EMAIL_FROM_ADDRESS   e.g. reservations@bombay-bicycle-chef.com
  *   EMAIL_FROM_NAME      e.g. Bombay Bicycle Chef
  *   ADMIN_NOTIFY_EMAIL   inbox for new-booking admin alerts
  */
@@ -27,7 +27,7 @@ export interface EmailProvider {
   send(msg: EmailMessage): Promise<{ id?: string }>;
 }
 
-const FROM_ADDRESS = process.env.EMAIL_FROM_ADDRESS || "reservations@bombaybicyclechef.uk";
+const FROM_ADDRESS = process.env.EMAIL_FROM_ADDRESS || "reservations@bombay-bicycle-chef.com";
 const FROM_NAME = process.env.EMAIL_FROM_NAME || "Bombay Bicycle Chef";
 
 class BrevoProvider implements EmailProvider {

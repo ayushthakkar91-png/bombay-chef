@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useRef } from "react";
+import { usePathname } from "next/navigation";
 import { ORDER_URL } from "@/lib/flags";
 import { gsap, ScrollTrigger } from "@/utils/gsap";
 import { useGSAP } from "@gsap/react";
 
 export function MobileBottomBar() {
   const barRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
   useGSAP(() => {
     if (!barRef.current) return;
@@ -22,6 +24,10 @@ export function MobileBottomBar() {
       onLeaveBack: () => gsap.to(barRef.current, { yPercent: 150, duration: 0.5, ease: "power3.in" }),
     });
   }, []);
+
+  // The marketing CTA bar collides with the ordering flow's own cart bar and
+  // doesn't belong over the account area — hide it on those routes.
+  if (pathname?.startsWith("/order") || pathname?.startsWith("/account")) return null;
 
   return (
     <div 

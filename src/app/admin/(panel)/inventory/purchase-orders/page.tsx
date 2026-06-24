@@ -16,7 +16,7 @@ export default async function PurchaseOrdersPage({ searchParams }: { searchParam
   const scoped = filterScoped(await listLocations(false), scopedLocationIds(ctx));
   if (scoped.length === 0) return (<><PageHeader title="Purchase orders" /><p className="text-sm text-body">No locations assigned.</p></>);
 
-  const locId = scoped.find((l) => l.id === sp.loc)?.id ?? scoped[0].id;
+  const locId = scoped.find((l) => (l.slug === sp.loc || l.id === sp.loc))?.id ?? scoped[0].id;
   const status = FILTERS.includes(sp.status ?? "") ? (sp.status as string) : "all";
   const canCreate = can(ctx, "location_manager", locId);
   const [orders, suppliers] = await Promise.all([listPurchaseOrders(locId, status), canCreate ? listSuppliers() : Promise.resolve([])]);

@@ -85,7 +85,7 @@ export function SignatureDishes() {
                 <div className="flex flex-col border-l border-[#B08A3E]/30 pl-6 max-w-md">
                   <span className="text-[#A88442] text-[10px] tracking-[0.25em] uppercase font-medium mb-3 font-sans">Why It Matters</span>
                   <p className="text-[16px] text-[#2B241D]/80 leading-[1.7] italic font-light">
-                    "{dish.whyItMatters}"
+                    &ldquo;{dish.whyItMatters}&rdquo;
                   </p>
                 </div>
               </div>

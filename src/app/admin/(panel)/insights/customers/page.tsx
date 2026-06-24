@@ -3,7 +3,6 @@ import { getCustomerInsights } from "@/lib/insights/engine";
 import { PageHeader, Stat, Panel } from "@/components/admin/ui";
 import { Td, Th } from "@/components/admin/ui";
 import { AlertList, RecommendationCard, ConfidenceBadge } from "@/components/admin/insights/insights-ui";
-import { cx } from "@/components/admin/primitives";
 
 const gbp = (p: number) => `£${Math.round(p / 100).toLocaleString("en-GB")}`;
 const riskTone = (s: number) => (s >= 75 ? "bg-primary/10 text-primary" : s >= 50 ? "bg-amber-50 text-amber-700" : "bg-sand/60 text-body");
@@ -57,7 +56,7 @@ function SignalTable({ rows, kind }: { rows: { customerId: string; name: string;
             <Td className="text-right tabular-nums">{gbp(c.ltvPence)}</Td>
             <Td className="text-right tabular-nums text-body">{c.lastOrderDays}d ago</Td>
             {kind === "churn"
-              ? <Td className="text-center"><span className={cx("inline-block rounded-full px-2 py-0.5 text-xs font-medium tabular-nums", riskTone(c.riskScore))}>{c.riskScore}</span></Td>
+              ? <Td className="text-center"><span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium tabular-nums ${riskTone(c.riskScore)}`}>{c.riskScore}</span></Td>
               : <Td className="text-right tabular-nums text-body">{c.orders}</Td>}
             <Td className="text-right"><ConfidenceBadge confidence={{ score: c.confidence.score, level: c.confidence.level as "low" | "medium" | "high", basis: c.confidence.basis }} /></Td>
           </tr>

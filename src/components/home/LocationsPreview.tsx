@@ -85,7 +85,7 @@ export function Locations() {
                   </h3>
                   
                   <p className="text-[#F3EEE8]/80 text-[16px] lg:text-[18px] font-light font-serif leading-[1.8] mb-10 max-w-md italic">
-                    "{loc.atmosphere}"
+                    &ldquo;{loc.atmosphere}&rdquo;
                   </p>
 
                   <div className="flex flex-col space-y-2 mb-10">

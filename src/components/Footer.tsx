@@ -130,7 +130,7 @@ export function Footer() {
             <Link href="/privacy" className="hover:text-[#F3EEE8]/60 transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-[#F3EEE8]/60 transition-colors">Terms</Link>
             <span>&copy; {new Date().getFullYear()} Bombay Bicycle Chef</span>
-            <span>Powered by <a href="https://digipi.uk" target="_blank" rel="noopener noreferrer" className="hover:text-[#F3EEE8]/60 transition-colors">digipi.uk</a></span>
+            <span>Developed by <a href="https://digipi.uk" target="_blank" rel="noopener noreferrer" className="hover:text-[#F3EEE8]/60 transition-colors">digipi.uk</a></span>
           </div>
         </div>
 

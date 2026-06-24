@@ -21,7 +21,7 @@ export function LoginForm({ next }: { next: string }) {
           autoComplete="username"
           autoFocus
           defaultValue={state.values?.email}
-          placeholder="you@bombaybicyclechef.uk"
+          placeholder="you@bombay-bicycle-chef.com"
         />
       </Field>
 

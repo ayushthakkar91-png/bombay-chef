@@ -17,7 +17,7 @@ export default async function InsightsPage({ searchParams }: { searchParams: Pro
   const sp = await searchParams;
   const range = parseRange(sp.days);
   const locations = await listLocations(false);
-  const locId = locations.find((l) => l.id === sp.loc)?.id;
+  const locId = locations.find((l) => (l.slug === sp.loc || l.id === sp.loc))?.id;
   const scopeName = locId ? (locations.find((l) => l.id === locId)?.name ?? "Location") : "All locations";
 
   const o = await getExecutiveOverview(range, locId);

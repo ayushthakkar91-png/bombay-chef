@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useGSAP } from "@gsap/react";
+import { useLenis } from "lenis/react";
 import { ScrollTrigger } from "@/utils/gsap";
 import { MENU_DATA } from "@/data/menu";
 
@@ -35,13 +36,19 @@ export function StickyMenuNav() {
     }, 500); // Give DOM time to render
   }, []);
 
+  const lenis = useLenis();
+
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
-      window.scrollTo({
-        top: element.offsetTop - 170, // Offset for main navbar + sticky nav
-        behavior: "smooth"
-      });
+      if (lenis) {
+        lenis.scrollTo(element, { offset: -170 });
+      } else {
+        window.scrollTo({
+          top: element.offsetTop - 170, // Offset for main navbar + sticky nav
+          behavior: "smooth"
+        });
+      }
     }
   };
 

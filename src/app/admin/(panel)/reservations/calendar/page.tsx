@@ -8,7 +8,6 @@ import { listReservationsBetween } from "@/lib/repositories/reservations";
 import { dateTimeToInstant, londonDateISO } from "@/lib/reservations/time";
 import { PageHeader } from "@/components/admin/ui";
 import { LocationSwitcher } from "@/components/admin/reservations/LocationSwitcher";
-import { cx } from "@/components/admin/primitives";
 
 type View = "week" | "month";
 
@@ -43,7 +42,9 @@ export default async function CalendarPage({
     );
   }
 
-  const locId = scoped.find((l) => l.id === sp.loc)?.id ?? scoped[0].id;
+  const loc = scoped.find((l) => l.slug === sp.loc || l.id === sp.loc) ?? scoped[0];
+  const locId = loc.id;
+  const locSlug = loc.slug;
   const view: View = sp.view === "month" ? "month" : "week";
   const anchorISO = sp.date && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : londonDateISO(new Date());
   const anchor = new Date(`${anchorISO}T12:00:00`);
@@ -81,7 +82,7 @@ export default async function CalendarPage({
 
   const prevAnchor = view === "week" ? iso(addDays(anchor, -7)) : iso(new Date(anchor.getFullYear(), anchor.getMonth() - 1, 1));
   const nextAnchor = view === "week" ? iso(addDays(anchor, 7)) : iso(new Date(anchor.getFullYear(), anchor.getMonth() + 1, 1));
-  const navUrl = (d: string) => `/admin/reservations/calendar?loc=${locId}&view=${view}&date=${d}`;
+  const navUrl = (d: string) => `/admin/reservations/calendar?loc=${locSlug}&view=${view}&date=${d}`;
   const todayISO = londonDateISO(new Date());
   const heading =
     view === "week"
@@ -103,8 +104,8 @@ export default async function CalendarPage({
           {(["week", "month"] as View[]).map((v) => (
             <Link
               key={v}
-              href={`/admin/reservations/calendar?loc=${locId}&view=${v}&date=${anchorISO}`}
-              className={cx("px-4 py-2 text-sm capitalize", v === view ? "bg-primary text-on-dark" : "bg-surface text-body hover:bg-sand/50")}
+              href={`/admin/reservations/calendar?loc=${locSlug}&view=${v}&date=${anchorISO}`}
+              className={`px-4 py-2 text-sm capitalize ${v === view ? "bg-primary text-on-dark" : "bg-surface text-body hover:bg-sand/50"}`}
             >
               {v}
             </Link>
@@ -124,13 +125,10 @@ export default async function CalendarPage({
           return (
             <Link
               key={key}
-              href={`/admin/reservations?loc=${locId}&date=${key}`}
-              className={cx(
-                "flex min-h-24 flex-col gap-1 bg-surface p-2 transition-colors hover:bg-bg/40",
-                !inMonth && "bg-surface/50 text-body/40",
-              )}
+              href={`/admin/reservations?loc=${locSlug}&date=${key}`}
+              className={`flex min-h-24 flex-col gap-1 bg-surface p-2 transition-colors hover:bg-bg/40 ${!inMonth ? "bg-surface/50 text-body/40" : ""}`}
             >
-              <span className={cx("text-sm tabular-nums", isToday && "inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-on-dark")}>
+              <span className={`text-sm tabular-nums ${isToday ? "inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary text-on-dark" : ""}`}>
                 {d.getDate()}
               </span>
               {data && (

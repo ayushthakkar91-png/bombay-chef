@@ -1,6 +1,6 @@
 import { BRANCHES, type Branch } from "@/data/locations";
+import { SITE_URL as SITE, LOGO_URL } from "@/lib/site";
 
-const SITE = "https://www.bombaybicyclechef.uk";
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 function Json({ data }: { data: object }) {
@@ -24,7 +24,7 @@ export function OrganizationSchema() {
     name: "Bombay Bicycle Chef",
     alternateName: "Bombay Bicycle Chef London",
     url: SITE,
-    logo: `${SITE}/logo.png`,
+    logo: LOGO_URL,
     image: `${SITE}/images/hero/hero-bg.png`,
     description: "Modern Indian restaurant group in London — Balham, Battersea and Kilburn. Dine-in, collection and delivery.",
   };

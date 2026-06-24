@@ -3,6 +3,7 @@ import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 import { PublicChrome } from "@/components/layout/PublicChrome";
 import { OrganizationSchema } from "@/components/seo/Schema";
+import { SITE_URL } from "@/lib/site";
 
 const cormorant = Cormorant_Garamond({
   variable: "--font-serif",
@@ -19,7 +20,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.bombaybicyclechef.uk"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "Bombay Bicycle Chef | Modern Indian Restaurant in London",
     template: "%s",

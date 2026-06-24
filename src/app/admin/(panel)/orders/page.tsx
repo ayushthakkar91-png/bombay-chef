@@ -19,7 +19,7 @@ export default async function OrdersOverviewPage({
   if (scoped.length === 0) {
     return (<><PageHeader title="Orders" /><p className="text-sm text-body">No locations are assigned to your account yet.</p></>);
   }
-  const locId = scoped.find((l) => l.id === sp.loc)?.id ?? scoped[0].id;
+  const locId = scoped.find((l) => (l.slug === sp.loc || l.id === sp.loc))?.id ?? scoped[0].id;
   const live = await listLiveOrders(locId);
 
   const awaiting = live.filter((o) => o.status === "paid").length;

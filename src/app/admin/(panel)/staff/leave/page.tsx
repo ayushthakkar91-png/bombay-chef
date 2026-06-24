@@ -14,11 +14,11 @@ export default async function LeavePage({ searchParams }: { searchParams: Promis
   const isManager = can(ctx, "location_manager");
 
   let teamLeave: LeaveRow[] = [];
-  let scoped: { id: string; name: string }[] = [];
+  let scoped: { id: string; slug: string; name: string }[] = [];
   let locId: string | undefined;
   if (isManager) {
-    scoped = (filterScoped(await listLocations(false), scopedLocationIds(ctx))).map((l) => ({ id: l.id, name: l.name }));
-    locId = scoped.find((l) => l.id === sp.loc)?.id ?? scoped[0]?.id;
+    scoped = (filterScoped(await listLocations(false), scopedLocationIds(ctx))).map((l) => ({ id: l.id, slug: l.slug, name: l.name }));
+    locId = scoped.find((l) => (l.slug === sp.loc || l.id === sp.loc))?.id ?? scoped[0]?.id;
     if (locId) teamLeave = await listLeave(locId);
   }
 

@@ -30,7 +30,7 @@ export default async function AdminReservationsPage({
     );
   }
 
-  const locId = scoped.find((l) => l.id === sp.loc)?.id ?? scoped[0].id;
+  const locId = scoped.find((l) => (l.slug === sp.loc || l.id === sp.loc))?.id ?? scoped[0].id;
   const date = sp.date && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) ? sp.date : londonDateISO(new Date());
   const query = sp.q?.trim() ?? "";
 

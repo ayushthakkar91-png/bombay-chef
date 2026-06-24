@@ -12,7 +12,7 @@ export default async function KitchenPage({ searchParams }: { searchParams: Prom
   const scoped = filterScoped(await listLocations(false), scopedLocationIds(ctx));
   if (scoped.length === 0) return (<><PageHeader title="Kitchen" /><p className="text-sm text-body">No locations assigned.</p></>);
 
-  const locId = scoped.find((l) => l.id === sp.loc)?.id ?? scoped[0].id;
+  const locId = scoped.find((l) => (l.slug === sp.loc || l.id === sp.loc))?.id ?? scoped[0].id;
   const orders = await listLiveOrders(locId);
 
   return (

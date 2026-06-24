@@ -20,7 +20,7 @@ export default async function ShiftsPage({ searchParams }: { searchParams: Promi
   const scoped = filterScoped(await listLocations(false), scopedLocationIds(ctx));
   if (scoped.length === 0) return (<><PageHeader title="Schedule" /><p className="text-sm text-body">No locations assigned.</p></>);
 
-  const locId = scoped.find((l) => l.id === sp.loc)?.id ?? scoped[0].id;
+  const locId = scoped.find((l) => (l.slug === sp.loc || l.id === sp.loc))?.id ?? scoped[0].id;
   const anchorISO = sp.week && /^\d{4}-\d{2}-\d{2}$/.test(sp.week) ? sp.week : iso(new Date());
   const weekStart = mondayOf(new Date(`${anchorISO}T12:00:00`));
   const days = Array.from({ length: 7 }, (_, i) => iso(addDays(weekStart, i)));

@@ -194,7 +194,7 @@ export function NotificationsBell() {
 
 /* ---- Location switcher (persisted) ------------------------------------ */
 
-export function HeaderLocation({ locations }: { locations: { id: string; name: string }[] }) {
+export function HeaderLocation({ locations }: { locations: { id: string; slug: string; name: string }[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -202,14 +202,16 @@ export function HeaderLocation({ locations }: { locations: { id: string; name: s
   const ref = useRef<HTMLDivElement>(null);
   useOutside(ref, () => setOpen(false));
 
-  const current = params.get("loc") ?? (typeof document !== "undefined" ? readCookie("admin_loc") : "") ?? "";
-  const label = current ? locations.find((l) => l.id === current)?.name ?? "Location" : "All locations";
+  // Accept either a slug (new, readable URLs) or an id (legacy/cookie) and resolve to a slug.
+  const raw = params.get("loc") ?? (typeof document !== "undefined" ? readCookie("admin_loc") : "") ?? "";
+  const currentSlug = raw ? (locations.find((l) => l.slug === raw || l.id === raw)?.slug ?? "") : "";
+  const label = currentSlug ? locations.find((l) => l.slug === currentSlug)?.name ?? "Location" : "All locations";
 
-  const choose = (id: string) => {
+  const choose = (slug: string) => {
     setOpen(false);
-    document.cookie = `admin_loc=${id}; path=/; max-age=31536000`;
+    document.cookie = `admin_loc=${slug}; path=/; max-age=31536000`;
     const sp = new URLSearchParams(Array.from(params.entries()));
-    if (id) sp.set("loc", id); else sp.delete("loc");
+    if (slug) sp.set("loc", slug); else sp.delete("loc");
     router.push(`${pathname}?${sp.toString()}`);
   };
 
@@ -221,8 +223,8 @@ export function HeaderLocation({ locations }: { locations: { id: string; name: s
       </button>
       {open && (
         <div className="absolute right-0 z-40 mt-2 w-52 overflow-hidden rounded-lg border border-sand bg-surface py-1 shadow-lg">
-          <button onClick={() => choose("")} className={cx("flex w-full px-4 py-2 text-left text-sm hover:bg-bg/50", !current ? "text-brass" : "text-text")}>All locations</button>
-          {locations.map((l) => <button key={l.id} onClick={() => choose(l.id)} className={cx("flex w-full px-4 py-2 text-left text-sm hover:bg-bg/50", current === l.id ? "text-brass" : "text-text")}>{l.name}</button>)}
+          <button onClick={() => choose("")} className={cx("flex w-full px-4 py-2 text-left text-sm hover:bg-bg/50", !currentSlug ? "text-brass" : "text-text")}>All locations</button>
+          {locations.map((l) => <button key={l.id} onClick={() => choose(l.slug)} className={cx("flex w-full px-4 py-2 text-left text-sm hover:bg-bg/50", currentSlug === l.slug ? "text-brass" : "text-text")}>{l.name}</button>)}
         </div>
       )}
     </div>

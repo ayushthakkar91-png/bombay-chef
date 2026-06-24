@@ -158,7 +158,7 @@ export function AdminShell({
   user: { name: string | null; email: string | null };
   rank: number;
   topRole: Role;
-  locations?: { id: string; name: string }[];
+  locations?: { id: string; slug: string; name: string }[];
 }) {
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);

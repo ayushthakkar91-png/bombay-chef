@@ -6,6 +6,7 @@ import { getOrderByToken } from "@/lib/repositories/orders";
 import { getCustomer } from "@/lib/auth/customer";
 import { ORDER_STATUS_LABEL, LIVE_STATUSES, type OrderStatus, type Fulfilment } from "@/lib/ordering/constants";
 import { TrackingControls } from "@/components/order/TrackingControls";
+import { PostPurchaseAccount } from "@/components/account/PostPurchaseAccount";
 
 export const metadata: Metadata = {
   title: "Your order | Bombay Bicycle Chef",
@@ -129,14 +130,8 @@ export default async function OrderTrackPage({
           </dl>
         </div>
 
-        {!customer && (
-          <div className="mt-8 bg-[#2A211C] text-[#F6F2EA] p-6 lg:p-8 text-center">
-            <p className="font-serif text-[24px] mb-2">Create an account</p>
-            <p className="text-[#F6F2EA]/70 font-sans text-[14px] mb-5">Track future orders, save your details, and reorder in a tap. We&apos;ll link this order to your account.</p>
-            <Link href="/account/register" className="inline-flex items-center justify-center h-[48px] px-8 bg-[#B08A3E] text-[#2A211C] text-[12px] tracking-[0.15em] uppercase font-sans hover:bg-[#F6F2EA] transition-colors">
-              Create account
-            </Link>
-          </div>
+        {!customer && order.contactEmail && (
+          <PostPurchaseAccount email={order.contactEmail} name={order.contactName} />
         )}
 
         <div className="text-center mt-10">

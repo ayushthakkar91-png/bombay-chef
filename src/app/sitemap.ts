@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
 import { BRANCHES } from "@/data/locations";
-
-const SITE = "https://www.bombaybicyclechef.uk";
+import { SITE_URL as SITE } from "@/lib/site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const core = ["", "/menu", "/locations", "/reservations", "/order", "/contact"].map((p) => ({

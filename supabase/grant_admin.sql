@@ -13,7 +13,7 @@
 insert into staff_roles (profile_id, location_id, role)
 select id, null, 'super_admin'
 from auth.users
-where email = 'you@bombaybicyclechef.uk'
+where email = 'you@bombay-bicycle-chef.com'
 on conflict (profile_id, location_id, role) do nothing;
 
 -- ── Other role examples ────────────────────────────────────────────────────

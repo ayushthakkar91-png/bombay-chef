@@ -10,6 +10,7 @@ const TABS = [
   { href: "/account/orders", label: "Orders" },
   { href: "/account/reservations", label: "Reservations" },
   ...(flags.loyalty ? [{ href: "/account/rewards", label: "Rewards" }] : []),
+  { href: "/account/gift-cards", label: "Gift cards" },
   { href: "/account/addresses", label: "Addresses" },
   { href: "/account/favourites", label: "Favourites" },
   { href: "/account/preferences", label: "Preferences" },

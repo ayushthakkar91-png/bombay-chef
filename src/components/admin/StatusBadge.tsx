@@ -1,4 +1,4 @@
-import { cx } from "./primitives";
+import { cx } from "./cx";
 
 /**
  * Consistent, platform-wide status colours. Functional indicators only — these

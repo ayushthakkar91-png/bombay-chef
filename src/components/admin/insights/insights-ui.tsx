@@ -2,7 +2,7 @@ import { TrendingUp, TrendingDown, Minus, AlertTriangle, Lightbulb, Sparkles, Ar
 
 import type { Alert, Confidence, Delta, Forecast, Insight, Recommendation } from "@/lib/insights/types";
 import { BarChart } from "@/components/admin/reports/charts";
-import { cx } from "@/components/admin/primitives";
+import { cx } from "@/components/admin/cx";
 
 const CONF_TONE: Record<string, string> = { high: "bg-emerald-50 text-emerald-700 border-emerald-200", medium: "bg-amber-50 text-amber-700 border-amber-200", low: "bg-sand/60 text-body border-sand" };
 

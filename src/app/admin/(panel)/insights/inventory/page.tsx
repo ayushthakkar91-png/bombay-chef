@@ -14,7 +14,7 @@ export default async function InventoryInsightsPage({ searchParams }: { searchPa
   const locations = await listLocations(false);
   if (locations.length === 0) return (<><PageHeader title="Inventory insights" /><p className="text-sm text-body">No locations yet.</p></>);
 
-  const locId = locations.find((l) => l.id === sp.loc)?.id ?? locations[0].id;
+  const locId = locations.find((l) => (l.slug === sp.loc || l.id === sp.loc))?.id ?? locations[0].id;
   // eslint-disable-next-line react-hooks/purity -- request-time boundary in a Server Component
   const ii = await getInventoryInsights(range, locId, Date.now());
   const recs = [...ii.optimisation, ...ii.staffing];

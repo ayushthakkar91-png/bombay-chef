@@ -132,7 +132,7 @@ select 'bombay-bicycle-chef', 'Bombay Bicycle Chef', 'active',
 on conflict (slug) do nothing;
 
 insert into tenant_settings (tenant_id, brand_name, support_email)
-select id, 'Bombay Bicycle Chef', 'hello@bombaybicyclechef.uk' from tenants where slug = 'bombay-bicycle-chef'
+select id, 'Bombay Bicycle Chef', 'hello@bombay-bicycle-chef.com' from tenants where slug = 'bombay-bicycle-chef'
 on conflict (tenant_id) do nothing;
 
 -- Map existing super admins as platform operators + owners/admins of tenant #1.

@@ -13,7 +13,7 @@ export default async function WastePage({ searchParams }: { searchParams: Promis
   const scoped = filterScoped(await listLocations(false), scopedLocationIds(ctx));
   if (scoped.length === 0) return (<><PageHeader title="Waste" /><p className="text-sm text-body">No locations assigned.</p></>);
 
-  const locId = scoped.find((l) => l.id === sp.loc)?.id ?? scoped[0].id;
+  const locId = scoped.find((l) => (l.slug === sp.loc || l.id === sp.loc))?.id ?? scoped[0].id;
   // eslint-disable-next-line react-hooks/purity -- request-time boundary in a Server Component
   const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString();
   const [items, waste] = await Promise.all([listItems(), listWaste(locId)]);

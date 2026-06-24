@@ -1,6 +1,6 @@
 import "server-only";
 
-import { getUserClient } from "@/lib/supabase/clients";
+import { getUserClient, getServiceClient } from "@/lib/supabase/clients";
 import type { OrderStatus, Fulfilment } from "@/lib/ordering/constants";
 import type { ReservationStatus } from "@/lib/reservations/constants";
 
@@ -65,6 +65,42 @@ export type AccountFavourite = {
   pricePence: number | null;
   imageUrl: string | null;
 };
+
+export type AccountGiftCard = {
+  id: string;
+  code: string;
+  initialPence: number;
+  balancePence: number;
+  status: string;
+  expiresAt: string | null;
+  viewToken: string | null;
+  role: "purchased" | "received";
+};
+
+/** Gift-card wallet — cards this customer bought (purchaser_id) OR received
+ *  (recipient_email). Service client: received cards aren't visible via RLS. */
+export async function listMyGiftCards(userId: string, email: string | null): Promise<AccountGiftCard[]> {
+  const service = getServiceClient();
+  if (!service) return [];
+  const ors = [`purchaser_id.eq.${userId}`];
+  if (email) ors.push(`recipient_email.ilike.${email}`);
+  const { data } = await service
+    .from("gift_cards")
+    .select("id, code, initial_pence, balance_pence, status, expires_at, view_token, purchaser_id")
+    .or(ors.join(","))
+    .neq("status", "pending")
+    .order("created_at", { ascending: false });
+  return (data ?? []).map((g) => ({
+    id: g.id as string,
+    code: g.code as string,
+    initialPence: Number(g.initial_pence ?? 0),
+    balancePence: Number(g.balance_pence ?? 0),
+    status: g.status as string,
+    expiresAt: (g.expires_at as string | null) ?? null,
+    viewToken: (g.view_token as string | null) ?? null,
+    role: g.purchaser_id === userId ? "purchased" : "received",
+  }));
+}
 
 function locName(loc: unknown): { name: string; slug: string } {
   const l = loc as { name?: string; slug?: string } | { name?: string; slug?: string }[] | null;

@@ -24,7 +24,7 @@ export default async function WaitlistPage({
     );
   }
 
-  const locId = scoped.find((l) => l.id === sp.loc)?.id ?? scoped[0].id;
+  const locId = scoped.find((l) => (l.slug === sp.loc || l.id === sp.loc))?.id ?? scoped[0].id;
   const entries = await listWaitlist(locId);
 
   return (

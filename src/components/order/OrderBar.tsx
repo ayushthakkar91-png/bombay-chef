@@ -60,7 +60,7 @@ export function OrderBar({ menu, branches, locationSlug }: { menu: OrderingMenu;
   });
 
   return (
-    <div className="sticky top-[84px] z-30 border-b border-[#2A211C]/10 bg-[#F6F2EA]/95 backdrop-blur lg:top-[88px]">
+    <div className="z-30 border-b border-[#2A211C]/10 bg-[#F6F2EA]/95 backdrop-blur lg:sticky lg:top-[88px]">
       <div className="mx-auto max-w-[1200px] px-5 py-3 lg:px-8">
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2.5">
           {/* Brand + location */}
