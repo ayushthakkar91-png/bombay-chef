@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getUserClient, getServiceClient } from "@/lib/supabase/clients";
 import { subscribeContact } from "@/lib/marketing/contacts";
 import { type ActionState, fail, ok, str } from "@/lib/admin/validation";
+import { rateLimit } from "@/lib/ratelimit";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -34,6 +35,9 @@ async function linkAndEnsure(userId: string, email: string | null, marketing: bo
 }
 
 export async function register(_prev: ActionState, form: FormData): Promise<ActionState> {
+  if (!(await rateLimit("account-register", { limit: 5, windowSec: 60 })).ok) {
+    return fail("Too many attempts. Please wait a minute and try again.");
+  }
   const fullName = str(form, "fullName");
   const email = str(form, "email");
   const password = String(form.get("password") ?? "");
@@ -67,6 +71,9 @@ export async function register(_prev: ActionState, form: FormData): Promise<Acti
 }
 
 export async function login(_prev: ActionState, form: FormData): Promise<ActionState> {
+  if (!(await rateLimit("account-login", { limit: 5, windowSec: 60 })).ok) {
+    return fail("Too many attempts. Please wait a minute and try again.");
+  }
   const email = str(form, "email");
   const password = String(form.get("password") ?? "");
   const next = safeNext(str(form, "next") || "/account");

@@ -7,6 +7,7 @@ import { buildEmailPayload, reservationReference } from "@/lib/reservations/form
 import { enqueueEmail } from "@/lib/notifications/outbox";
 import { ADMIN_NOTIFY_EMAIL } from "@/lib/email/provider";
 import { experienceById } from "@/lib/reservations/constants";
+import { rateLimit } from "@/lib/ratelimit";
 
 export type BookingInput = {
   locationSlug: string;
@@ -50,6 +51,9 @@ function validateCore(input: BookingInput): string | null {
 
 /** Create a confirmed guest reservation, or report the slot is full. */
 export async function submitReservation(input: BookingInput): Promise<SubmitResult> {
+  if (!(await rateLimit("reservation", { limit: 5, windowSec: 60 })).ok) {
+    return { ok: false, error: "Too many attempts. Please wait a moment and try again." };
+  }
   const coreError = validateCore(input);
   if (coreError) return { ok: false, error: coreError };
   if (!input.time) return { ok: false, error: "Please choose a time." };

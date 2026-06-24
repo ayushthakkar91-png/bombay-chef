@@ -8,6 +8,7 @@ import { planRedemption } from "@/lib/giftcards/service";
 import { confirmPaidOrder } from "@/lib/ordering/confirm";
 import type { CartLineInput } from "@/lib/ordering/types";
 import type { Fulfilment } from "@/lib/ordering/constants";
+import { rateLimit } from "@/lib/ratelimit";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -60,6 +61,9 @@ export type CheckoutResult = { ok: true; url: string } | { ok: false; error: str
 
 /** Validate a gift card code at checkout and return its balance. */
 export async function checkGiftCard(code: string): Promise<{ ok: boolean; balancePence?: number; error?: string }> {
+  if (!(await rateLimit("gift-card-check", { limit: 10, windowSec: 60 })).ok) {
+    return { ok: false, error: "Too many attempts. Please wait a moment and try again." };
+  }
   if (!code?.trim()) return { ok: false };
   const plan = await planRedemption(code, 1_000_000);
   if ("error" in plan) return { ok: false, error: plan.error };
@@ -72,6 +76,9 @@ export async function checkGiftCard(code: string): Promise<{ ok: boolean; balanc
  * trust the client redirect. Card data never touches us (PCI SAQ A).
  */
 export async function createCheckout(input: CheckoutInput): Promise<CheckoutResult> {
+  if (!(await rateLimit("checkout", { limit: 10, windowSec: 60 })).ok) {
+    return { ok: false, error: "Too many checkout attempts. Please wait a moment and try again." };
+  }
   const name = input.contact?.name?.trim();
   const email = input.contact?.email?.trim();
   if (!name) return { ok: false, error: "Please enter your name." };

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { getUserClient } from "@/lib/supabase/clients";
 import { type ActionState, fail, str } from "@/lib/admin/validation";
+import { rateLimit } from "@/lib/ratelimit";
 
 /**
  * Sign in to the admin panel. On success a Supabase session cookie is set (via
@@ -12,6 +13,9 @@ import { type ActionState, fail, str } from "@/lib/admin/validation";
  * account can never hold a lingering admin session.
  */
 export async function login(_prev: ActionState, form: FormData): Promise<ActionState> {
+  if (!(await rateLimit("admin-login", { limit: 5, windowSec: 60 })).ok) {
+    return fail("Too many attempts. Please wait a minute and try again.");
+  }
   const email = str(form, "email");
   const password = String(form.get("password") ?? "");
   const next = str(form, "next") || "/admin";
