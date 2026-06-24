@@ -31,7 +31,7 @@ export const flags = {
 } as const;
 
 /** Interim external ordering destination, used while `flags.ordering` is off. */
-export const EXTERNAL_ORDER_URL = "https://www.bombay-bicycle-chef.com/locator";
+export const EXTERNAL_ORDER_URL = "https://www.bombaybicyclechef.uk/locator";
 
 /**
  * Where every public "Order online" CTA points. When in-house ordering is on it's
