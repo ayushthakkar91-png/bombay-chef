@@ -1,5 +1,15 @@
 import Link from "next/link";
 
+import { ORDER_URL } from "@/lib/flags";
+
+const FOOTER_NAV = [
+  { name: "Menu", href: "/menu" },
+  { name: "Locations", href: "/locations" },
+  { name: "Reservations", href: "/reservations" },
+  { name: "Order Online", href: ORDER_URL },
+  { name: "Contact", href: "/contact" },
+];
+
 const LOCATIONS_DATA = [
   {
     name: "Balham",
@@ -112,6 +122,19 @@ export function Footer() {
           ))}
 
         </div>
+
+        {/* Primary navigation — clear links for visitors and for search crawlers */}
+        <nav aria-label="Footer" className="mb-10 flex flex-wrap items-center justify-center gap-x-7 gap-y-3">
+          {FOOTER_NAV.map((l) => (
+            <Link
+              key={l.name}
+              href={l.href}
+              className="font-sans text-[11px] uppercase tracking-[0.2em] text-[#F3EEE8]/60 transition-colors duration-300 hover:text-[#C8A96B]"
+            >
+              {l.name}
+            </Link>
+          ))}
+        </nav>
 
         {/* Bottom: Social + Legal */}
         <div className="flex flex-col md:flex-row items-center justify-between pt-8 border-t border-[#F3EEE8]/10">

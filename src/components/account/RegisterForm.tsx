@@ -14,23 +14,23 @@ export function RegisterForm({ next }: { next: string }) {
       <AccountBanner state={state} />
       <div className="flex flex-col gap-1.5">
         <label htmlFor="fullName" className="text-[#5A524B] text-[12px] tracking-[0.15em] uppercase font-sans font-semibold">Full name</label>
-        <input id="fullName" name="fullName" autoComplete="name" defaultValue={state.values?.fullName} className={accountField} />
+        <input id="fullName" name="fullName" autoComplete="name" defaultValue={state.values?.fullName} placeholder="Enter your full name" className={accountField} />
         {state.errors?.fullName && <p className="text-[#5D0925] text-[12px] font-sans">{state.errors.fullName}</p>}
       </div>
       <div className="grid sm:grid-cols-2 gap-5">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="email" className="text-[#5A524B] text-[12px] tracking-[0.15em] uppercase font-sans font-semibold">Email</label>
-          <input id="email" name="email" type="email" autoComplete="email" defaultValue={state.values?.email} className={accountField} />
+          <input id="email" name="email" type="email" autoComplete="email" defaultValue={state.values?.email} placeholder="Enter your email" className={accountField} />
           {state.errors?.email && <p className="text-[#5D0925] text-[12px] font-sans">{state.errors.email}</p>}
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="phone" className="text-[#5A524B] text-[12px] tracking-[0.15em] uppercase font-sans font-semibold">Phone (optional)</label>
-          <input id="phone" name="phone" type="tel" autoComplete="tel" defaultValue={state.values?.phone} className={accountField} />
+          <input id="phone" name="phone" type="tel" autoComplete="tel" defaultValue={state.values?.phone} placeholder="Enter your phone number" className={accountField} />
         </div>
       </div>
       <div className="flex flex-col gap-1.5">
         <label htmlFor="password" className="text-[#5A524B] text-[12px] tracking-[0.15em] uppercase font-sans font-semibold">Password</label>
-        <input id="password" name="password" type="password" autoComplete="new-password" className={accountField} />
+        <input id="password" name="password" type="password" autoComplete="new-password" placeholder="Create a password" className={accountField} />
         {state.errors?.password && <p className="text-[#5D0925] text-[12px] font-sans">{state.errors.password}</p>}
       </div>
 

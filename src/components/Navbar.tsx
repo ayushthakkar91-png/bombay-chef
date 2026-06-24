@@ -26,11 +26,12 @@ export function Navbar() {
   const isDarkTheme =
     isScrolled ||
     pathname === '/contact' ||
-    pathname.startsWith('/locations') ||
-    pathname.startsWith('/reservations') ||
-    pathname.startsWith('/order') ||
-    pathname.startsWith('/gift') ||
-    pathname.startsWith('/indian-restaurant');
+    pathname?.startsWith('/locations') ||
+    pathname?.startsWith('/reservations') ||
+    pathname?.startsWith('/order') ||
+    pathname?.startsWith('/gift') ||
+    pathname?.startsWith('/indian-restaurant') ||
+    pathname?.startsWith('/account');
 
   useGSAP(() => {
     if (navRef.current) {

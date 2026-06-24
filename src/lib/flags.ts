@@ -30,6 +30,16 @@ export const flags = {
   platform: process.env.NEXT_PUBLIC_FEATURE_PLATFORM === "true",
 } as const;
 
+/**
+ * Public-site kill switch. The site is LIVE by default; set
+ * `NEXT_PUBLIC_SITE_ENABLED=false` (in Vercel, then redeploy) to put the public
+ * pages into an "under construction" holding screen. The /admin panel stays
+ * reachable so you can keep managing orders/reservations while it's off.
+ *   on  → NEXT_PUBLIC_SITE_ENABLED=true   (or leave it unset)
+ *   off → NEXT_PUBLIC_SITE_ENABLED=false
+ */
+export const SITE_ENABLED = process.env.NEXT_PUBLIC_SITE_ENABLED !== "false";
+
 /** Interim external ordering destination, used while `flags.ordering` is off. */
 export const EXTERNAL_ORDER_URL = "https://www.bombay-bicycle-chef.com/locator";
 

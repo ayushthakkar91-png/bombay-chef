@@ -67,6 +67,35 @@ export function RestaurantSchema() {
   return <Json data={data} />;
 }
 
+/** WebSite entity — reinforces the site name in results. Render site-wide. */
+export function WebSiteSchema() {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": `${SITE}/#website`,
+    name: "Bombay Bicycle Chef",
+    url: SITE,
+    inLanguage: "en-GB",
+    publisher: { "@id": `${SITE}/#organization` },
+  };
+  return <Json data={data} />;
+}
+
+/** Breadcrumb trail for a page. Pass the path from Home → current page. */
+export function BreadcrumbSchema({ items }: { items: { name: string; path: string }[] }) {
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((it, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: it.name,
+      item: `${SITE}${it.path}`,
+    })),
+  };
+  return <Json data={data} />;
+}
+
 /** Per-branch Restaurant/LocalBusiness — render on each location landing page. */
 export function BranchSchema({ branch }: { branch: Branch }) {
   const data = {

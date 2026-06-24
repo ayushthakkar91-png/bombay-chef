@@ -14,11 +14,11 @@ export function LoginForm({ next }: { next: string }) {
       <AccountBanner state={state} />
       <div className="flex flex-col gap-1.5">
         <label htmlFor="email" className="text-[#5A524B] text-[12px] tracking-[0.15em] uppercase font-sans font-semibold">Email</label>
-        <input id="email" name="email" type="email" autoComplete="email" autoFocus defaultValue={state.values?.email} className={accountField} />
+        <input id="email" name="email" type="email" autoComplete="email" autoFocus defaultValue={state.values?.email} placeholder="Enter your email" className={accountField} />
       </div>
       <div className="flex flex-col gap-1.5">
         <label htmlFor="password" className="text-[#5A524B] text-[12px] tracking-[0.15em] uppercase font-sans font-semibold">Password</label>
-        <input id="password" name="password" type="password" autoComplete="current-password" className={accountField} />
+        <input id="password" name="password" type="password" autoComplete="current-password" placeholder="Enter your password" className={accountField} />
       </div>
       <AccountSubmit className="w-full mt-1">Sign in</AccountSubmit>
       <p className="text-center text-[#5A524B] text-[14px] font-sans">

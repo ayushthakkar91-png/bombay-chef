@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { MapPin, Clock, Phone, UtensilsCrossed, CalendarDays, Bike, ArrowRight } from "lucide-react";
 
 import { BRANCHES, branchBySlug } from "@/data/locations";
-import { BranchSchema } from "@/components/seo/Schema";
+import { BranchSchema, BreadcrumbSchema } from "@/components/seo/Schema";
 import { ORDER_URL } from "@/lib/flags";
 
 export function generateStaticParams() {
@@ -31,6 +31,7 @@ export default async function LocationLandingPage({ params }: { params: Promise<
   return (
     <main className="min-h-screen bg-[#F6F2EA] pt-[110px] selection:bg-[#B08A3E] selection:text-[#F6F2EA]">
       <BranchSchema branch={b} />
+      <BreadcrumbSchema items={[{ name: "Home", path: "/" }, { name: "Locations", path: "/locations" }, { name: b.name, path: `/locations/${b.slug}` }]} />
 
       <div className="mx-auto max-w-[1100px] px-6 py-12 lg:py-16">
         <nav className="mb-8 font-sans text-[12px] text-[#5A524B]">

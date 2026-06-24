@@ -7,6 +7,5 @@
 const env = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
 export const SITE_URL = env && env.startsWith("https://") ? env : "https://www.bombay-bicycle-chef.com";
 
-/** Square brand logo for Organization schema. A placeholder lives at
- *  /public/logo.svg — drop in a real square PNG (≥112px) and point this at it. */
-export const LOGO_URL = `${SITE_URL}/logo.svg`;
+/** Square brand logo (512×512 PNG) for Organization schema / Google. */
+export const LOGO_URL = `${SITE_URL}/logo.png`;

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 import { PublicChrome } from "@/components/layout/PublicChrome";
-import { OrganizationSchema } from "@/components/seo/Schema";
+import { OrganizationSchema, WebSiteSchema } from "@/components/seo/Schema";
 import { SITE_URL } from "@/lib/site";
 
 const cormorant = Cormorant_Garamond({
@@ -25,9 +25,20 @@ export const metadata: Metadata = {
     default: "Bombay Bicycle Chef | Modern Indian Restaurant in London",
     template: "%s",
   },
-  description: "Inspired by the flavours, memories and gathering places of old Bombay, reimagined for modern London dining. Dine-in, collection and delivery across Balham, Battersea and Kilburn.",
+  description: "Modern Indian dining inspired by Bombay, made for London. Reserve a table, view the menu, or order online from Bombay Bicycle Chef.",
   keywords: ["Bombay Bicycle Chef", "Indian restaurant London", "Indian restaurant Balham", "Indian takeaway London", "Indian food delivery London", "modern Indian restaurant", "book a table Indian restaurant"],
   applicationName: "Bombay Bicycle Chef",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon-96x96.png", type: "image/png", sizes: "96x96" },
+      { url: "/favicon-32x32.png", type: "image/png", sizes: "32x32" },
+      { url: "/favicon-16x16.png", type: "image/png", sizes: "16x16" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  manifest: "/site.webmanifest",
   openGraph: {
     siteName: "Bombay Bicycle Chef",
     type: "website",
@@ -51,6 +62,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans bg-[#F5F0E6]">
         <OrganizationSchema />
+        <WebSiteSchema />
         {/* Public marketing chrome (smooth scroll, grain, navbar, footer) wraps
             every route except /admin, which renders on a bare canvas. The public
             site is unchanged. */}

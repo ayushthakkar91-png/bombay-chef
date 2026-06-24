@@ -21,12 +21,12 @@ export function LoginForm({ next }: { next: string }) {
           autoComplete="username"
           autoFocus
           defaultValue={state.values?.email}
-          placeholder="you@bombay-bicycle-chef.com"
+          placeholder="Enter your email"
         />
       </Field>
 
       <Field label="Password" htmlFor="password" error={state.errors?.password} required>
-        <TextInput id="password" name="password" type="password" autoComplete="current-password" />
+        <TextInput id="password" name="password" type="password" autoComplete="current-password" placeholder="Enter your password" />
       </Field>
 
       <SubmitButton pendingLabel="Signing in…" className="mt-1 w-full">

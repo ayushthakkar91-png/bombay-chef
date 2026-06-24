@@ -5,6 +5,8 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { MobileBottomBar } from "@/components/common/MobileBottomBar";
+import { Maintenance } from "@/components/layout/Maintenance";
+import { SITE_ENABLED } from "@/lib/flags";
 
 /**
  * Renders the public marketing chrome (smooth scroll, grain atmosphere, navbar,
@@ -18,6 +20,11 @@ export function PublicChrome({ children }: { children: React.ReactNode }) {
 
   if (pathname?.startsWith("/admin")) {
     return <>{children}</>;
+  }
+
+  // Public-site kill switch — /admin above is unaffected so staff keep working.
+  if (!SITE_ENABLED) {
+    return <Maintenance />;
   }
 
   return (
