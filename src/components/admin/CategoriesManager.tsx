@@ -61,6 +61,7 @@ export function CategoriesManager({
             <thead className="border-b border-sand bg-bg/40">
               <tr>
                 <Th>Title</Th>
+                <Th>Type</Th>
                 <Th>Slug</Th>
                 <Th className="text-right">Dishes</Th>
                 <Th className="text-right">Order</Th>
@@ -71,6 +72,7 @@ export function CategoriesManager({
               {categories.map((c) => (
                 <tr key={c.id} className="hover:bg-bg/30">
                   <Td className="font-medium">{c.title}</Td>
+                  <Td><Badge>{c.id.startsWith("drinks-") ? "Drinks" : "Food"}</Badge></Td>
                   <Td><code className="rounded bg-bg px-1.5 py-0.5 text-xs text-body">{c.id}</code></Td>
                   <Td className="text-right tabular-nums">{c.itemCount}</Td>
                   <Td className="text-right tabular-nums text-body">{c.sortOrder}</Td>

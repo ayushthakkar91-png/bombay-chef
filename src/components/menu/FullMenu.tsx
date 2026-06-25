@@ -3,15 +3,43 @@
 import type { MenuCategory } from "@/data/menu";
 
 // Signature and Drinks render in their own dedicated sections, so they're
-// excluded from the main editorial list here.
+// excluded from the main editorial (food) list here. Drinks live in the DB as
+// `drinks-*` categories and are rendered by <DrinksMenu /> instead.
 export function FullMenu({ categories }: { categories: MenuCategory[] }) {
   const visibleCategories = categories.filter(
-    (cat) => cat.id !== "signatures" && cat.id !== "drinks"
+    (cat) =>
+      cat.id !== "signatures" &&
+      cat.id !== "drinks" &&
+      !cat.id.startsWith("drinks-")
   );
 
   return (
     <section className="bg-[#F6F2EA] w-full pt-10 pb-32 lg:pb-[160px] px-6">
       <div className="max-w-[1000px] mx-auto">
+
+        {/* Food Allergy or Intolerance notice */}
+        <div className="max-w-[820px] mx-auto mb-24 lg:mb-32 border border-[#1A1411]/10 bg-[#FBF8F2] px-6 py-8 lg:px-10 lg:py-10">
+          <h2 className="text-[#B08A3E] text-[12px] tracking-[0.25em] uppercase font-semibold font-sans text-center mb-6">
+            Food Allergy or Intolerance
+          </h2>
+          <div className="flex flex-col space-y-4 text-[13px] lg:text-[14px] text-[#1A1411]/70 font-sans font-light leading-[1.8]">
+            <p>
+              All dishes may contain traces of the following allergens: wheat, gluten, peanuts, sesame seeds,
+              celery, soyabeans, soyabean oil, milk, eggs, mustard, lupin, molasses, crustaceans, fish,
+              sulphur dioxide and asafoetida (hing).
+            </p>
+            <p>
+              Please inform a member of staff or management team if you are pregnant, allergic to any
+              ingredients, or have any special request.
+            </p>
+            <p className="text-[#1A1411]/55 pt-2">
+              <span className="font-medium text-[#1A1411]/70">Key:</span> E = Egg, G = Gluten, N = Nuts, D = Dairy,
+              P = Peanuts, M = Mustard, SY = Soya, S = Seafood, V = Vegan.{" "}
+              <span className="font-medium text-[#1A1411]/70">Spice:</span> 🌶 Slightly spicy, 🌶🌶 Medium spicy,
+              🌶🌶🌶 Hot.
+            </p>
+          </div>
+        </div>
 
         {visibleCategories.map((category) => (
           <div key={category.id} id={`menu-${category.id}`} className="mb-24 lg:mb-32">

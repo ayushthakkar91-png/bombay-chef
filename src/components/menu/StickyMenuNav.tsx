@@ -4,16 +4,23 @@ import { useState } from "react";
 import { useGSAP } from "@gsap/react";
 import { useLenis } from "lenis/react";
 import { ScrollTrigger } from "@/utils/gsap";
-import { MENU_DATA } from "@/data/menu";
+import type { MenuCategory } from "@/data/menu";
 
-// Additional non-data sections
-const SECTIONS = [
-  ...MENU_DATA.map(c => ({ id: `menu-${c.id}`, label: c.title })),
-  { id: "menu-drinks", label: "DRINKS" }
-];
+export function StickyMenuNav({
+  food,
+  hasDrinks = true,
+}: {
+  food: MenuCategory[];
+  hasDrinks?: boolean;
+}) {
+  // Build the nav from the same DB-sourced categories the page renders, so the
+  // tabs always match the content and stay in the database's sort order.
+  const SECTIONS = [
+    ...food.map((c) => ({ id: `menu-${c.id}`, label: c.title })),
+    ...(hasDrinks ? [{ id: "menu-drinks", label: "DRINKS" }] : []),
+  ];
 
-export function StickyMenuNav() {
-  const [activeId, setActiveId] = useState(SECTIONS[0].id);
+  const [activeId, setActiveId] = useState(SECTIONS[0]?.id ?? "");
 
   useGSAP(() => {
     // Setup ScrollTrigger for each section to update the active nav link
@@ -29,7 +36,7 @@ export function StickyMenuNav() {
               if (self.isActive) {
                 setActiveId(section.id);
               }
-            }
+            },
           });
         }
       });
@@ -46,7 +53,7 @@ export function StickyMenuNav() {
       } else {
         window.scrollTo({
           top: element.offsetTop - 170, // Offset for main navbar + sticky nav
-          behavior: "smooth"
+          behavior: "smooth",
         });
       }
     }
@@ -54,7 +61,7 @@ export function StickyMenuNav() {
 
   return (
     <div className="sticky top-[84px] lg:top-[88px] z-[40] w-full bg-[#F6F2EA]/95 backdrop-blur-md border-b border-[#2A211C]/10 block transition-all duration-500">
-      <div className="max-w-[1200px] mx-auto px-4 md:px-6 h-[50px] md:h-[60px] flex items-center justify-start md:justify-center overflow-x-auto hide-scrollbar">
+      <div className="max-w-[1200px] mx-auto px-4 md:px-6 h-[50px] md:h-[60px] flex items-center justify-start overflow-x-auto hide-scrollbar">
         <ul className="flex items-center gap-6 md:gap-8 lg:gap-12 w-max pr-6 md:pr-0">
           {SECTIONS.map((section) => (
             <li key={section.id} className="relative shrink-0">

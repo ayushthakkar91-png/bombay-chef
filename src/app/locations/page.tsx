@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { SmoothScroll } from "@/components/motion/SmoothScroll";
@@ -14,7 +13,7 @@ const LOCATIONS_DATA = [
     name: "Balham",
     address: "88 Balham High Rd\nLondon SW12 9AG",
     phone: "020 8772 3222",
-    image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2000&auto=format&fit=crop",
+    // image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2000&auto=format&fit=crop",
     mapUrl: "https://maps.google.com"
   },
   {
@@ -22,7 +21,7 @@ const LOCATIONS_DATA = [
     name: "Battersea",
     address: "28 Queenstown Rd\nLondon SW8 3RX",
     phone: "020 7720 0500",
-    image: "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?q=80&w=2000&auto=format&fit=crop",
+    // image: "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?q=80&w=2000&auto=format&fit=crop",
     mapUrl: "https://maps.google.com"
   },
   {
@@ -30,7 +29,7 @@ const LOCATIONS_DATA = [
     name: "Kilburn",
     address: "24 Willesden Ln\nLondon NW6 7ST",
     phone: "020 7624 0300",
-    image: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=2000&auto=format&fit=crop",
+    // image: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=2000&auto=format&fit=crop",
     mapUrl: "https://maps.google.com"
   }
 ];
@@ -58,16 +57,20 @@ export default function LocationsPage() {
               return (
               <div key={loc.id} className={`flex flex-col ${index % 2 !== 0 ? 'lg:flex-row-reverse' : 'lg:flex-row'} gap-12 lg:gap-24 items-center`}>
                 
-                {/* Image */}
+                {/* Monogram Panel (placeholder until photography is added) */}
                 <div className="w-full lg:w-3/5">
-                  <div className="relative w-full aspect-[4/3] bg-[#2A211C] overflow-hidden">
-                    <Image
-                      src={loc.image}
-                      alt={loc.name}
-                      fill
-                      className="object-cover transition-transform duration-[2s] hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-black/10 mix-blend-overlay" />
+                  <div className="relative w-full aspect-[4/3] overflow-hidden bg-gradient-to-br from-[#2A211C] to-[#1F1813] border border-[#B08A3E]/20">
+                    {/* Decorative inner frame */}
+                    <div className="absolute inset-5 lg:inset-8 border border-[#B08A3E]/15" />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-8">
+                      <span className="text-[#F6F2EA]/90 text-[120px] lg:text-[160px] font-serif leading-none">
+                        {loc.name.charAt(0)}
+                      </span>
+                      <span className="mt-5 w-12 h-px bg-[#B08A3E]/50" />
+                      <span className="mt-5 text-[#F6F2EA]/55 text-[11px] tracking-[0.35em] uppercase font-sans">
+                        {loc.name}
+                      </span>
+                    </div>
                   </div>
                 </div>
 

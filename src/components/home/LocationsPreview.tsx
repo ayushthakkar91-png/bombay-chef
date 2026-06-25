@@ -8,24 +8,27 @@ import { RESERVATIONS_ONLINE } from "@/lib/flags";
 const LOCATIONS = [
   {
     name: "Balham",
+    established: "Est. 2014",
     address: "88 Balham High Rd, London SW12 9AG",
     phone: "020 8772 3222",
-    atmosphere: "Intimate, warm, and constantly buzzing. Our original dining room where the story began, featuring vintage Irani café mirrors and dark wood panelling.",
-    image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2000&auto=format&fit=crop"
+    atmosphere: "Bombay Bicycle Chef in Balham offers a diverse selection of Indian cuisine, featuring a blend of traditional and modern dishes. The menu includes popular items like Chicken Tikka Masala, Lamb Dum Biryani, and Shahi Paneer.",
+    // image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2000&auto=format&fit=crop"
   },
   {
     name: "Battersea",
+    established: "Est. 2018",
     address: "28 Queenstown Rd, London SW8 3RX",
     phone: "020 7720 0500",
-    atmosphere: "High ceilings, large tables, perfect for Sunday gatherings and evening celebrations. The air smells of charred tandoor and celebration.",
-    image: "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?q=80&w=2000&auto=format&fit=crop"
+    atmosphere: "Bombay Bicycle Chef in Battersea offers a diverse selection of Indian cuisine, featuring a blend of traditional and modern dishes. The menu includes popular items like Tandoori Lamb Chops, Shahi Paneer, and Chicken Biryani.",
+    // image: "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?q=80&w=2000&auto=format&fit=crop"
   },
   {
     name: "Kilburn",
+    established: "Est. 2021",
     address: "24 Willesden Ln, London NW6 7ST",
     phone: "020 7624 0300",
-    atmosphere: "Cozy leather booths and a lively brass bar serving spice-infused cocktails late into the night. A vibrant escape from the High Road.",
-    image: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=2000&auto=format&fit=crop"
+    atmosphere: "Bombay Bicycle Chef in Kilburn offers a diverse selection of Indian cuisine, featuring a blend of traditional and modern dishes. The menu includes popular items like Chicken Tikka Masala, Chicken Biryani, and Lamb Dum Biryani.",
+    // image: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=2000&auto=format&fit=crop"
   }
 ];
 
@@ -59,19 +62,28 @@ export function Locations() {
                 key={loc.name}
                 className={`flex flex-col ${isEven ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-12 lg:gap-24 group`}
               >
-                {/* Image Side */}
+                {/* Monogram Panel (placeholder until photography is added) */}
                 <div className="w-full lg:w-1/2">
-                  <div className="relative w-full aspect-[4/5] overflow-hidden bg-[#1A1510]">
-                    <motion.div 
-                      className="absolute inset-0 w-full h-full"
-                      whileHover={{ scale: 1.05 }}
-                      transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+                  <div className="relative w-full aspect-[4/5] overflow-hidden bg-gradient-to-br from-[#1A1510] to-[#241D16] border border-[#C8A96B]/15">
+                    {/* Decorative inner frame */}
+                    <div className="absolute inset-5 lg:inset-7 border border-[#C8A96B]/15" />
+
+                    <motion.div
+                      className="absolute inset-0 flex flex-col items-center justify-center text-center px-8"
+                      initial={{ opacity: 0.85 }}
+                      whileHover={{ scale: 1.03 }}
+                      transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
                     >
-                      <div
-                        className="absolute inset-0 bg-cover bg-center opacity-80"
-                        style={{ backgroundImage: `url(${loc.image})` }}
-                      />
-                      <div className="absolute inset-0 bg-black/20 mix-blend-overlay" />
+                      <span className="text-[#C8A96B]/80 text-[10px] tracking-[0.4em] uppercase font-sans mb-6">
+                        {loc.established}
+                      </span>
+                      <span className="text-[#F3EEE8]/90 text-[120px] lg:text-[160px] font-serif leading-none">
+                        {loc.name.charAt(0)}
+                      </span>
+                      <span className="mt-6 w-12 h-px bg-[#C8A96B]/40" />
+                      <span className="mt-6 text-[#F3EEE8]/50 text-[11px] tracking-[0.35em] uppercase font-sans">
+                        {loc.name}
+                      </span>
                     </motion.div>
                   </div>
                 </div>

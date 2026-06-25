@@ -8,19 +8,25 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 
 const DISHES = [
   {
-    title: "Black House Daal",
-    description: "Slow-cooked for 24 hours over wood fire, enriched with cream and butter.",
-    whyItMatters: "A true labour of love. The rich, smoky depth of this daal represents the patience and tradition at the heart of our kitchen.",
+    title: "Chicken Tikka Masala",
+    description: "Char-grilled chicken tikka folded into a silky tomato gravy finished with cream and fenugreek.",
+    whyItMatters: "The dish that introduced the world to Indian cooking. Ours stays true to its roots — smoky from the tandoor, rich without ever being heavy.",
     image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?q=80&w=2000&auto=format&fit=crop"
   },
   {
-    title: "Tandoori Lamb Chops",
+    title: "Tandoori Lamb Chop",
     description: "Tender lamb cutlets marinated overnight in ginger, garlic, and Kashmiri chilli.",
     whyItMatters: "Kissed by the intense heat of the tandoor charcoal. It perfectly balances robust spice with a delicate, melt-in-the-mouth texture.",
     image: "https://images.unsplash.com/photo-1544025162-811114cdb83b?q=80&w=2000&auto=format&fit=crop"
   },
   {
-    title: "Bicycle Biryani",
+    title: "Shahi Paneer",
+    description: "Soft paneer in a royal cashew and tomato gravy, perfumed with cardamom and saffron.",
+    whyItMatters: "A recipe born in royal kitchens. The velvety richness and gentle sweetness make it the dish our regulars never let leave the menu.",
+    image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?q=80&w=2000&auto=format&fit=crop"
+  },
+  {
+    title: "Biryani",
     description: "Aromatic basmati rice layered with marinated meat, saffron, and slow-cooked in a sealed handi.",
     whyItMatters: "Our ultimate tribute to celebration. The theatrical unsealing of the dough lid reveals aromas that immediately transport you to a Bombay feast.",
     image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?q=80&w=2000&auto=format&fit=crop"
@@ -38,8 +44,8 @@ export function SignatureDishes() {
       if (!dish) return;
       ScrollTrigger.create({
         trigger: dish,
-        start: "top center",
-        end: "bottom center",
+        start: "top 70%",
+        end: "bottom 30%",
         onEnter: () => setActiveIndex(index),
         onEnterBack: () => setActiveIndex(index),
       });

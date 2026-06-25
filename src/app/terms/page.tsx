@@ -25,7 +25,7 @@ export default function TermsPage() {
 
           <section>
             <p>
-              These terms apply when you use the Bombay Bicycle Chef website operated by <strong>[LEGAL ENTITY NAME]</strong>{" "}
+              These terms apply when you use the <strong>Bombay Bicycle Chef</strong> website{" "}
               (&ldquo;we&rdquo;, &ldquo;us&rdquo;) to place an order, make a reservation, or buy and redeem a gift card. By
               using the site you agree to these terms.
             </p>

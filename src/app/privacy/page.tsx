@@ -25,8 +25,8 @@ export default function PrivacyPage() {
 
           <section>
             <p>
-              This Privacy Policy explains how <strong>[LEGAL ENTITY NAME]</strong> (&ldquo;Bombay Bicycle Chef&rdquo;,
-              &ldquo;we&rdquo;, &ldquo;us&rdquo;) collects and uses your personal data when you visit our website, place an
+              This Privacy Policy explains how <strong>Bombay Bicycle Chef</strong> (&ldquo;we&rdquo;,
+              &ldquo;us&rdquo;) collects and uses your personal data when you visit our website, place an
               order, make a reservation, buy or redeem a gift card, or join our mailing list. We are the data controller
               for that information.
             </p>
@@ -35,9 +35,9 @@ export default function PrivacyPage() {
           <section>
             <h2>Who we are</h2>
             <p>
-              <strong>Data controller:</strong> [LEGAL ENTITY NAME], [REGISTERED ADDRESS]. ICO registration: [ICO NUMBER].
+              <strong>Data controller:</strong> Bombay Bicycle Chef.
               For any privacy question or request, contact us at{" "}
-              <a href="mailto:privacy@bombay-bicycle-chef.com">privacy@bombay-bicycle-chef.com</a>.
+              <a href="mailto:info@bombaybicyclechef.com">info@bombaybicyclechef.com</a>.
             </p>
           </section>
 

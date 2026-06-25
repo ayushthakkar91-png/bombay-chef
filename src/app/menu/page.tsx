@@ -21,15 +21,19 @@ export const revalidate = 60;
 
 export default async function MenuPage() {
   const categories = await getMenu();
+  // Drinks are stored in the DB as `drinks-*` categories; split them out so
+  // FullMenu shows only food and DrinksMenu renders the bar list.
+  const drinks = categories.filter((c) => c.id.startsWith("drinks-"));
+  const food = categories.filter((c) => !c.id.startsWith("drinks-"));
 
   return (
     <main className="min-h-screen bg-[#F6F2EA] selection:bg-[#B08A3E] selection:text-[#F6F2EA]">
       <MenuHero />
-      <StickyMenuNav />
+      <StickyMenuNav food={food} hasDrinks={drinks.length > 0} />
       <FullMenu categories={categories} />
       <DineInTakeaway />
       <ChefRecommendations />
-      <DrinksMenu />
+      <DrinksMenu categories={drinks} />
       <PrivateDining />
       <MenuCTA />
     </main>

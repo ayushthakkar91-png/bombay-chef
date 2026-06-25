@@ -6,10 +6,10 @@ import { useGSAP } from "@gsap/react";
 import Image from "next/image";
 
 const TIMELINE = [
-  { year: "1987", text: "The first memories" },
-  { year: "2009", text: "London begins" },
-  { year: "2016", text: "A second home" },
-  { year: "Today", text: "Still bringing people together" },
+  { text: "The first memories" },
+  { text: "London begins" },
+  { text: "A second home" },
+  { text: "Still bringing people together" },
 ];
 
 export function Story() {
@@ -111,11 +111,8 @@ export function Story() {
             {/* Subtly Timeline */}
             <div className="flex flex-col space-y-5 pt-12 border-t border-[rgba(43,36,29,0.1)]">
               {TIMELINE.map((item, index) => (
-                <div key={index} className="flex items-baseline space-x-6">
-                  <span className="text-[#806515] font-serif tracking-wider whitespace-nowrap min-w-[50px]">
-                    {item.year}
-                  </span>
-                  <span className="text-[#2B241D]/20 text-xs">—</span>
+                <div key={index} className="flex items-baseline space-x-4">
+                  <span className="text-[#806515] text-xs">—</span>
                   <span className="text-[#5E564D] text-[15px] lg:text-base">
                     {item.text}
                   </span>
