@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 import { eventPopup as cfg } from "@/config/event-popup";
@@ -100,18 +99,6 @@ export function EventPopup() {
         aria-label={`Live Football at ${cfg.location}`}
         className={`relative max-h-[94vh] w-full max-w-[600px] overflow-y-auto overflow-x-hidden rounded-[14px] border border-[#B08A3E]/25 bg-[#F6F2EA] px-6 pb-5 pt-5 text-center shadow-[0_40px_120px_-30px_rgba(42,33,28,0.7)] transition-transform duration-[450ms] ease-out will-change-transform motion-reduce:transition-none sm:px-8 sm:pb-6 sm:pt-6 ${shown ? "scale-100" : "scale-[0.96]"}`}
       >
-        {/* Goal animation — compact, top */}
-        <div className="relative -mx-6 -mt-5 mb-4 h-[120px] overflow-hidden rounded-t-[14px] bg-[#FAF9F5] sm:-mx-8 sm:-mt-6 sm:h-[150px]">
-          <Image
-            src="/goal-animation.gif"
-            alt="Live football at Balham"
-            fill
-            unoptimized
-            sizes="(max-width: 640px) 100vw, 600px"
-            className="object-contain"
-          />
-        </div>
-
         {/* Close */}
         <button
           ref={closeRef}
