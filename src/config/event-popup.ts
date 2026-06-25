@@ -44,8 +44,8 @@ export const eventPopup: EventPopupConfig = {
   message: "Watch England vs Panama with us over food, drinks and Bombay atmosphere.",
   location: "Balham",
   match: { home: "England", away: "Panama", date: "Saturday 27 June" },
-  offerHeadline: "Get 50% Off",
-  offer: "Match Night Special",
+  offerHeadline: "Get 25% Off",
+  offer: "On Takeaway Orders",
   details: [
     "Limited tables available",
     "Reserve early for the best seats",
