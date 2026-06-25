@@ -14,8 +14,16 @@ export type EventPopupConfig = {
   title: string;
   message: string;
   location: string;
+  /** Optional fixture shown with team flags. */
+  match?: { home: string; away: string; date: string };
+  /** Optional bold offer headline, e.g. "Get 50% Off". */
+  offerHeadline?: string;
+  /** Optional premium offer label, e.g. "Match Night Special". */
+  offer?: string;
   /** Short supporting bullet points. */
   details: string[];
+  /** Optional reassurance microcopy shown under the CTAs. */
+  note?: string;
   ctaText: string;
   ctaHref: string;
   secondaryText: string;
@@ -24,7 +32,8 @@ export type EventPopupConfig = {
   endDate: string | null;
   /** Exact pathnames the pop-up is allowed to appear on. */
   routes: string[];
-  /** Hours to stay hidden after a dismissal (persisted in localStorage). */
+  /** Hours to stay hidden after a dismissal (persisted in localStorage).
+   *  Set to 0 to show on every page load (no suppression). */
   dismissHours: number;
 };
 
@@ -32,10 +41,12 @@ export const eventPopup: EventPopupConfig = {
   enabled: true,
   label: "This week only",
   title: "Live Football at Balham",
-  message: "Watch the match with us over food, drinks and Bombay atmosphere.",
+  message: "Watch England vs Panama with us over food, drinks and Bombay atmosphere.",
   location: "Balham",
+  match: { home: "England", away: "Panama", date: "Saturday 27 June" },
+  offerHeadline: "Get 50% Off",
+  offer: "Match Night Special",
   details: [
-    "Balham Branch",
     "Limited tables available",
     "Reserve early for the best seats",
   ],
@@ -43,8 +54,9 @@ export const eventPopup: EventPopupConfig = {
   ctaHref: "/reservations?location=balham",
   secondaryText: "View Menu",
   secondaryHref: "/menu",
+  note: "Tables are limited",
   startDate: null,
   endDate: null,
   routes: ["/", "/locations/balham"],
-  dismissHours: 24,
+  dismissHours: 0, // show on every refresh; set to 24 to suppress for a day after closing
 };
