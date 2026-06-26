@@ -4,19 +4,19 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { eventPopup as cfg } from "@/config/event-popup";
+import { eventPopup as staticConfig, type EventPopupConfig } from "@/config/event-popup";
 
 const STORAGE_KEY = "bbc:event:live-football-balham";
 const APPEAR_DELAY_MS = 2500;
 const EXIT_MS = 500;
 
-function withinCampaignWindow(now: Date): boolean {
+function withinCampaignWindow(cfg: EventPopupConfig, now: Date): boolean {
   if (cfg.startDate && now < new Date(`${cfg.startDate}T00:00:00`)) return false;
   if (cfg.endDate && now > new Date(`${cfg.endDate}T23:59:59`)) return false;
   return true;
 }
 
-function recentlyDismissed(): boolean {
+function recentlyDismissed(cfg: EventPopupConfig): boolean {
   if (cfg.dismissHours <= 0) return false; // 0 → show on every load
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -34,7 +34,9 @@ function recentlyDismissed(): boolean {
  * animation that respects prefers-reduced-motion. Self-gates to the routes in
  * the config, so it can be mounted once globally.
  */
-export function EventPopup() {
+export function EventPopup({ config }: { config?: EventPopupConfig }) {
+  // Falls back to the bundled static config if no DB-sourced config is passed.
+  const cfg = config ?? staticConfig;
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false); // present in the DOM
   const [shown, setShown] = useState(false); // drives the enter/exit transition
@@ -46,12 +48,12 @@ export function EventPopup() {
   // Schedule the pop-up on eligible routes.
   useEffect(() => {
     if (!eligible) return;
-    if (!withinCampaignWindow(new Date())) return;
-    if (recentlyDismissed()) return;
+    if (!withinCampaignWindow(cfg, new Date())) return;
+    if (recentlyDismissed(cfg)) return;
 
     const t = setTimeout(() => setMounted(true), APPEAR_DELAY_MS);
     return () => clearTimeout(t);
-  }, [eligible]);
+  }, [eligible, cfg]);
 
   // Play the enter transition on the next frame and move focus into the dialog,
   // remembering what was focused so we can restore it on close.
@@ -114,6 +116,14 @@ export function EventPopup() {
 
         {/* Content — fades in */}
         <div className={`transition-all duration-700 ease-out delay-200 motion-reduce:translate-y-0 motion-reduce:transition-none ${shown ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"}`}>
+          {/* Optional banner image */}
+          {cfg.image && (
+            <div className="mb-4 overflow-hidden rounded-[10px] border border-[#B08A3E]/20">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={cfg.image} alt="" className="h-36 w-full object-cover sm:h-44" />
+            </div>
+          )}
+
           {/* Eyebrow with flanking gold rules */}
           {cfg.label && (
             <div className="mb-2 flex items-center justify-center gap-3">

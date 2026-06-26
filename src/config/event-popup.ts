@@ -20,6 +20,8 @@ export type EventPopupConfig = {
   offerHeadline?: string;
   /** Optional premium offer label, e.g. "Match Night Special". */
   offer?: string;
+  /** Optional banner image shown at the top of the pop-up (full https:// URL). */
+  image?: string;
   /** Short supporting bullet points. */
   details: string[];
   /** Optional reassurance microcopy shown under the CTAs. */

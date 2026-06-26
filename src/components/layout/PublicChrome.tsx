@@ -8,6 +8,7 @@ import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { MobileBottomBar } from "@/components/common/MobileBottomBar";
 import { Maintenance } from "@/components/layout/Maintenance";
 import { SITE_ENABLED } from "@/lib/flags";
+import type { EventPopupConfig } from "@/config/event-popup";
 
 // Promo pop-up is client-only and self-gates by route — load it lazily so it
 // stays out of the initial bundle.
@@ -23,7 +24,13 @@ const EventPopup = dynamic(
  * navigation. The non-admin branch is identical to the original root layout —
  * the public site renders exactly as before.
  */
-export function PublicChrome({ children }: { children: React.ReactNode }) {
+export function PublicChrome({
+  children,
+  eventPopup,
+}: {
+  children: React.ReactNode;
+  eventPopup?: EventPopupConfig;
+}) {
   const pathname = usePathname();
 
   if (pathname?.startsWith("/admin")) {
@@ -60,7 +67,7 @@ export function PublicChrome({ children }: { children: React.ReactNode }) {
       <main className="flex-grow">{children}</main>
       <Footer />
       <MobileBottomBar />
-      <EventPopup />
+      <EventPopup config={eventPopup} />
     </SmoothScroll>
   );
 }
