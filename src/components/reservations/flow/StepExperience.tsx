@@ -11,7 +11,6 @@ interface Props {
 }
 
 const EXPERIENCES = [
-  { id: "lunch", title: "Lunch", desc: "A brief escape. Bright, flavorful, and perfectly paced." },
   { id: "dinner", title: "Dinner", desc: "The main event. Dim lights, deep spices, and shared stories." },
   { id: "brunch", title: "Weekend Gathering", desc: "Leisurely mornings melting into afternoons." },
   { id: "private", title: "Private Dining", desc: "Exclusive spaces tailored for your most important gatherings." },

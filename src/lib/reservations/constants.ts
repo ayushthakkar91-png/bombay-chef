@@ -12,7 +12,6 @@ export type Experience = {
 
 /** Mirrors the labels in StepExperience.tsx; `period` drives which slots show. */
 export const EXPERIENCES: Experience[] = [
-  { id: "lunch", label: "Lunch", period: "lunch" },
   { id: "dinner", label: "Dinner", period: "dinner" },
   { id: "brunch", label: "Weekend Gathering", period: "lunch", weekendOnly: true },
   { id: "private", label: "Private Dining", period: "all" },

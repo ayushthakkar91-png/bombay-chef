@@ -16,7 +16,7 @@ const LOCATIONS = [
     name: "Balham",
     desc: "A neighbourhood favourite.",
     address: "88 Balham High Rd, SW12 9AG",
-    image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=1000&auto=format&fit=crop"
+    image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=1000&auto=format&fit=crop"
   },
   {
     id: "battersea",
