@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 
-import { modifyReservation, cancelReservation } from "@/app/reservations/manage/actions";
+import { modifyReservation, cancelReservation, type ManageViewData } from "@/app/reservations/manage/actions";
 import { EXPERIENCES, OCCASIONS, STATUS_LABEL, type ReservationStatus } from "@/lib/reservations/constants";
 
 export type ManageProps = {
   token: string;
+  /** Verified booking email — sent with every action for re-verification. */
+  email: string;
+  /** Receives the fresh server view after a successful change. */
+  onView: (view: ManageViewData) => void;
   status: ReservationStatus;
   reference: string;
   locationName: string;
@@ -26,7 +29,6 @@ const GOLD = "text-[#B08A3E]";
 const modifiable = (s: ReservationStatus) => s === "confirmed" || s === "pending";
 
 export function ManageReservation(props: ManageProps) {
-  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -66,11 +68,11 @@ export function ManageReservation(props: ManageProps) {
   const save = () => {
     setMessage(null);
     startTransition(async () => {
-      const r = await modifyReservation(props.token, { dateISO, time, guests, requests });
+      const r = await modifyReservation(props.token, props.email, { dateISO, time, guests, requests });
       if (r.ok) {
         setEditing(false);
         setMessage({ ok: true, text: "Your booking has been updated." });
-        router.refresh();
+        props.onView(r.view);
       } else {
         setMessage({ ok: false, text: r.error ?? "Something went wrong." });
       }
@@ -81,10 +83,10 @@ export function ManageReservation(props: ManageProps) {
     if (!window.confirm("Cancel this reservation? This can't be undone.")) return;
     setMessage(null);
     startTransition(async () => {
-      const r = await cancelReservation(props.token);
+      const r = await cancelReservation(props.token, props.email);
       if (r.ok) {
         setMessage({ ok: true, text: "Your reservation has been cancelled." });
-        router.refresh();
+        props.onView(r.view);
       } else {
         setMessage({ ok: false, text: r.error ?? "Something went wrong." });
       }
@@ -137,7 +139,13 @@ export function ManageReservation(props: ManageProps) {
           {modifiable(props.status) && (
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
               <button
-                onClick={() => setEditing(true)}
+                onClick={() => {
+                  setDateISO(props.dateISO);
+                  setTime(props.timeLabel);
+                  setGuests(props.partySize);
+                  setRequests(props.requests ?? "");
+                  setEditing(true);
+                }}
                 className="inline-flex items-center justify-center h-[52px] px-8 bg-[#2B221D] text-[#F6F2EA] text-[12px] tracking-[0.15em] uppercase font-sans hover:bg-[#B08A3E] transition-colors duration-500"
               >
                 Modify Booking
