@@ -45,7 +45,7 @@ export function ReservationCTA() {
         </h2>
 
         <p className="text-[18px] md:text-xl text-[#EFE6D8]/70 max-w-[700px] mx-auto leading-[1.9] mb-10 font-sans">
-          Whether it’s a quick lunch in Balham or a celebration feast in Battersea, our tables are ready.
+          Whether it’s a quick lunch or a celebration feast in Balham, our tables are ready.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center gap-4">

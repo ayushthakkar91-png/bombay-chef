@@ -40,7 +40,7 @@ export function MenuCTA() {
         </h2>
 
         <p className="text-[18px] lg:text-[22px] text-[#F6F2EA]/70 max-w-[600px] mx-auto leading-[1.8] mb-16 font-sans">
-          Whether it&apos;s a quick lunch in Balham or a celebration feast in Battersea, our tables are ready.
+          Whether it&apos;s a quick lunch or a celebration feast in Balham, our tables are ready.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center gap-6">
