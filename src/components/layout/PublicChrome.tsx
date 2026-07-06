@@ -1,6 +1,5 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -8,14 +7,6 @@ import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { MobileBottomBar } from "@/components/common/MobileBottomBar";
 import { Maintenance } from "@/components/layout/Maintenance";
 import { SITE_ENABLED } from "@/lib/flags";
-import type { EventPopupConfig } from "@/config/event-popup";
-
-// Promo pop-up is client-only and self-gates by route — load it lazily so it
-// stays out of the initial bundle.
-const EventPopup = dynamic(
-  () => import("@/components/marketing/EventPopup").then((m) => m.EventPopup),
-  { ssr: false },
-);
 
 /**
  * Renders the public marketing chrome (smooth scroll, grain atmosphere, navbar,
@@ -26,10 +17,8 @@ const EventPopup = dynamic(
  */
 export function PublicChrome({
   children,
-  eventPopup,
 }: {
   children: React.ReactNode;
-  eventPopup?: EventPopupConfig;
 }) {
   const pathname = usePathname();
 
@@ -67,7 +56,6 @@ export function PublicChrome({
       <main className="flex-grow">{children}</main>
       <Footer />
       <MobileBottomBar />
-      <EventPopup config={eventPopup} />
     </SmoothScroll>
   );
 }

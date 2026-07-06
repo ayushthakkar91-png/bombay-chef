@@ -4,7 +4,6 @@ import "./globals.css";
 import { PublicChrome } from "@/components/layout/PublicChrome";
 import { OrganizationSchema, WebSiteSchema } from "@/components/seo/Schema";
 import { SITE_URL } from "@/lib/site";
-import { getEventPopup } from "@/lib/repositories/marketing-popup";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -58,8 +57,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const eventPopup = await getEventPopup();
-
   return (
     <html
       lang="en"
@@ -71,7 +68,7 @@ export default async function RootLayout({
         {/* Public marketing chrome (smooth scroll, grain, navbar, footer) wraps
             every route except /admin, which renders on a bare canvas. The public
             site is unchanged. */}
-        <PublicChrome eventPopup={eventPopup}>{children}</PublicChrome>
+        <PublicChrome>{children}</PublicChrome>
         <Analytics />
         <SpeedInsights />
       </body>
