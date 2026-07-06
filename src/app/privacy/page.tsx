@@ -88,7 +88,7 @@ export default function PrivacyPage() {
             <h2>Your rights</h2>
             <p>Under UK GDPR you can ask us to access, correct, delete, restrict or port your data, and you can object to
               processing or withdraw consent. To exercise any of these, email{" "}
-              <a href="mailto:privacy@bombay-bicycle-chef.com">privacy@bombay-bicycle-chef.com</a>. You can unsubscribe from
+              <a href="mailto:info@bombaybicyclechef.com">info@bombaybicyclechef.com</a>. You can unsubscribe from
               marketing at any time via the link in our emails. If you&rsquo;re unhappy with how we handle your data you can
               complain to the Information Commissioner&rsquo;s Office (<a href="https://ico.org.uk" target="_blank" rel="noopener noreferrer">ico.org.uk</a>).
             </p>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { MapPin, Clock, Phone, UtensilsCrossed, CalendarDays, Bike, ArrowRight } from "lucide-react";
+import { MapPin, Clock, Phone, Mail, UtensilsCrossed, CalendarDays, Bike, ArrowRight } from "lucide-react";
 
 import { BRANCHES, branchBySlug } from "@/data/locations";
 import { BranchSchema, BreadcrumbSchema } from "@/components/seo/Schema";
@@ -68,10 +68,11 @@ export default async function LocationLandingPage({ params }: { params: Promise<
         </div>
 
         {/* Details */}
-        <div className="mt-12 grid gap-6 border-t border-[#2A211C]/10 pt-12 sm:grid-cols-3">
+        <div className="mt-12 grid gap-6 border-t border-[#2A211C]/10 pt-12 sm:grid-cols-2 lg:grid-cols-4">
           <Detail icon={MapPin} label="Find us">{b.street}<br />{b.locality} {b.postcode}</Detail>
           <Detail icon={Clock} label="Opening hours"><OpeningHours services={b.hours} /></Detail>
           <Detail icon={Phone} label="Call us"><a href={`tel:${b.phone.replace(/\s/g, "")}`} className="hover:text-[#B08A3E]">{b.phone}</a></Detail>
+          <Detail icon={Mail} label="Email us"><a href={`mailto:${b.email}`} className="break-all hover:text-[#B08A3E]">{b.email}</a></Detail>
         </div>
 
         {b.orderingEnabled ? (

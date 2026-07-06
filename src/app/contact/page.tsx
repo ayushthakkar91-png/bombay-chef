@@ -33,8 +33,8 @@ export default function ContactPage() {
                   General Enquiries
                 </h4>
                 <p>For general questions, feedback, or press requests.</p>
-                <a href="mailto:hello@bombay-bicycle-chef.com" className="text-[#2B221D] font-medium hover:text-[#B08A3E] transition-colors">
-                  hello@bombay-bicycle-chef.com
+                <a href="mailto:info@bombaybicyclechef.com" className="text-[#2B221D] font-medium hover:text-[#B08A3E] transition-colors">
+                  info@bombaybicyclechef.com
                 </a>
               </div>
 
@@ -43,8 +43,8 @@ export default function ContactPage() {
                   Private Events & Catering
                 </h4>
                 <p>Host your next event with us. From corporate lunches to large celebrations.</p>
-                <a href="mailto:events@bombay-bicycle-chef.com" className="text-[#2B221D] font-medium hover:text-[#B08A3E] transition-colors">
-                  events@bombay-bicycle-chef.com
+                <a href="mailto:info@bombaybicyclechef.com" className="text-[#2B221D] font-medium hover:text-[#B08A3E] transition-colors">
+                  info@bombaybicyclechef.com
                 </a>
               </div>
 
@@ -53,8 +53,8 @@ export default function ContactPage() {
                   Careers
                 </h4>
                 <p>Join our team of passionate chefs and hospitality professionals.</p>
-                <a href="mailto:careers@bombay-bicycle-chef.com" className="text-[#2B221D] font-medium hover:text-[#B08A3E] transition-colors">
-                  careers@bombay-bicycle-chef.com
+                <a href="mailto:info@bombaybicyclechef.com" className="text-[#2B221D] font-medium hover:text-[#B08A3E] transition-colors">
+                  info@bombaybicyclechef.com
                 </a>
               </div>
             </div>

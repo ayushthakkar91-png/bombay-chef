@@ -12,6 +12,7 @@ export type Branch = {
   postcode: string;
   region: string;
   phone: string;
+  email: string;
   /** One schedule per service. The first entry is the dine-in/primary service
    *  and drives the JSON-LD opening hours. */
   hours: ServiceHours[];
@@ -31,6 +32,7 @@ export const BRANCHES: Branch[] = [
     postcode: "SW12 9AG",
     region: "Greater London",
     phone: "020 8772 3222",
+    email: "balham@bombaybicyclechef.com",
     hours: [
       {
         label: "Restaurant",
@@ -83,6 +85,7 @@ export const BRANCHES: Branch[] = [
     postcode: "SW8 3RX",
     region: "Greater London",
     phone: "020 7720 0500",
+    email: "info@bombaybicyclechef.com",
     hours: [
       {
         label: "Restaurant",
@@ -111,6 +114,7 @@ export const BRANCHES: Branch[] = [
     postcode: "NW6 7ST",
     region: "Greater London",
     phone: "020 7624 0300",
+    email: "info@bombaybicyclechef.com",
     hours: [
       {
         label: "Restaurant",
