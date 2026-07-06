@@ -17,6 +17,8 @@ export function DineInTakeaway() {
             src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2000&auto=format&fit=crop"
             alt="Dine In"
             fill
+            sizes="(max-width: 767px) 100vw, 50vw"
+            quality={70}
             className="object-cover opacity-30 group-hover:opacity-40 transition-opacity duration-1000"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#1A1411] via-[#1A1411]/80 to-[#1A1411]/40" />
@@ -45,6 +47,8 @@ export function DineInTakeaway() {
             src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2000&auto=format&fit=crop"
             alt="Takeaway"
             fill
+            sizes="(max-width: 767px) 100vw, 50vw"
+            quality={70}
             className="object-cover opacity-30 group-hover:opacity-40 transition-opacity duration-1000"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#1A1411] via-[#1A1411]/80 to-[#1A1411]/40" />

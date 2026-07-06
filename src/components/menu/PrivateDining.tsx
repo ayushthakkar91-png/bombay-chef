@@ -41,6 +41,8 @@ export function PrivateDining() {
           src="https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?q=80&w=2000&auto=format&fit=crop"
           alt="Private Dining at Bombay Bicycle Chef"
           fill
+          sizes="100vw"
+          quality={70}
           className="object-cover"
         />
         {/* Luxury dark tint */}

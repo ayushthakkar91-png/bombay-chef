@@ -6,7 +6,8 @@ import { dateTimeToInstant, parse12h } from "@/lib/reservations/time";
 import { buildEmailPayload, reservationReference } from "@/lib/reservations/format";
 import { enqueueEmail } from "@/lib/notifications/outbox";
 import { ADMIN_NOTIFY_EMAIL } from "@/lib/email/provider";
-import { experienceById } from "@/lib/reservations/constants";
+import { experienceById, OCCASIONS, BOOKING_HORIZON_DAYS } from "@/lib/reservations/constants";
+import { londonDateISO } from "@/lib/reservations/time";
 import { rateLimit } from "@/lib/ratelimit";
 
 export type BookingInput = {
@@ -27,6 +28,8 @@ export type SubmitResult =
   | { ok: false; full?: true; error: string };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const MAX_PARTY = 12;
 
 async function resolveLocation(slug: string): Promise<{ id: string; name: string } | null> {
   const supabase = getServiceClient();
@@ -40,12 +43,28 @@ async function resolveLocation(slug: string): Promise<{ id: string; name: string
   return data ? { id: data.id as string, name: data.name as string } : null;
 }
 
+/** Full server-side validation — the client UI is not trusted. */
 function validateCore(input: BookingInput): string | null {
-  if (!input.name?.trim()) return "Please enter your name.";
-  if (!EMAIL_RE.test(input.email ?? "")) return "Please enter a valid email.";
-  if (!input.locationSlug) return "Please choose a location.";
-  if (!input.dateISO) return "Please choose a date.";
-  if (!input.guests || input.guests < 1) return "Please choose a party size.";
+  const name = input.name?.trim() ?? "";
+  if (!name) return "Please enter your name.";
+  if (name.length > 100) return "That name is too long.";
+  const email = input.email?.trim() ?? "";
+  if (!EMAIL_RE.test(email) || email.length > 254) return "Please enter a valid email.";
+  if ((input.phone ?? "").trim().length > 30) return "That phone number is too long.";
+  if ((input.requests ?? "").length > 1000) return "Special requests must be under 1000 characters.";
+  if (!input.locationSlug || input.locationSlug.length > 50) return "Please choose a location.";
+
+  if (!Number.isInteger(input.guests) || input.guests < 1) return "Please choose a party size.";
+  if (input.guests > MAX_PARTY) return `For parties over ${MAX_PARTY}, please call us to book.`;
+
+  if (!DATE_RE.test(input.dateISO ?? "")) return "Please choose a date.";
+  const todayISO = londonDateISO(new Date());
+  if (input.dateISO < todayISO) return "That date has passed — please choose another.";
+  const horizon = londonDateISO(new Date(Date.now() + BOOKING_HORIZON_DAYS * 86400_000));
+  if (input.dateISO > horizon) return `We take bookings up to ${BOOKING_HORIZON_DAYS} days ahead.`;
+
+  if (input.experience != null && !experienceById(input.experience)) return "That experience isn't available.";
+  if (input.occasion != null && !OCCASIONS.some((o) => o.id === input.occasion)) return "That occasion isn't available.";
   return null;
 }
 
@@ -107,6 +126,7 @@ export async function submitReservation(input: BookingInput): Promise<SubmitResu
     guestName: input.name.trim(),
     manageToken,
     locationName: loc.name,
+    durationMin: check.turnMinutes,
   });
 
   await enqueueEmail({
@@ -128,6 +148,9 @@ export async function submitReservation(input: BookingInput): Promise<SubmitResu
 
 /** Add the guest to the waitlist for their chosen date. */
 export async function joinWaitlist(input: BookingInput): Promise<{ ok: boolean; error?: string }> {
+  if (!(await rateLimit("waitlist", { limit: 5, windowSec: 60 })).ok) {
+    return { ok: false, error: "Too many attempts. Please wait a moment and try again." };
+  }
   const coreError = validateCore(input);
   if (coreError) return { ok: false, error: coreError };
 

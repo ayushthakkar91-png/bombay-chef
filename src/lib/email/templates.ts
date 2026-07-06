@@ -16,6 +16,10 @@ export type ReservationEmailPayload = {
   occasionLabel?: string;
   reference?: string;
   manageUrl?: string;
+  /** "Add to Google Calendar" deep link. */
+  calendarGoogleUrl?: string;
+  /** Downloadable .ics link (Apple/Outlook, mobile calendars). */
+  calendarIcsUrl?: string;
   reason?: string;
   /** admin alert summary line */
   adminSummary?: string;
@@ -59,23 +63,60 @@ const INK = "#2B221D";
 const GOLD = "#B08A3E";
 const PAPER = "#F6F2EA";
 const MUTED = "#5A524B";
+const MAROON = "#5D0925";
 
 function shell(title: string, bodyHtml: string): string {
   return `<!doctype html><html><body style="margin:0;background:${PAPER};font-family:Georgia,'Times New Roman',serif;color:${INK};">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${PAPER};padding:32px 0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${PAPER};padding:36px 12px;">
     <tr><td align="center">
-      <table role="presentation" width="520" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fff;border:1px solid rgba(43,34,29,0.1);">
-        <tr><td style="padding:28px 36px;border-bottom:1px solid rgba(43,34,29,0.08);">
-          <div style="font-size:20px;letter-spacing:0.5px;">Bombay Bicycle Chef</div>
-          <div style="font-family:Arial,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};margin-top:4px;">${title}</div>
+      <table role="presentation" width="540" cellpadding="0" cellspacing="0" style="max-width:540px;background:#ffffff;border:1px solid rgba(43,34,29,0.1);">
+        <tr><td style="height:4px;background:${MAROON};font-size:0;line-height:0;">&nbsp;</td></tr>
+        <tr><td align="center" style="padding:34px 36px 26px;border-bottom:1px solid rgba(43,34,29,0.08);">
+          <div style="font-size:23px;letter-spacing:1px;color:${INK};">Bombay Bicycle Chef</div>
+          <table role="presentation" cellpadding="0" cellspacing="0" style="margin:12px auto 0;"><tr>
+            <td style="width:28px;height:1px;background:rgba(176,138,62,0.5);font-size:0;">&nbsp;</td>
+            <td style="padding:0 10px;font-family:Arial,sans-serif;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:${GOLD};white-space:nowrap;">${title}</td>
+            <td style="width:28px;height:1px;background:rgba(176,138,62,0.5);font-size:0;">&nbsp;</td>
+          </tr></table>
         </td></tr>
         <tr><td style="padding:32px 36px;">${bodyHtml}</td></tr>
-        <tr><td style="padding:20px 36px;border-top:1px solid rgba(43,34,29,0.08);font-family:Arial,sans-serif;font-size:11px;color:${MUTED};">
-          Bombay Bicycle Chef · Balham · Battersea · Kilburn
+        <tr><td align="center" style="padding:22px 36px;border-top:1px solid rgba(43,34,29,0.08);background:rgba(246,242,234,0.6);">
+          <div style="font-family:Arial,sans-serif;font-size:11px;letter-spacing:1px;color:${MUTED};">Bombay Bicycle Chef · Balham · Battersea · Kilburn</div>
+          <div style="font-family:Arial,sans-serif;font-size:11px;color:${MUTED};margin-top:6px;"><a href="mailto:info@bombaybicyclechef.com" style="color:${MUTED};">info@bombaybicyclechef.com</a></div>
         </td></tr>
       </table>
     </td></tr>
   </table></body></html>`;
+}
+
+/** Big centred date/time/party hero for reservation emails. */
+function reservationHero(p: ReservationEmailPayload): string {
+  if (!p.dateLabel && !p.timeLabel) return "";
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:22px 0;background:${PAPER};border:1px solid rgba(176,138,62,0.35);">
+    <tr><td align="center" style="padding:22px 24px;">
+      <div style="font-size:24px;line-height:1.3;color:${INK};">${p.dateLabel ?? ""}</div>
+      <div style="font-size:19px;color:${MAROON};margin-top:4px;">${p.timeLabel ?? ""}${p.partySize ? ` · ${p.partySize} ${p.partySize === 1 ? "guest" : "guests"}` : ""}</div>
+      ${p.locationName ? `<div style="font-family:Arial,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};margin-top:10px;">${p.locationName}</div>` : ""}
+    </td></tr>
+  </table>`;
+}
+
+/** Manage + add-to-calendar actions for reservation emails. */
+function reservationActions(p: ReservationEmailPayload): string {
+  const parts: string[] = [];
+  if (p.manageUrl) parts.push(button(p.manageUrl, "Manage booking"));
+  if (p.calendarGoogleUrl) {
+    parts.push(
+      `<a href="${p.calendarGoogleUrl}" style="display:inline-block;background:${MAROON};color:${PAPER};text-decoration:none;font-family:Arial,sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;padding:14px 28px;margin-top:8px;">Add to Google Calendar</a>`,
+    );
+  }
+  const row = parts.length
+    ? `<table role="presentation" cellpadding="0" cellspacing="0"><tr>${parts.map((b) => `<td style="padding-right:10px;">${b}</td>`).join("")}</tr></table>`
+    : "";
+  const ics = p.calendarIcsUrl
+    ? `<p style="font-family:Arial,sans-serif;font-size:12px;color:${MUTED};margin-top:12px;">On iPhone or Outlook? <a href="${p.calendarIcsUrl}" style="color:${MAROON};">Add to your calendar (.ics)</a></p>`
+    : "";
+  return `${row}${ics}`;
 }
 
 function detailRows(p: ReservationEmailPayload): string {
@@ -156,10 +197,12 @@ export function renderTemplate(
           "Reservation confirmed",
           `<p style="font-size:16px;line-height:1.7;">${hi}</p>
            <p style="font-size:16px;line-height:1.7;">Your table is confirmed. We can't wait to welcome you.</p>
-           ${detailRows(p)}<p style="margin-top:8px;">${manage}</p>
-           <p style="font-family:Arial,sans-serif;font-size:12px;color:${MUTED};line-height:1.7;margin-top:20px;">Need to change or cancel? Use the link above any time.</p>`,
+           ${reservationHero(p)}
+           ${detailRows(p)}
+           ${reservationActions(p)}
+           <p style="font-family:Arial,sans-serif;font-size:12px;color:${MUTED};line-height:1.7;margin-top:20px;">Need to change or cancel? Use the manage link above any time.</p>`,
         ),
-        text: `${hi}\n\nYour table is confirmed.\n\n${textLines(p)}${manageText}\n\n— Bombay Bicycle Chef`,
+        text: `${hi}\n\nYour table is confirmed.\n\n${textLines(p)}${manageText}${p.calendarIcsUrl ? `\nAdd to calendar: ${p.calendarIcsUrl}` : ""}\n\n— Bombay Bicycle Chef`,
       };
 
     case "reservation_reminder":
@@ -169,7 +212,7 @@ export function renderTemplate(
           "A gentle reminder",
           `<p style="font-size:16px;line-height:1.7;">${hi}</p>
            <p style="font-size:16px;line-height:1.7;">Looking forward to seeing you soon.</p>
-           ${detailRows(p)}<p style="margin-top:8px;">${manage}</p>`,
+           ${reservationHero(p)}${detailRows(p)}${reservationActions(p)}`,
         ),
         text: `${hi}\n\nA reminder of your upcoming booking.\n\n${textLines(p)}${manageText}\n\n— Bombay Bicycle Chef`,
       };
@@ -181,7 +224,7 @@ export function renderTemplate(
           "Booking updated",
           `<p style="font-size:16px;line-height:1.7;">${hi}</p>
            <p style="font-size:16px;line-height:1.7;">Your reservation has been updated. The new details:</p>
-           ${detailRows(p)}<p style="margin-top:8px;">${manage}</p>`,
+           ${reservationHero(p)}${detailRows(p)}${reservationActions(p)}`,
         ),
         text: `${hi}\n\nYour reservation has been updated.\n\n${textLines(p)}${manageText}\n\n— Bombay Bicycle Chef`,
       };

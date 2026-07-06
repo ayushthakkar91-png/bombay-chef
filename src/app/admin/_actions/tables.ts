@@ -61,23 +61,60 @@ export async function deleteTable(_p: ActionState, form: FormData): Promise<Acti
   return ok("Table removed.");
 }
 
-export async function updateSlot(_p: ActionState, form: FormData): Promise<ActionState> {
+const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+export async function upsertSlot(_p: ActionState, form: FormData): Promise<ActionState> {
   const id = str(form, "id");
   const locationId = str(form, "locationId");
+  const weekday = intOrNull(form, "weekday");
+  const serviceStart = str(form, "serviceStart");
+  const serviceEnd = str(form, "serviceEnd");
+  const slotMinutes = intOrNull(form, "slotMinutes") ?? 15;
+  const turnMinutes = intOrNull(form, "turnMinutes") ?? 120;
   const maxCovers = intOrNull(form, "maxCovers");
   const isActive = bool(form, "isActive");
-  if (!id || !locationId) return fail("Missing slot.");
-  if (maxCovers != null && maxCovers < 0) return fail("Covers can't be negative.");
+
+  if (!locationId) return fail("Missing location.");
+  if (weekday == null || weekday < 0 || weekday > 6) return fail("Pick a day of the week.");
+  if (!TIME_RE.test(serviceStart)) return fail("Start time must be HH:MM.", { serviceStart: "Use 24h HH:MM." });
+  if (!TIME_RE.test(serviceEnd)) return fail("End time must be HH:MM.", { serviceEnd: "Use 24h HH:MM." });
+  if (serviceEnd <= serviceStart) return fail("End must be after start.", { serviceEnd: "Must be after start." });
+  if (slotMinutes < 5 || slotMinutes > 120) return fail("Booking interval must be 5–120 minutes.", { slotMinutes: "5–120." });
+  if (turnMinutes < 30 || turnMinutes > 300) return fail("Table turn must be 30–300 minutes.", { turnMinutes: "30–300." });
+  if (maxCovers == null || maxCovers < 0 || maxCovers > 1000) return fail("Max covers must be 0–1000.", { maxCovers: "0–1000." });
 
   await requireRole("location_manager", locationId);
   const supabase = await getUserClient();
   if (!supabase) return fail("Database not connected.");
 
-  const patch: Record<string, unknown> = { is_active: isActive };
-  if (maxCovers != null) patch.max_covers = maxCovers;
+  const row = {
+    location_id: locationId,
+    weekday,
+    service_start: serviceStart,
+    service_end: serviceEnd,
+    slot_minutes: slotMinutes,
+    turn_minutes: turnMinutes,
+    max_covers: maxCovers,
+    is_active: isActive,
+  };
+  const { error } = id
+    ? await supabase.from("reservation_slots").update(row).eq("id", id)
+    : await supabase.from("reservation_slots").insert(row);
 
-  const { error } = await supabase.from("reservation_slots").update(patch).eq("id", id);
   if (error) return fail(error.message);
   revalidateTables();
-  return ok("Service window saved.");
+  return ok(id ? "Service window saved." : "Service window added.");
+}
+
+export async function deleteSlot(_p: ActionState, form: FormData): Promise<ActionState> {
+  const id = str(form, "id");
+  const locationId = str(form, "locationId");
+  if (!id || !locationId) return fail("Missing slot.");
+  await requireRole("location_manager", locationId);
+  const supabase = await getUserClient();
+  if (!supabase) return fail("Database not connected.");
+  const { error } = await supabase.from("reservation_slots").delete().eq("id", id);
+  if (error) return fail(error.message);
+  revalidateTables();
+  return ok("Service window removed.");
 }
