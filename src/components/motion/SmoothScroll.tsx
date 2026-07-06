@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { ReactLenis } from "lenis/react";
-import gsap from "gsap";
+import { gsap, ScrollTrigger } from "@/utils/gsap";
 
 export function SmoothScroll({ children }: { children: React.ReactNode }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Lenis ref shape isn't exported cleanly
@@ -25,8 +25,14 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
     gsap.ticker.add(update);
     gsap.ticker.lagSmoothing(0);
 
+    // Keep ScrollTrigger in sync with Lenis-driven scrolling; without this,
+    // pinned/scrubbed sections lag or jump while Lenis animates the scroll.
+    const lenis = lenisRef.current?.lenis;
+    lenis?.on("scroll", ScrollTrigger.update);
+
     return () => {
       gsap.ticker.remove(update);
+      lenis?.off("scroll", ScrollTrigger.update);
     };
   }, []);
 

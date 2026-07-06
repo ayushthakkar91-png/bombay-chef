@@ -25,10 +25,12 @@ export function StepDateTime({ state, updateState, nextStep, prevStep }: Props) 
 
   // Availability is DERIVED from a (location|date|experience) signature; the effect
   // only setState()s inside its async callback.
+  type NoTimesReason = "closed" | "past" | "full";
   const sig = state.location ? `${state.location}|${toDateISO(effectiveDate)}|${state.experience ?? ""}` : "";
-  const [avail, setAvail] = useState<{ sig: string; times: string[] }>({ sig: "", times: [] });
+  const [avail, setAvail] = useState<{ sig: string; times: string[]; reason: NoTimesReason | "ok" }>({ sig: "", times: [], reason: "ok" });
   const loadingTimes = sig !== "" && avail.sig !== sig;
   const times = avail.sig === sig ? avail.times : [];
+  const reason: NoTimesReason = avail.sig === sig && avail.reason !== "ok" ? avail.reason : "full";
 
   // Calendar Logic
   const year = currentMonth.getFullYear();
@@ -74,9 +76,11 @@ export function StepDateTime({ state, updateState, nextStep, prevStep }: Props) 
     if (experience) params.set("experience", experience);
     fetch(`/api/reservations/availability?${params.toString()}`, { signal: controller.signal })
       .then((r) => r.json())
-      .then((d: { times?: string[] }) => setAvail({ sig, times: d.times ?? [] }))
+      .then((d: { times?: string[]; reason?: "ok" | "closed" | "past" | "full" }) =>
+        setAvail({ sig, times: d.times ?? [], reason: d.reason ?? "full" }),
+      )
       .catch((e: Error) => {
-        if (e.name !== "AbortError") setAvail({ sig, times: [] });
+        if (e.name !== "AbortError") setAvail({ sig, times: [], reason: "full" });
       });
     return () => controller.abort();
   }, [sig]);
@@ -171,7 +175,7 @@ export function StepDateTime({ state, updateState, nextStep, prevStep }: Props) 
               className="border-t border-[#2A211C]/10 pt-8"
             >
               <h4 className="text-center text-[#2B221D] text-[20px] font-serif mb-1.5">
-                {isTodaySelected ? "Today — Available" : effectiveDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+                {isTodaySelected ? "Today" : effectiveDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
               </h4>
               {!loadingTimes && times.length > 0 && (
                 <p className="text-center text-[#B08A3E] text-[11px] tracking-[0.15em] uppercase font-sans font-semibold mb-6">{times.length} slots available · tap to continue</p>
@@ -198,15 +202,29 @@ export function StepDateTime({ state, updateState, nextStep, prevStep }: Props) 
                 </div>
               ) : (
                 <div className="text-center py-4">
-                  <p className="text-[#2B221D] text-[18px] font-serif mb-1.5">Fully booked for this date</p>
-                  <p className="text-[#5A524B] text-[15px] font-sans mb-7">We&apos;d still love to welcome you — join the waitlist, or enjoy us at home tonight.</p>
+                  <p className="text-[#2B221D] text-[18px] font-serif mb-1.5">
+                    {reason === "past"
+                      ? "Today's bookings have closed"
+                      : reason === "closed"
+                        ? "No online bookings on this day"
+                        : "Fully booked for this date"}
+                  </p>
+                  <p className="text-[#5A524B] text-[15px] font-sans mb-7">
+                    {reason === "past"
+                      ? "Pick another day, or enjoy us at home tonight."
+                      : reason === "closed"
+                        ? "Please choose another date — or call us and we'll do our best."
+                        : "We'd still love to welcome you — join the waitlist, or enjoy us at home tonight."}
+                  </p>
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <button
-                      onClick={handleJoinWaitlist}
-                      className="inline-flex items-center justify-center h-[52px] px-8 bg-[#B08A3E] text-[#2A211C] text-[12px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-[#2A211C] hover:text-[#F6F2EA] transition-colors duration-500"
-                    >
-                      Join the Waitlist
-                    </button>
+                    {reason === "full" && (
+                      <button
+                        onClick={handleJoinWaitlist}
+                        className="inline-flex items-center justify-center h-[52px] px-8 bg-[#B08A3E] text-[#2A211C] text-[12px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-[#2A211C] hover:text-[#F6F2EA] transition-colors duration-500"
+                      >
+                        Join the Waitlist
+                      </button>
+                    )}
                     <a
                       href={ORDER_URL}
                       className="inline-flex items-center justify-center h-[52px] px-8 border border-[#5D0925] text-[#5D0925] text-[12px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-[#5D0925] hover:text-[#F6F2EA] transition-colors duration-500"

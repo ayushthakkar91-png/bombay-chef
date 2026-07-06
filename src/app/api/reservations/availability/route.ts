@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getServiceClient } from "@/lib/supabase/clients";
-import { getAvailableTimes } from "@/lib/reservations/availability";
+import { getDayAvailability } from "@/lib/reservations/availability";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   }
 
   const supabase = getServiceClient();
-  if (!supabase) return NextResponse.json({ times: [] });
+  if (!supabase) return NextResponse.json({ times: [], reason: "closed" });
 
   const { data: loc } = await supabase
     .from("locations")
@@ -29,8 +29,8 @@ export async function GET(request: Request) {
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
-  if (!loc) return NextResponse.json({ times: [] });
+  if (!loc) return NextResponse.json({ times: [], reason: "closed" });
 
-  const times = await getAvailableTimes(loc.id as string, date, experience);
-  return NextResponse.json({ times });
+  const { times, reason } = await getDayAvailability(loc.id as string, date, experience);
+  return NextResponse.json({ times, reason });
 }

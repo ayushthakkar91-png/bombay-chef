@@ -32,12 +32,23 @@ export function ServiceWindows({ slots, locationId }: { slots: SlotRow[]; locati
   const [editing, setEditing] = useState<SlotRow | null>(null);
   const ordered = [...slots].sort((a, b) => a.weekday - b.weekday || a.service_start.localeCompare(b.service_start));
 
+  // Days with no active window — guests see "fully booked" on these.
+  const covered = new Set(slots.filter((s) => s.is_active).map((s) => s.weekday));
+  const uncovered = [1, 2, 3, 4, 5, 6, 0].filter((d) => !covered.has(d));
+
   return (
     <>
       <div className="mb-4 flex items-center justify-between">
         <p className="text-sm text-body">{slots.length} windows · bookable times are generated from these each week</p>
         <Button onClick={() => setAddOpen(true)}><Plus className="h-4 w-4" /> Add window</Button>
       </div>
+
+      {slots.length > 0 && uncovered.length > 0 && (
+        <p className="mb-4 rounded-md border border-amber-300/60 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          No active window on <strong>{uncovered.map((d) => WEEKDAYS[d].slice(0, 3)).join(", ")}</strong> — guests
+          see &ldquo;fully booked&rdquo; on those days. Add a window to open them.
+        </p>
+      )}
 
       {slots.length === 0 ? (
         <EmptyState

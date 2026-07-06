@@ -102,23 +102,32 @@ function periodOfSlot(slot: SlotRow): "lunch" | "dinner" {
 
 export type TimeOption = { value: string; covers: number; remaining: number };
 
+/** Why a day has no bookable times (used to show honest messaging). */
+export type DayAvailability = {
+  times: string[];
+  /** ok = times exist · closed = no service configured for this day ·
+   *  past = service exists but every time is behind the lead-time cutoff ·
+   *  full = capacity/blocks exhausted. */
+  reason: "ok" | "closed" | "past" | "full";
+};
+
 /**
- * Available times for a (location, date, experience), as display strings like
- * "7:30 PM". `partySize` (optional) filters to slots that can still seat the
+ * Available times + a no-availability reason for a (location, date,
+ * experience). `partySize` (optional) filters to slots that can still seat the
  * party; without it, any slot with remaining capacity is returned.
  */
-export async function getAvailableTimes(
+export async function getDayAvailability(
   locationId: string,
   dateISO: string,
   experienceId: string | null,
   partySize?: number,
-): Promise<string[]> {
+): Promise<DayAvailability> {
   const day = await loadDay(locationId, dateISO);
-  if (!day) return [];
+  if (!day) return { times: [], reason: "closed" };
 
   const exp = experienceById(experienceId);
   const wd = weekdayOf(dateISO);
-  if (exp?.weekendOnly && wd !== 0 && wd !== 6) return [];
+  if (exp?.weekendOnly && wd !== 0 && wd !== 6) return { times: [], reason: "closed" };
 
   const wantPeriod = exp?.period ?? "all";
   const minLeadMs = Date.now() + BOOKING_LEAD_MINUTES * 60000;
@@ -126,6 +135,8 @@ export async function getAvailableTimes(
 
   const out: { value: string; ms: number }[] = [];
   const seen = new Set<string>();
+  let candidates = 0; // times generated for this day at all
+  let future = 0; // …of which are still ahead of the lead-time cutoff
 
   for (const slot of day.slots) {
     if (wantPeriod !== "all" && periodOfSlot(slot) !== wantPeriod) continue;
@@ -137,7 +148,9 @@ export async function getAvailableTimes(
       const m = mins % 60;
       const instant = dateTimeToInstant(dateISO, h, m);
       const ms = instant.getTime();
+      candidates++;
       if (ms < minLeadMs) continue;
+      future++;
       if (isBlocked(day.blocks, ms, slot.turn_minutes)) continue;
 
       const booked = coversOverlapping(day.reservations, ms, slot.turn_minutes);
@@ -150,7 +163,20 @@ export async function getAvailableTimes(
     }
   }
 
-  return out.sort((a, b) => a.ms - b.ms).map((o) => o.value);
+  const times = out.sort((a, b) => a.ms - b.ms).map((o) => o.value);
+  const reason: DayAvailability["reason"] =
+    times.length > 0 ? "ok" : candidates === 0 ? "closed" : future === 0 ? "past" : "full";
+  return { times, reason };
+}
+
+/** Available times only, as display strings like "7:30 PM". */
+export async function getAvailableTimes(
+  locationId: string,
+  dateISO: string,
+  experienceId: string | null,
+  partySize?: number,
+): Promise<string[]> {
+  return (await getDayAvailability(locationId, dateISO, experienceId, partySize)).times;
 }
 
 /** Whether a specific date has ANY availability for the experience. */

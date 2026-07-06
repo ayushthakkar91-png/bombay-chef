@@ -1,8 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Navbar } from "@/components/Navbar";
-import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { motion } from "framer-motion";
 
 export default function ContactPage() {
@@ -11,10 +9,10 @@ export default function ContactPage() {
   const handleFocus = (field: string) => setFocusedField(field);
   const handleBlur = () => setFocusedField(null);
 
+  // Navbar, footer and smooth scroll come from PublicChrome (root layout);
+  // wrapping them again here double-mounted Lenis and broke scrolling.
   return (
-    <SmoothScroll>
-      <Navbar />
-      <main className="min-h-screen bg-[#F6F2EA] selection:bg-[#B08A3E] selection:text-[#F6F2EA] pt-[110px]">
+    <div className="min-h-screen bg-[#F6F2EA] selection:bg-[#B08A3E] selection:text-[#F6F2EA] pt-[110px]">
         
         <div className="max-w-[1200px] mx-auto px-6 py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-32">
           
@@ -130,7 +128,6 @@ export default function ContactPage() {
 
         </div>
 
-      </main>
-    </SmoothScroll>
+    </div>
   );
 }

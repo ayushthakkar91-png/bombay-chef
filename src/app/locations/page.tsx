@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Navbar } from "@/components/Navbar";
-import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { OpeningHours } from "@/components/locations/OpeningHours";
 import { branchBySlug } from "@/data/locations";
 import { RESERVATIONS_ONLINE } from "@/lib/flags";
@@ -35,10 +33,10 @@ const LOCATIONS_DATA = [
 ];
 
 export default function LocationsPage() {
+  // Navbar, footer and smooth scroll come from PublicChrome (root layout);
+  // wrapping them again here double-mounted Lenis and broke scrolling.
   return (
-    <SmoothScroll>
-      <Navbar />
-      <main className="min-h-screen bg-[#F6F2EA] selection:bg-[#B08A3E] selection:text-[#F6F2EA] pt-[110px]">
+    <div className="min-h-screen bg-[#F6F2EA] selection:bg-[#B08A3E] selection:text-[#F6F2EA] pt-[110px]">
         
         <div className="max-w-[1200px] mx-auto px-6 py-16 lg:py-24">
           <div className="text-center mb-24">
@@ -137,7 +135,6 @@ export default function LocationsPage() {
           </div>
         </div>
 
-      </main>
-    </SmoothScroll>
+    </div>
   );
 }
