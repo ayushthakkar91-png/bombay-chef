@@ -1,10 +1,12 @@
 "use server";
 
+import { after } from "next/server";
+
 import { getServiceClient } from "@/lib/supabase/clients";
 import { checkSlot } from "@/lib/reservations/availability";
 import { dateTimeToInstant, parse12h } from "@/lib/reservations/time";
 import { buildEmailPayload, reservationReference } from "@/lib/reservations/format";
-import { enqueueEmail } from "@/lib/notifications/outbox";
+import { enqueueEmail, dispatchDue } from "@/lib/notifications/outbox";
 import { ADMIN_NOTIFY_EMAIL } from "@/lib/email/provider";
 import { experienceById, OCCASIONS, BOOKING_HORIZON_DAYS } from "@/lib/reservations/constants";
 import { londonDateISO } from "@/lib/reservations/time";
@@ -143,6 +145,10 @@ export async function submitReservation(input: BookingInput): Promise<SubmitResu
     reservationId: id,
   });
 
+  // Send the queued emails right away (after the response) instead of waiting
+  // for the daily cron — the cron remains the retry/reminder fallback.
+  after(() => dispatchDue(10));
+
   return { ok: true, reference: reservationReference(id), manageToken };
 }
 
@@ -188,6 +194,8 @@ export async function joinWaitlist(input: BookingInput): Promise<{ ok: boolean; 
       experienceLabel: experienceById(input.experience)?.label,
     },
   });
+
+  after(() => dispatchDue(10));
 
   return { ok: true };
 }

@@ -58,7 +58,7 @@ export const STATUS_TRANSITIONS: Record<ReservationStatus, ReservationStatus[]> 
 };
 
 /** Minimum lead time before a slot is bookable (minutes). */
-export const BOOKING_LEAD_MINUTES = 60;
+export const BOOKING_LEAD_MINUTES = 30;
 
 /** How many days ahead the public flow may book. */
 export const BOOKING_HORIZON_DAYS = 90;

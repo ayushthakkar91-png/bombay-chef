@@ -1,10 +1,12 @@
 "use server";
 
+import { after } from "next/server";
+
 import { getServiceClient } from "@/lib/supabase/clients";
 import { checkSlot } from "@/lib/reservations/availability";
 import { dateTimeToInstant, parse12h, formatInstantDate, formatInstantTime, londonDateISO } from "@/lib/reservations/time";
 import { buildEmailPayload, reservationReference } from "@/lib/reservations/format";
-import { enqueueEmail } from "@/lib/notifications/outbox";
+import { enqueueEmail, dispatchDue } from "@/lib/notifications/outbox";
 import { getManageView, type ManageView } from "@/lib/repositories/reservations";
 import { BOOKING_HORIZON_DAYS } from "@/lib/reservations/constants";
 import { rateLimit } from "@/lib/ratelimit";
@@ -147,6 +149,8 @@ export async function modifyReservation(
         durationMin: check.turnMinutes,
       }),
     });
+    // Deliver immediately (after the response); the daily cron is the retry path.
+    after(() => dispatchDue(10));
   }
 
   return {
@@ -195,6 +199,7 @@ export async function cancelReservation(token: string, email: string): Promise<C
         locationName: r.locationName,
       }),
     });
+    after(() => dispatchDue(10));
   }
 
   return { ok: true, view: toView({ ...r, status: "cancelled" }) };
