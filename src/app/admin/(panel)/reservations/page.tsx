@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Search, X } from "lucide-react";
+import { Search, X, Armchair } from "lucide-react";
 
 import { requireStaff } from "@/lib/auth/dal";
 import { scopedLocationIds, filterScoped } from "@/lib/auth/scope";
@@ -50,7 +50,17 @@ export default async function AdminReservationsPage({
       <PageHeader
         title="Bookings"
         description={query ? `Search results for “${query}”` : formatInstantDate(dateTimeToInstant(date, 12, 0))}
-        actions={<LocationSwitcher locations={scoped} current={locId} />}
+        actions={
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/admin/reservations/tables?loc=${locId}`}
+              className="inline-flex items-center gap-1.5 rounded-md border border-sand bg-surface px-3 py-2 text-sm text-text hover:bg-bg/40"
+            >
+              <Armchair className="h-4 w-4" /> Times &amp; capacity
+            </Link>
+            <LocationSwitcher locations={scoped} current={locId} />
+          </div>
+        }
       />
 
       <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
