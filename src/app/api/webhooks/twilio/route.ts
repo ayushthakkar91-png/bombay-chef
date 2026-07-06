@@ -16,7 +16,9 @@ function siteUrl(): string {
 /** Twilio signs requests: base64(HMAC-SHA1(authToken, url + sorted key+value concat)). */
 function verifyTwilio(url: string, params: Record<string, string>, signature: string | null): boolean {
   const token = process.env.TWILIO_AUTH_TOKEN;
-  if (!token) return true; // dev / console mode — nothing to verify against
+  // No auth token → nothing to verify against. Fail CLOSED in production
+  // (otherwise anyone could post fake consent/status updates); allow only in dev.
+  if (!token) return process.env.NODE_ENV !== "production";
   if (!signature) return false;
   const data = url + Object.keys(params).sort().map((k) => k + params[k]).join("");
   const expected = crypto.createHmac("sha1", token).update(Buffer.from(data, "utf-8")).digest("base64");

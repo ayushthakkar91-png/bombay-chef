@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getServiceClient } from "@/lib/supabase/clients";
 import { getDayAvailability } from "@/lib/reservations/availability";
+import { rateLimit } from "@/lib/ratelimit";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,12 @@ export const dynamic = "force-dynamic";
  * never another guest's details.
  */
 export async function GET(request: Request) {
+  // Generous per-IP cap — normal browsing is a handful of requests; this only
+  // stops bulk scraping/hammering.
+  if (!(await rateLimit("availability", { limit: 60, windowSec: 60 })).ok) {
+    return NextResponse.json({ times: [], error: "Too many requests." }, { status: 429 });
+  }
+
   const { searchParams } = new URL(request.url);
   const slug = searchParams.get("location");
   const date = searchParams.get("date");

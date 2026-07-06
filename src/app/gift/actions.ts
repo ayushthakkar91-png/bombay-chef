@@ -4,6 +4,7 @@ import { isStripeConfigured, createCheckoutSession } from "@/lib/stripe/client";
 import { createPendingGiftCard } from "@/lib/giftcards/service";
 import { GIFT_MIN_PENCE, GIFT_MAX_PENCE, gbp } from "@/lib/giftcards/constants";
 import { getCustomer } from "@/lib/auth/customer";
+import { rateLimit } from "@/lib/ratelimit";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -23,6 +24,9 @@ export type GiftBuyInput = {
 export type GiftBuyResult = { ok: true; url: string } | { ok: false; error: string };
 
 export async function buyGiftCard(input: GiftBuyInput): Promise<GiftBuyResult> {
+  if (!(await rateLimit("gift-buy", { limit: 5, windowSec: 60 })).ok) {
+    return { ok: false, error: "Too many attempts. Please wait a moment and try again." };
+  }
   const amount = Math.round(input.amountPence);
   if (!Number.isFinite(amount) || amount < GIFT_MIN_PENCE || amount > GIFT_MAX_PENCE) {
     return { ok: false, error: `Choose an amount between ${gbp(GIFT_MIN_PENCE)} and ${gbp(GIFT_MAX_PENCE)}.` };
