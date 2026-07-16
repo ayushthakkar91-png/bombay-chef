@@ -82,7 +82,7 @@ function shell(title: string, bodyHtml: string): string {
         <tr><td style="padding:32px 36px;">${bodyHtml}</td></tr>
         <tr><td align="center" style="padding:22px 36px;border-top:1px solid rgba(43,34,29,0.08);background:rgba(246,242,234,0.6);">
           <div style="font-family:Arial,sans-serif;font-size:11px;letter-spacing:1px;color:${MUTED};">Bombay Bicycle Chef · Balham · Battersea · Kilburn</div>
-          <div style="font-family:Arial,sans-serif;font-size:11px;color:${MUTED};margin-top:6px;"><a href="mailto:info@bombaybicyclechef.com" style="color:${MUTED};">info@bombaybicyclechef.com</a></div>
+          <div style="font-family:Arial,sans-serif;font-size:11px;color:${MUTED};margin-top:6px;"><a href="mailto:hello@bombaybicyclechef.com" style="color:${MUTED};">hello@bombaybicyclechef.com</a></div>
         </td></tr>
       </table>
     </td></tr>
