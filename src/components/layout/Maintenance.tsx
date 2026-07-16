@@ -38,8 +38,8 @@ export function Maintenance() {
         <a href="tel:+442087723222" className="transition-colors hover:text-[#C8A96B]">
           Balham &middot; 020 8772 3222
         </a>
-        <a href="mailto:hello@bombaybicyclechef.com" className="transition-colors hover:text-[#C8A96B]">
-          hello@bombaybicyclechef.com
+        <a href="mailto:info@bombaybicyclechef.com" className="transition-colors hover:text-[#C8A96B]">
+          info@bombaybicyclechef.com
         </a>
       </div>
     </main>

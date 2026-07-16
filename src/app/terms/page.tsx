@@ -102,7 +102,7 @@ export default function TermsPage() {
             <h2>Contact &amp; changes</h2>
             <p>
               Questions about these terms? Email{" "}
-              <a href="mailto:hello@bombaybicyclechef.com">hello@bombaybicyclechef.com</a>. We may update these terms from
+              <a href="mailto:info@bombaybicyclechef.com">info@bombaybicyclechef.com</a>. We may update these terms from
               time to time; the date at the top shows when they were last revised.
             </p>
           </section>

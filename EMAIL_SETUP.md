@@ -1,46 +1,34 @@
 # Email setup — Bombay Bicycle Chef
 
-Reservation emails send via **Brevo** (transactional API). Incoming mail is
-untouched — it stays on **one.com**, where it already lives.
+Reservation emails send via **Brevo** (transactional API). All site-facing email
+uses **`info@bombaybicyclechef.com`**. Booking alerts to the owner go to a Gmail.
 
 ## Who does what
 
-| Piece                          | Provider        | Domain                        |
+| Piece                          | Provider        | Address                       |
 | ------------------------------ | --------------- | ----------------------------- |
-| App sends confirmations/alerts | **Brevo** (API) | from `@bombaybicyclechef.com` |
-| Mailboxes (receive / read)     | **one.com**     | `@bombaybicyclechef.com`      |
-| DNS records (authoritative)    | **GoDaddy**     | `bombaybicyclechef.com`       |
+| App sends confirmations        | **Brevo** (API) | from `info@bombaybicyclechef.com` |
+| Owner's booking alerts         | **Gmail**       | `thakkarayush41@gmail.com`    |
+| Site contact / location pages  | display only    | `info@bombaybicyclechef.com`  |
+| Inbound mail for the domain    | **one.com**     | MX → one.com (read by others) |
 | Website                        | Hostinger/Vercel| `bombay-bicycle-chef.com`     |
 
-> ⚠️ **DNS is edited at GoDaddy only.** The domain's nameservers are GoDaddy
-> (`ns21/ns22.domaincontrol.com`). SiteGround also shows a DNS Zone Editor for
-> this domain, but it is **dormant and ignored** — editing it does nothing.
+On a booking: the guest gets a confirmation from `info@`, and the owner gets an
+alert at the Gmail. No reply-to is set — replies go to the From address (`info@`),
+which routes to one.com.
 
-On a booking: the guest gets a confirmation, and `balham@bombaybicyclechef.com`
-gets an admin alert. Guest replies also go to `balham@`. `balham@` is a live
-one.com mailbox (MX points at one.com, so it receives).
+> **Why alerts go to Gmail, not info@:** the domain's MX points at **one.com**, and
+> that inbox is read by someone else — the owner has no one.com access. Sending
+> owner alerts to Gmail guarantees the owner sees every booking. The SiteGround
+> mailboxes (balham@, etc.) do NOT receive, because MX is one.com, not SiteGround.
+> Do not change MX without confirming who relies on one.com mail.
 
-## Sending records at GoDaddy (added — additive, non-destructive)
+## Brevo — done
 
-These authorise Brevo to send. They do **not** change MX or SPF, so incoming
-one.com mail is unaffected.
-
-| Type  | Name                | Value                                              |
-| ----- | ------------------- | -------------------------------------------------- |
-| TXT   | `@`                 | `brevo-code:edb22dadc89b1d3cf66b158ba506a39c`      |
-| CNAME | `brevo1._domainkey` | `b1.bombaybicyclechef-com.dkim.brevo.com`          |
-| CNAME | `brevo2._domainkey` | `b2.bombaybicyclechef-com.dkim.brevo.com`          |
-| TXT   | `_dmarc`            | `v=DMARC1; p=none; rua=mailto:rua@dmarc.brevo.com` |
-
-Left untouched (do NOT change): `MX → …one.com`, `TXT SPF → include:_custspf.one.com`.
-
-## Brevo
-
-- Domain `bombaybicyclechef.com` — **Authenticated**.
-- **Authorised-IP restriction must stay OFF** for API keys. Vercel egress IPs
-  rotate and can't be allowlisted; with the restriction on, every send 401s.
-- Send from any `@bombaybicyclechef.com` address (domain auth covers all of them);
-  no per-sender verification needed.
+- Domain `bombaybicyclechef.com` — **Authenticated** (DKIM + DMARC at GoDaddy).
+- **Authorised-IP restriction is OFF** for API keys, and must stay off — Vercel
+  egress IPs rotate; with it on, every send 401s.
+- Send from any `@bombaybicyclechef.com` address (domain auth covers all).
 
 ## Vercel — production env vars
 
@@ -49,41 +37,28 @@ Project **bombay-chef** → Settings → Environment Variables → **Production*
 | Name                  | Value                                 |
 | --------------------- | ------------------------------------- |
 | `BREVO_API_KEY`       | *(Brevo transactional key)*           |
-| `EMAIL_FROM_ADDRESS`  | `reservations@bombaybicyclechef.com`  |
+| `EMAIL_FROM_ADDRESS`  | `info@bombaybicyclechef.com`          |
 | `EMAIL_FROM_NAME`     | `Bombay Bicycle Chef`                 |
-| `EMAIL_REPLY_TO`      | `balham@bombaybicyclechef.com`        |
-| `ADMIN_NOTIFY_EMAIL`  | `balham@bombaybicyclechef.com`        |
+| `ADMIN_NOTIFY_EMAIL`  | `thakkarayush41@gmail.com`            |
 | `EMAIL_PROVIDER`      | `brevo`                               |
 | `CRON_SECRET`         | *(any long random string)*            |
 | `NEXT_PUBLIC_SITE_URL`| `https://www.bombay-bicycle-chef.com` |
 
-Env changes require a **Redeploy** to take effect. `.env.local` is local-only and
-never deploys — production reads these.
+No `EMAIL_REPLY_TO` — reply-to is not set. Env changes require a **Redeploy**.
+`.env.local` is local-only and never deploys.
 
 ## Test
 
-Make a real booking on the live site with your own email:
-- guest inbox → confirmation arrives (check spam the first few times)
-- `balham@` → admin alert arrives
-- reply to the confirmation → lands in `balham@`
-
-## Verify DNS from a terminal
-
-```bash
-# Brevo DKIM resolves?
-curl -s "https://dns.google/resolve?name=brevo1._domainkey.bombaybicyclechef.com&type=CNAME" | grep -o '"data":"[^"]*"'
-# one.com MX still intact (must be unchanged)?
-curl -s "https://dns.google/resolve?name=bombaybicyclechef.com&type=MX" | grep -o '"data":"[^"]*"'
-```
+Book on the live site with your own email:
+- guest inbox → confirmation from `info@bombaybicyclechef.com`
+- `thakkarayush41@gmail.com` → owner alert
 
 ## Notes
 
-- Per-branch addresses (`src/data/locations.ts`): balham@ / battersea@ / kilburn@.
-  General + legal pages use `hello@`. All on `bombaybicyclechef.com`.
 - Email code: `src/lib/email/provider.ts` (Brevo via `fetch`, no npm package).
 - Retry/reminder cron runs daily 00:00 (`vercel.json`); a failed send waits up to
   24h to retry. `CRON_SECRET` must be set or that route returns 503.
-- Local testing without sending: `EMAIL_PROVIDER=console` prints emails to the
-  server console instead of hitting Brevo.
-- Optional future: `hello@`, `battersea@`, `kilburn@` mailboxes — create on one.com
-  so page-listed addresses receive. Not required for reservation emails to work.
+- Local testing without sending: `EMAIL_PROVIDER=console` prints to the console.
+- **Future — to route site mail (info@ etc.) to the SiteGround mailboxes:** point
+  the domain's MX at SiteGround (`mx10/20/30.mailspamprotection.com`). This stops
+  one.com delivery, so confirm who reads one.com first. Reversible.

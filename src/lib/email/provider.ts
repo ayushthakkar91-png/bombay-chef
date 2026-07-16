@@ -9,9 +9,8 @@ import "server-only";
  * Env:
  *   EMAIL_PROVIDER       'brevo' | 'console' (default: brevo if BREVO_API_KEY set)
  *   BREVO_API_KEY        Brevo transactional API key
- *   EMAIL_FROM_ADDRESS   e.g. reservations@bombaybicyclechef.com
+ *   EMAIL_FROM_ADDRESS   e.g. info@bombaybicyclechef.com
  *   EMAIL_FROM_NAME      e.g. Bombay Bicycle Chef
- *   EMAIL_REPLY_TO       real mailbox for guest replies (Brevo sender can't receive)
  *   ADMIN_NOTIFY_EMAIL   inbox for new-booking admin alerts
  */
 
@@ -29,10 +28,8 @@ export interface EmailProvider {
 }
 
 // Domain must be authenticated in Brevo or sends are rejected at the API.
-const FROM_ADDRESS = process.env.EMAIL_FROM_ADDRESS || "reservations@bombaybicyclechef.com";
+const FROM_ADDRESS = process.env.EMAIL_FROM_ADDRESS || "info@bombaybicyclechef.com";
 const FROM_NAME = process.env.EMAIL_FROM_NAME || "Bombay Bicycle Chef";
-// Reply-to is a real, monitored mailbox — guests do reply to booking emails.
-const REPLY_TO = process.env.EMAIL_REPLY_TO || "balham@bombaybicyclechef.com";
 
 class BrevoProvider implements EmailProvider {
   readonly name = "brevo";
@@ -49,7 +46,6 @@ class BrevoProvider implements EmailProvider {
       body: JSON.stringify({
         sender: { name: FROM_NAME, email: FROM_ADDRESS },
         to: [{ email: msg.to, name: msg.toName }],
-        replyTo: { email: REPLY_TO, name: FROM_NAME },
         subject: msg.subject,
         htmlContent: msg.html,
         textContent: msg.text,
