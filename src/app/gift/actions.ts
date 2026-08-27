@@ -24,7 +24,7 @@ export type GiftBuyInput = {
 export type GiftBuyResult = { ok: true; url: string } | { ok: false; error: string };
 
 export async function buyGiftCard(input: GiftBuyInput): Promise<GiftBuyResult> {
-  if (!(await rateLimit("gift-buy", { limit: 5, windowSec: 60 })).ok) {
+  if (!(await rateLimit("gift-buy", { limit: 5, windowSec: 60, failClosed: true })).ok) {
     return { ok: false, error: "Too many attempts. Please wait a moment and try again." };
   }
   const amount = Math.round(input.amountPence);

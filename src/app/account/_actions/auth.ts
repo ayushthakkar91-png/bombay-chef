@@ -44,7 +44,7 @@ async function linkAndEnsure(userId: string, email: string | null, marketing: bo
 }
 
 export async function register(_prev: ActionState, form: FormData): Promise<ActionState> {
-  if (!(await rateLimit("account-register", { limit: 5, windowSec: 60 })).ok) {
+  if (!(await rateLimit("account-register", { limit: 5, windowSec: 60, failClosed: true })).ok) {
     return fail("Too many attempts. Please wait a minute and try again.");
   }
   const fullName = str(form, "fullName");
@@ -80,7 +80,7 @@ export async function register(_prev: ActionState, form: FormData): Promise<Acti
 }
 
 export async function login(_prev: ActionState, form: FormData): Promise<ActionState> {
-  if (!(await rateLimit("account-login", { limit: 5, windowSec: 60 })).ok) {
+  if (!(await rateLimit("account-login", { limit: 5, windowSec: 60, failClosed: true })).ok) {
     return fail("Too many attempts. Please wait a minute and try again.");
   }
   const email = str(form, "email");

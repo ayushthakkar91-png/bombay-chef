@@ -36,9 +36,12 @@ function memHit(rawKey: string, limit: number, windowSec: number): RateResult {
   return { ok: true, retryAfter: 0 };
 }
 
-async function redisHit(rawKey: string, limit: number, windowSec: number): Promise<RateResult> {
+async function redisHit(rawKey: string, limit: number, windowSec: number, failClosed: boolean): Promise<RateResult> {
   const windowId = Math.floor(Date.now() / (windowSec * 1000));
   const key = `${rawKey}:${windowId}`;
+  // When failClosed, a Redis outage must NOT silently fall back to the
+  // per-instance limiter (which an attacker can spread across instances) — deny.
+  const onError = (): RateResult => (failClosed ? { ok: false, retryAfter: windowSec } : memHit(rawKey, limit, windowSec));
   try {
     const res = await fetch(`${UPSTASH_URL}/pipeline`, {
       method: "POST",
@@ -49,13 +52,13 @@ async function redisHit(rawKey: string, limit: number, windowSec: number): Promi
       ]),
       cache: "no-store",
     });
-    if (!res.ok) return memHit(rawKey, limit, windowSec); // degrade, never block on infra error
+    if (!res.ok) return onError();
     const data = (await res.json()) as Array<{ result?: number }>;
     const count = Number(data?.[0]?.result ?? 0);
     if (count > limit) return { ok: false, retryAfter: windowSec };
     return { ok: true, retryAfter: 0 };
   } catch {
-    return memHit(rawKey, limit, windowSec); // never block on a transient Redis error
+    return onError();
   }
 }
 
@@ -71,13 +74,23 @@ async function clientIp(): Promise<string> {
  * `limit` requests for `bucket` within the rolling `windowSec` window.
  * Always resolves — callers can rely on `.ok`.
  */
-export async function rateLimit(bucket: string, opts: { limit: number; windowSec: number }): Promise<RateResult> {
+export async function rateLimit(
+  bucket: string,
+  opts: { limit: number; windowSec: number; failClosed?: boolean },
+): Promise<RateResult> {
   const ip = await clientIp();
   const rawKey = `rl:${bucket}:${ip}`;
-  if (UPSTASH_URL && UPSTASH_TOKEN) return redisHit(rawKey, opts.limit, opts.windowSec);
-  if (process.env.NODE_ENV === "production" && !warnedNoRedis) {
-    warnedNoRedis = true;
-    console.warn("[ratelimit] UPSTASH_REDIS_REST_URL/TOKEN not set — using per-instance in-memory limiter (best-effort across serverless instances).");
+  const failClosed = opts.failClosed ?? false;
+  if (UPSTASH_URL && UPSTASH_TOKEN) return redisHit(rawKey, opts.limit, opts.windowSec, failClosed);
+  // No Redis configured. In production, sensitive buckets (failClosed) must deny
+  // rather than trust the per-instance counter an attacker can spread across
+  // serverless instances. Non-sensitive buckets stay best-effort in-memory.
+  if (process.env.NODE_ENV === "production") {
+    if (failClosed) return { ok: false, retryAfter: opts.windowSec };
+    if (!warnedNoRedis) {
+      warnedNoRedis = true;
+      console.warn("[ratelimit] UPSTASH_REDIS_REST_URL/TOKEN not set — using per-instance in-memory limiter (best-effort across serverless instances).");
+    }
   }
   return memHit(rawKey, opts.limit, opts.windowSec);
 }

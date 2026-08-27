@@ -13,7 +13,7 @@ import { rateLimit } from "@/lib/ratelimit";
  * account can never hold a lingering admin session.
  */
 export async function login(_prev: ActionState, form: FormData): Promise<ActionState> {
-  if (!(await rateLimit("admin-login", { limit: 5, windowSec: 60 })).ok) {
+  if (!(await rateLimit("admin-login", { limit: 5, windowSec: 60, failClosed: true })).ok) {
     return fail("Too many attempts. Please wait a minute and try again.");
   }
   const email = str(form, "email");
