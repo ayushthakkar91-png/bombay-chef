@@ -1,16 +1,30 @@
 "use server";
 
 import { requireStaff } from "@/lib/auth/dal";
-import { getServiceClient } from "@/lib/supabase/clients";
+import { getUserClient } from "@/lib/supabase/clients";
 
 export type SearchHit = { group: string; label: string; sub?: string; href: string };
 
-/** Universal admin search across the core entities. Staff-gated, read-only. */
+/** Mask a gift-card bearer code — never surface the full redeemable value. */
+function maskGiftCode(code: unknown): string {
+  const s = String(code ?? "");
+  return s.length <= 4 ? "••••" : `••••${s.slice(-4)}`;
+}
+
+/**
+ * Universal admin search across the core entities. Staff-gated and **RLS-scoped**:
+ * it runs on the signed-in user's client, so Postgres RLS restricts results to
+ * what the staffer may actually see — a branch's own orders/reservations
+ * (`role_at_least('staff', location_id)`), customers/gift-cards only for managers
+ * (`role_at_least('location_manager'|'restaurant_manager')`). A base staffer at
+ * one location no longer sees other branches' data. Gift-card codes are masked to
+ * the last four characters regardless of role — they are bearer secrets.
+ */
 export async function globalSearch(query: string): Promise<SearchHit[]> {
   await requireStaff();
   const term = query.trim();
   if (term.length < 2) return [];
-  const supabase = getServiceClient();
+  const supabase = await getUserClient();
   if (!supabase) return [];
   const like = `%${term.replace(/[%_,()*]/g, "")}%`; // strip PostgREST .or() metachars
 
@@ -29,7 +43,7 @@ export async function globalSearch(query: string): Promise<SearchHit[]> {
   for (const r of reservations.data ?? []) hits.push({ group: "Reservations", label: (r.guest_name as string) ?? "Booking", sub: `Party of ${r.party_size} · ${r.status}`, href: `/admin/reservations` });
   for (const c of customers.data ?? []) hits.push({ group: c.loyalty_opt_in ? "Loyalty" : "Customers", label: name(c.profiles), sub: c.loyalty_opt_in ? "Loyalty member" : undefined, href: `/admin/customers/${c.id}` });
   for (const d of dishes.data ?? []) hits.push({ group: "Dishes", label: d.name as string, sub: (d.price as string) ?? undefined, href: `/admin/menu/items` });
-  for (const g of giftCards.data ?? []) hits.push({ group: "Gift cards", label: `${g.code}`, sub: `£${(Number(g.balance_pence) / 100).toFixed(2)} balance`, href: `/admin/giftcards` });
+  for (const g of giftCards.data ?? []) hits.push({ group: "Gift cards", label: maskGiftCode(g.code), sub: `£${(Number(g.balance_pence) / 100).toFixed(2)} balance`, href: `/admin/giftcards` });
 
   return hits;
 }

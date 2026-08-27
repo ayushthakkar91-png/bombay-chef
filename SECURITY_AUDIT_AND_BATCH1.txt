@@ -1,0 +1,540 @@
+================================================================================
+SECURITY AUDIT & IMPLEMENTATION REPORT
+Bombay Bicycle Chef / Restaurant OS  (Next.js 16 App Router + Supabase)
+Mode: Audit-only audit, then approved Implementation Batch 1 (F2, F3, F6, +F10)
+Repo: C:\Users\ayush\Desktop\bom   Branch: security/batch1-f2-f3-f6
+================================================================================
+
+Scope note: the second working directory qr-menu-saas/src/app/review is a
+DIFFERENT project and was NOT audited.
+
+No claim of "100% secure" or "unhackable" is made. Security cannot be guaranteed
+against future vulnerabilities, credential compromise, or infrastructure failure.
+What follows is verified findings, attack paths, fixes, tests, remaining risks.
+
+
+################################################################################
+PART A — FULL SECURITY AUDIT
+################################################################################
+
+--------------------------------------------------------------------------------
+1. EXECUTIVE SUMMARY
+--------------------------------------------------------------------------------
+Mature, security-conscious codebase. Fundamentals are right: cart pricing is
+fully server-authoritative (client prices are display-only); the Stripe amount is
+computed server-side and an order is marked paid ONLY by a signature-verified
+webhook; RLS is enabled on all 67 tables; the admin authorization model reads
+trusted DB roles (never client claims); the service-role key is server-only and
+used with authorization-first discipline; strong security headers already exist;
+migration 0018 shows the Supabase security linter was already run and closed
+(pinned search_path, security_invoker view, revoked RPC grants).
+
+The real risks are a small number of over-permissive RLS policies reachable
+through Supabase's public PostgREST API (not the app), and the voucher/promo
+layer (no atomic single-use, no owner-scoping). One latent-critical: the
+multi-tenant SaaS layer added tenant plumbing but never applied per-table tenant
+RLS, so onboarding a second tenant would expose all tenants' data to each other.
+
+KEY MENTAL MODEL: the Supabase anon key is public (NEXT_PUBLIC_SUPABASE_ANON_KEY)
+and PostgREST at /rest/v1 is internet-exposed. A logged-in customer holds a real
+JWT and can call that API DIRECTLY, bypassing your server actions. So for
+authenticated users, RLS — not your server code — is the boundary.
+
+--------------------------------------------------------------------------------
+2. PRODUCTION-READINESS VERDICT
+--------------------------------------------------------------------------------
+- Single-restaurant app: CONDITIONALLY READY — fix P1 findings first (F2-F6).
+- Multi-tenant SaaS: NOT READY (F1). Do not onboard a 2nd tenant until per-table
+  tenant RLS is applied.
+
+--------------------------------------------------------------------------------
+3. ARCHITECTURE & TRUST BOUNDARIES
+--------------------------------------------------------------------------------
+- Next.js 16 (middleware renamed proxy.ts), React 19, TypeScript strict.
+- Two Supabase clients (src/lib/supabase/clients.ts): getUserClient() = anon key +
+  cookies, RLS-ENFORCED; getServiceClient() = service-role, BYPASSES RLS,
+  import "server-only". No browser client — all data access is server-side.
+- Auth layering: proxy.ts = optimistic authentication only (session exists?) on
+  /admin,/account,/platform. Real authorization = DAL (requireStaff/requireRole,
+  requireCustomer, saas/tenancy) PLUS Postgres RLS.
+- Trust boundaries: (1) public internet -> server actions/route handlers;
+  (2) authenticated JWT -> PostgREST + RLS (independent of app); (3) service-role
+  modules -> full DB. Boundary #2 is where the P1 findings live.
+
+--------------------------------------------------------------------------------
+4. CRITICAL VULNERABILITIES
+--------------------------------------------------------------------------------
+[F1] No tenant isolation on any domain table  (latent CRITICAL) · P1
+  Confidence High · CWE-284/639.
+  Where: 0017_saas_platform.sql:5-6 (deferral stated in comment);
+    0002_auth_and_rbac.sql:45-54 (staff_roles has no tenant_id); 0003:91; 0002:148.
+  Evidence: 0017 added tenant_id only to `locations` and a separate tenant_users
+    membership the domain RLS never consults. Every domain policy authorizes via
+    role_at_least()/is_staff() reading tenant-agnostic staff_roles.
+  Attack path: onboard tenant B -> any org-wide restaurant_manager/super_admin of
+    B reads/writes ALL tenants' customers, orders, menu, marketing.
+  Impact: full cross-tenant breach the moment a 2nd tenant exists. Currently
+    mitigated only by a single seeded tenant + NEXT_PUBLIC_FEATURE_PLATFORM=false.
+  Fix: add tenant_id to staff_roles; add current_tenant_id()-scoped predicate to
+    every domain policy; gate the /platform flag. Effort: Large.
+
+--------------------------------------------------------------------------------
+5. HIGH-RISK VULNERABILITIES
+--------------------------------------------------------------------------------
+[F2] customers FOR ALL self-policy — customer can forge CRM fields & self-delete · P1
+  High · High · CWE-639/915. 0003_customers.sql:89-90:
+    create policy "own customer rw" on customers for all
+      using (id = auth.uid()) with check (id = auth.uid());
+  Attack: logged-in customer calls PostgREST PATCH /rest/v1/customers?id=eq.<self>
+    to set lifetime_value_pence, orders_count, tags, stripe_customer_id,
+    default_address_id; or DELETE own row (cascades to addresses/loyalty/referrals).
+  Fix: split into for select / for update with a WITH CHECK pinning non-mutable
+    columns; remove DELETE; route CRM writes to service-role. Effort: Small-Medium.
+  [IMPLEMENTED IN BATCH 1 — see Part B]
+
+[F3] reservations FOR ALL self-policy bypasses the booking engine · P1
+  High · High · CWE-639/840. 0005_reservations.sql:151-152.
+  Attack: logged-in customer INSERT/UPDATE/DELETE own reservation rows directly
+    via PostgREST, choosing any location_id/party_size/starts_at, ignoring
+    reservation_slots.max_covers and reservation_blocks.
+  Impact: table oversell, unlimited self-bookings, self-editing confirmed bookings.
+  Fix: customer policy for select only; writes through server action/RPC that
+    enforces the engine. Effort: Medium.
+  [IMPLEMENTED IN BATCH 1 — see Part B]
+
+[F4] Personal loyalty/birthday vouchers not owner-scoped · P1
+  High · High · CWE-639/284. src/lib/ordering/pricing.ts:171-175 looks up promo by
+    ilike(code) only — no customer_id filter. Personal vouchers minted with
+    customer_id (loyalty/service.ts:119-127,154-162; promo_codes.customer_id added
+    0011:15). Verified: applyPromo references none of customer_id,
+    per_customer_limit, first_order_only.
+  Attack: any guest submits "BDAY-XXXX"/"PTS-XXXX" belonging to another customer
+    -> discount applies. per_customer_limit / first_order_only (0006:13-14) are
+    dead columns.
+  Fix: filter applyPromo to customer_id IS NULL OR = authed uid; enforce
+    per_customer_limit/first_order_only via promo_redemptions. Effort: Medium.
+
+[F5] Promo single-use / limit not atomically enforced (unused promo_redemptions) · P1
+  High · High · CWE-362/841. pricing.ts:183 checks used_count>=global_limit; the
+    increment is non-atomic read-then-write far later (confirm.ts:49-52) AFTER the
+    discount is baked into the Stripe charge (order/actions.ts:108-124). The table
+    designed to enforce caps — promo_redemptions (0006:125-132) — is NEVER written.
+  Attack: obtain a global_limit=1 code, fire N concurrent createCheckout calls ->
+    all price at used_count=0, all charge discounted. "One-time" becomes unlimited.
+  Fix: reserve redemption atomically at order-create via a UNIQUE-constrained
+    promo_redemptions insert or a SECURITY DEFINER RPC. Effort: Medium.
+
+[F6] globalSearch leaks cross-branch PII & live gift-card codes to any staff · P1/P2
+  High · High · CWE-284/639. src/app/admin/_actions/search.ts:9-35 gated only by
+    requireStaff() (rank >=1, any branch) but queries with the SERVICE client (RLS
+    bypassed) across orders/reservations/customers/gift_cards org-wide (:22,:32).
+  Attack: a base staffer at one branch reads other branches' customer PII, booking
+    details, AND live gift-card codes + balances (bearer instruments).
+  Fix: run through getUserClient() (RLS scopes it); never return gift-card code.
+    Effort: Small.
+  [IMPLEMENTED IN BATCH 1 — see Part B]
+
+--------------------------------------------------------------------------------
+6. MEDIUM & LOW-RISK FINDINGS
+--------------------------------------------------------------------------------
+[F7]  Med · Gift-card "fully covered" order marked paid BEFORE debit -> concurrency
+      yields 2 paid orders on one balance (free order up to card value; ledger
+      stays correct, but payment isn't conditional on debit).
+      order/actions.ts:170-172 -> confirm.ts:25-47 before giftcards/service.ts:159.
+[F8]  Med · Loyalty double-EARN race — no UNIQUE(order_id,reason) on loyalty_ledger;
+      concurrent webhook retries both pass the existence check and double points.
+      (Over-REDEEM is safe via points_balance>=0 CHECK, 0007:8.)
+      loyalty/service.ts:47-60; 0007:19-31.
+[F9]  Med · Rate limits best-effort — ratelimit.ts falls back to per-instance
+      in-memory when UPSTASH_REDIS_* unset or on Redis error; multi-instance
+      serverless lets an attacker spread requests (weakens admin-login 5/min &
+      booking caps). ratelimit.ts:27,52,58,74-83.
+[F10] Med · reservation_status_history fail-closed trigger — trigger is SECURITY
+      INVOKER, table has no INSERT policy; a staff status change via the RLS user
+      client is denied and errors. 0005:83-104,165; admin/_actions/reservations.ts:41-43.
+      [INVESTIGATED IN BATCH 1 — confirmed by static analysis, not fixed]
+[F11] Low-Med · CSV/formula injection in report export — cells not neutralized for
+      leading = + - @; a customer named =HYPERLINK(...) executes in Excel.
+      api/admin/reports/export/route.ts:8-12,32.
+[F12] Low · Cron secret: non-timing-safe != compare AND accepted via ?secret= query
+      string (leaks to logs/Referer). Fails closed if unset (good).
+      api/cron/*/route.ts (e.g. loyalty:21-22).
+[F13] Low · Unauthenticated booking = email-bomb primitive to arbitrary guest_email,
+      rate-limited only best-effort. No header injection (Brevo is a JSON API).
+      reservations/actions.ts:134-150.
+[F14] Low · User enumeration via verbatim Supabase error (register / createStaff).
+      account/_actions/auth.ts:71, admin/_actions/staff.ts:47.
+[F15] Low · Open redirect to DB-stored link_url (marketing click-tracking),
+      unauthenticated. api/m/[id]/route.ts:17.
+[F16] Low · Guest track page renders contactEmail + full address; 128-bit token in
+      URL (history/Referer). Mitigated by strict Referrer-Policy for cross-origin.
+      order/track/[token]/page.tsx:69,106-109.
+[F17] Low · CSP script-src 'unsafe-inline' (no nonce/hash) weakens XSS defense;
+      other headers strong. next.config.ts:20.
+[F18] Low · confirmPaidOrder doesn't assert amount_total == order.total_pence
+      (defense-in-depth; session is server-authoritative). webhooks/stripe:31.
+[F19] Info · JSON-LD via JSON.stringify not </script>-safe (config-only today).
+      components/seo/Schema.tsx:6.
+[F20] Info · Append-only tables convention-only — no FORCE RLS; service-role can
+      rewrite history. 0002:93, 0007, 0017:92.
+[F21] Info · lucide-react ^1.21.0 anomalous version (real line is 0.x) — verify the
+      resolved package (supply-chain/typo). package.json.
+[F22] Info · Org-wide managers read ALL customer PII with no location/tenant scope
+      — GDPR blast-radius. 0002:121, 0003:91.
+[F23] Info · supabase/server.ts anon client lacks import "server-only" (only server
+      importers today).
+
+--------------------------------------------------------------------------------
+7. SUPABASE TABLE / RLS MATRIX  (67 tables — ALL RLS-enabled, none FORCED)
+--------------------------------------------------------------------------------
+Every table has RLS enabled; none wide-open; no GRANTs to anon/authenticated; no
+storage or realtime configured; every SECURITY DEFINER function has a pinned
+search_path. Representative rows:
+
+  menu_items/item_modifiers/allergens/location_menu_items/rewards/plans/
+    marketing_popup   RLS=Y  public read (using(true)/is_active); mgr write  [intended]
+  profiles            RLS=Y  own read/update (id=auth.uid()); mgr read
+                             [authz uses staff_roles NOT editable type — safe]
+  staff_roles         RLS=Y  own read; super_admin ALL [no self-grant — safe]
+  customers           RLS=Y  own FOR ALL; mgr read                     [F2]
+  addresses/favourites RLS=Y own FOR ALL (customer_id=auth.uid())      [scoped OK]
+  reservations        RLS=Y  own FOR ALL; staff manage @loc            [F3]
+  orders              RLS=Y  own READ only; staff manage @loc (branch)  [OK]
+  order_items/payments RLS=Y own read via order join; staff @loc        [OK]
+  refunds/promo_redemptions/gift_card_transactions RLS=Y mgr read only  [OK]
+  loyalty_accounts/loyalty_ledger RLS=Y own read; no client write       [earn race F8]
+  promo_codes/gift_cards RLS=Y mgr manage; own/purchaser read           [owner gap F4]
+  notifications(0008)/cookie_consents(0020) RLS=Y no policy = DENY-ALL   [server-only OK]
+  tenants/tenant_settings/subscriptions/tenant_users/platform_admins/
+    tenant_audit_log  RLS=Y  platform_admin ALL; member read own        [plumbing — F1]
+  all per-location tables (tables/shifts/stock/PO/waste/delivery_zones/
+    blocks/location_menu_items) RLS=Y role_at_least('...',location_id)   [branch-isolated OK]
+
+Cross-customer IDOR is PREVENTED for authenticated users: every personal-data
+policy compares row owner to auth.uid(), never a client parameter. Guest orders/
+reservations (customer_id null) are unreadable via anon; reachable only via
+unguessable 128-bit tokens (manage_token, track_token, view_token). Residual
+cross-account exposure = manager roles (by design, unscoped — F22) and the
+over-broad FOR ALL self-policies (F2/F3, fixed in Batch 1).
+
+--------------------------------------------------------------------------------
+8. DATABASE FUNCTION / RPC AUDIT
+--------------------------------------------------------------------------------
+9 SECURITY DEFINER functions; ALL have a pinned search_path (0018:21-44 ->
+public, pg_temp). RPC-reachable definers (is_staff, role_at_least,
+is_platform_admin, is_tenant_member) evaluate only auth.uid()'s own rows and
+return booleans — no leakage, no injection. Internal/trigger functions had EXECUTE
+revoked from anon/authenticated (0018:53-72). handle_new_user() (signup trigger)
+is definer with parameterized inserts and on-conflict-do-nothing. No SECURITY
+DEFINER is unnecessary.
+
+--------------------------------------------------------------------------------
+9. STORAGE & REALTIME AUDIT
+--------------------------------------------------------------------------------
+Neither configured at the DB layer. No storage.buckets/objects policies; file
+references are plain image_url/logo_url text columns with NO MIME/size/path
+enforcement. If Supabase Storage is used via the dashboard, audit its bucket
+policies THERE (not visible in migrations). No realtime publication — Realtime is
+off. One view, current_consent, correctly set security_invoker=true (0018:11-16).
+
+--------------------------------------------------------------------------------
+10. NEXT.JS ROUTE & SERVER ACTION AUDIT
+--------------------------------------------------------------------------------
+12 route handlers. All webhooks (Stripe, Stripe-billing, Twilio) verify signatures
+with timingSafeEqual + replay windows and FAIL CLOSED when secrets unset. All 5
+crons fail closed (503) if CRON_SECRET unset (F12 = compare/query nit).
+availability route public but rate-limited, aggregates only. ics/[token] and
+m/[id] are token/public (F15).
+Server Actions: every admin action calls requireRole(...); every account action
+requireCustomer(); every platform action requirePlatformAdmin()/requireTenantAccess().
+No action lacks an auth check. "trust client locationId for the app check, write
+via getUserClient()" is SAFE because RLS (role_at_least('staff',location_id)) is
+the real boundary — cross-location writes hit 0 rows. Exceptions: F6 (globalSearch
+service client) and staff.ts role-grants (service client, but privilege-escalation
+guards canGrantRole/outrank are correct).
+
+--------------------------------------------------------------------------------
+11. AUTH & ADMIN-ACCESS AUDIT
+--------------------------------------------------------------------------------
+Textbook. Admin identity = auth.getUser() (validated JWT) -> staff_roles from DB
+(dal.ts:34-68), never a client claim. requireStaff/requireRole enforce+redirect;
+(panel) layout gates all admin pages; every mutating action re-checks. Login
+rate-limited (5/min), generic errors, non-staff signed back out. No open redirect
+— both logins constrain next to /admin|/account prefix (admin/_actions/auth.ts:50).
+No password-reset/email-change surface exists. Users cannot self-escalate (authz
+from staff_roles, no self-insert). MFA for admins NOT enforced (operational rec).
+
+--------------------------------------------------------------------------------
+12. RESTAURANT BUSINESS-LOGIC VULNERABILITIES
+--------------------------------------------------------------------------------
+Done right (verified): server-authoritative pricing; qty clamped
+max(1,min(50,trunc)); modifiers validated vs parent item; discounts capped at
+subtotal; min-order server-side; integer pence; order paid ONLY by verified
+webhook; success redirect cosmetic; idempotent order/gift-card confirmation via
+atomic status claims; order state machine guarded by DB trigger + app config +
+admin re-check; paid orders can't be cancelled without refund path (reverses
+loyalty + audits).
+Gaps: F4 (voucher theft), F5 (promo reuse), F7 (gift-card free-order race), F8
+(loyalty double-earn), F3 (direct reservation manipulation). Not enforced:
+required-modifier groups (verify against menu model).
+
+--------------------------------------------------------------------------------
+13. STRIPE / PAYMENT AUDIT
+--------------------------------------------------------------------------------
+Solid. Secret key server-only (stripe/client.ts:1,14). Charge = one line item at
+server total; client never sends an amount. Webhook verified over RAW body with
+HMAC-SHA256, timing-safe, 5-min replay window; ONLY place an order is paid.
+Refunds require location_manager at the order's branch, verify a succeeded
+payment, audit-log with actor. Idempotency via atomic status claims (no processed-
+event.id store — F18 + a stripe_events table would harden further).
+
+--------------------------------------------------------------------------------
+14. DUPLICATE-CODE INVENTORY
+--------------------------------------------------------------------------------
+- isSupabaseConfigured() defined twice (supabase/server.ts:7, clients.ts:12).
+- EMAIL_RE duplicated in 8+ files (order, reservations, account auth, staff, gift,
+  newsletter, tenants, provision).
+- DATE_RE + MAX_PARTY=12 + validateCore duplicated across reservations/actions.ts
+  and reservations/manage/actions.ts.
+- Two anon-client factories (server.ts getSupabase vs clients.ts getUserClient).
+- No schema-validation library; lib/admin/validation.ts hand-rolled.
+
+--------------------------------------------------------------------------------
+15. DEAD-CODE CANDIDATES
+--------------------------------------------------------------------------------
+None confirmed definitely-dead. promo_redemptions (table) is unused code-wise but
+is a schema to START WRITING (F5), not delete. .env.example EMAIL_REPLY_TO now
+stale. supabase/server.ts is a DUPLICATE, not dead. All page/layout/route/proxy/
+sitemap/robots/config convention files must NOT be treated as dead. (Static grep
+only — treat as possibly-unused.)
+
+--------------------------------------------------------------------------------
+16. STRUCTURAL PROBLEMS
+--------------------------------------------------------------------------------
+No CI/CD (.github absent). No test framework / tests. No Zod. .env.example missing
+NEXT_PUBLIC_FEATURE_PLATFORM, NEXT_PUBLIC_SITE_ENABLED, UPSTASH_REDIS_REST_URL/TOKEN.
+Positives: business logic isolated in lib/**; no direct Supabase calls in the 112
+client components; auth centralized in DAL; single source for pricing/loyalty/
+gift-cards; no god files.
+
+--------------------------------------------------------------------------------
+17. RECOMMENDED PROJECT STRUCTURE
+--------------------------------------------------------------------------------
+Already close to target. Do NOT restructure. Smallest changes: merge
+supabase/server.ts into clients.ts + de-dup isSupabaseConfigured; add
+lib/validation/ (adopt Zod); add lib/security/ for a timing-safe secret-compare
+helper reused by all crons.
+
+--------------------------------------------------------------------------------
+18. DEPENDENCY & SECRET-HANDLING FINDINGS
+--------------------------------------------------------------------------------
+Secrets clean: none logged, none hardcoded, .env* gitignored + untracked. No
+NEXT_PUBLIC_* holds a secret. Rotate BREVO_API_KEY (was exposed in chat). Verify
+lucide-react ^1.21.0 resolves to the intended package (F21). Lockfile present.
+Run npm audit before release (not run — audit-only).
+
+--------------------------------------------------------------------------------
+19. PERFORMANCE / SCALABILITY FINDINGS
+--------------------------------------------------------------------------------
+Indexes on hot FKs present. RLS helpers stable security definer. For >=200
+concurrent users the promo/gift-card/loyalty races (F5/F7/F8) worsen under load;
+the in-memory rate-limit fallback (F9) is not multi-instance safe. Load-test:
+menu browse, login burst, concurrent checkout on one promo/gift card, concurrent
+loyalty earn via webhook replay, tracking-by-token, admin live-orders. Capacity
+cannot be certified from inspection alone.
+
+--------------------------------------------------------------------------------
+20. MISSING SECURITY TESTS
+--------------------------------------------------------------------------------
+No tests exist. Required suite: anon/customer/cross-customer/cross-branch RLS
+(esp. F2/F3 direct-PostgREST); server-action authn/authz; price/modifier/negative-
+qty; voucher owner-scope + concurrent single-use (F4/F5); gift-card concurrent
+full-cover (F7); loyalty double-earn (F8); order-state transitions; Stripe sig-
+failure/duplicate/out-of-order/amount-mismatch; guest-token tracking; rate-limit;
+CSV-injection (F11); open-redirect (F15).
+
+--------------------------------------------------------------------------------
+21. PRIORITISED REMEDIATION PLAN
+--------------------------------------------------------------------------------
+P0 (active, directly exploitable): F2, F3, F4, F5, F6.
+P1 (before production): F1 (before any 2nd tenant), F7, F8, F9.
+P2 (hardening): F10, F11, F12, F17, F18; rotate BREVO key; add CI + first RLS tests.
+P3 (maintainability): F13-F16, F19-F23; de-dup EMAIL_RE/clients; adopt Zod;
+   .env.example gaps.
+
+--------------------------------------------------------------------------------
+22. SAFE DELETION / CONSOLIDATION PLAN
+--------------------------------------------------------------------------------
+Nothing safe to delete yet. Consolidations (update refs -> remove, with tests):
+merge supabase/server.ts -> clients.ts; centralize EMAIL_RE/DATE_RE/MAX_PARTY.
+promo_redemptions is to be USED, not removed.
+
+--------------------------------------------------------------------------------
+23. REMAINING UNKNOWNS & LIMITATIONS
+--------------------------------------------------------------------------------
+Dashboard-only settings not visible from code: actual Storage buckets/policies,
+Auth settings (email confirmation, password policy, leaked-password protection,
+allowed redirect URLs, OTP/CAPTCHA), and whether RLS is truly enforced live —
+VERIFY IN DASHBOARD. F10 needs a runtime check. No app run/tests/npm audit/Supabase
+advisors were executed (audit-only). No dynamic exploitation performed.
+
+
+################################################################################
+PART B — IMPLEMENTATION BATCH 1 (approved: F2, F3, F6; investigate F10)
+################################################################################
+
+--------------------------------------------------------------------------------
+PRE-FLIGHT
+--------------------------------------------------------------------------------
+- Branch: security/batch1-f2-f3-f6 (off main).
+- Baselines BEFORE changes: tsc clean (exit 0); next build passed (exit 0);
+  eslint exit 1 with 1 PRE-EXISTING error (setState-in-effect, unrelated file) +
+  144 warnings.
+- Grants verified from migration source of truth: NO GRANT statements to anon/
+  authenticated — RLS is the sole boundary. Policies on customers/reservations/
+  orders/gift_cards read and quoted. Live grants NOT queried (no local DB;
+  production not touched) — verify in dashboard before deploy.
+- Environment limit: no Docker/psql/local Postgres/pg module -> cannot execute
+  DB/RLS tests or `supabase db lint` here.
+
+--------------------------------------------------------------------------------
+EXACT FILES CHANGED
+--------------------------------------------------------------------------------
+NEW  supabase/migrations/0021_security_batch1_f2_f3.sql   F2+F3 RLS (self-guarding)
+NEW  src/lib/account/customer-write.ts                    F2 service-role allowlist helper
+MOD  src/app/account/_actions/profile.ts                  route birthday + default_address_id thru helper
+MOD  src/app/admin/_actions/search.ts                     F6 RLS-scoped client + gift-card masking
+NEW  supabase/tests/rls_batch1_test.sql                   pgTAP regression tests (F2,F3,F10 repro)
+NEW  supabase/tests/README.md                             run instructions + env note
+No deployed migration was edited.
+
+--------------------------------------------------------------------------------
+MIGRATION SQL (0021 — NOT yet applied anywhere)
+--------------------------------------------------------------------------------
+F2 customers:  drop "own customer rw" (FOR ALL) ->
+               create "own customer read" for select using (id = auth.uid());
+F3 reservations: drop "own reservations rw" (FOR ALL) ->
+               create "own reservations read" for select using (customer_id = auth.uid());
+Self-guarding (to_regclass checks), idempotent (drop-then-create), staff policies
+untouched. Full file: supabase/migrations/0021_security_batch1_f2_f3.sql.
+
+--------------------------------------------------------------------------------
+IMPLEMENTATION NOTES
+--------------------------------------------------------------------------------
+F2 Customers: DELETE + unrestricted UPDATE removed at RLS; self-read kept. The two
+  legit customer writes (birthday, default_address_id) now go through
+  patchOwnCustomer(userId, fields) — server-only service-role helper with an
+  explicit allowlist of exactly those two columns. System/CRM fields
+  (lifetime_value_pence, orders_count, tags, stripe_customer_id, last_order_at,
+  loyalty_opt_in, id) are rejected by omission. Row creation was already
+  service-role (account/_actions/auth.ts:28) — nothing breaks.
+
+F3 Reservations: customer access now self-READ only. Verified by grep that NO app
+  code writes reservations through the customer RLS client — every create/modify/
+  cancel already runs through secured server actions / service role. So F3 is
+  policy-only with ZERO code change and no functional impact; it purely closes the
+  direct-PostgREST hole.
+
+F6 Global search: switched from RLS-bypassing service client to getUserClient(),
+  so RLS scopes results (base staff -> own branch only; customers/gift-cards ->
+  managers only). Gift-card codes masked to last four (••••1234) for all roles.
+  Behaviour change: base staff no longer get customer/gift-card hits (intended
+  least-privilege tightening).
+
+--------------------------------------------------------------------------------
+F10 INVESTIGATION — confirmed by static analysis, NOT fixed
+--------------------------------------------------------------------------------
+setReservationStatus (admin/_actions/reservations.ts:41-43) uses getUserClient().
+A status change fires reservations_guard_status() (SECURITY INVOKER, 0005:83-104)
+which INSERTs into reservation_status_history — RLS-on with NO INSERT policy
+(0005:165). Under the authenticated role the insert is denied, so the whole UPDATE
+errors. Guest/admin cancel via the SERVICE client is unaffected.
+
+Could NOT run the required runtime DB test (no local Postgres). Per instruction,
+NO fix applied. Reproduction encoded as the last assertion in rls_batch1_test.sql
+(expects the staff update to throw today).
+
+PROPOSED FIX (NOT APPLIED — apply only after reproducing F10 on a real DB):
+  create or replace function reservations_guard_status() returns trigger
+    language plpgsql security definer set search_path = public, pg_temp as $$
+  declare ok boolean;
+  begin
+    if tg_op = 'UPDATE' and new.status is distinct from old.status then
+      ok := case old.status
+        when 'pending'   then new.status in ('confirmed','cancelled')
+        when 'confirmed' then new.status in ('seated','cancelled','no_show')
+        when 'seated'    then new.status in ('completed','cancelled')
+        else false end;
+      if not ok then raise exception 'illegal reservation transition % -> %', old.status, new.status; end if;
+      insert into reservation_status_history (reservation_id, from_status, to_status, actor_id)
+      values (new.id, old.status, new.status, auth.uid());
+    end if;
+    return new;
+  end $$;
+  revoke execute on function public.reservations_guard_status() from public, anon, authenticated;
+Runs the audit insert as the function owner (bypasses the missing INSERT policy);
+pinned path + revoked EXECUTE keep it tightly controlled; the insert is derived
+solely from the validated transition (no user-controlled table/identifier).
+
+--------------------------------------------------------------------------------
+TEST / VERIFICATION RESULTS
+--------------------------------------------------------------------------------
+TypeScript tsc --noEmit ............ PASS (exit 0)
+ESLint — changed files ............. PASS (0 problems)
+ESLint — whole project ............. 145 problems, IDENTICAL to baseline (no new
+                                     issues; the 1 error pre-exists elsewhere)
+Production next build ............... PASS (exit 0)
+Secret scan (changed/new files) ..... CLEAN
+pgTAP RLS tests (rls_batch1_test.sql) AUTHORED, NOT EXECUTED — no runnable DB in
+                                     this env. Run: supabase test db (needs Docker).
+Supabase db lint / advisors ......... NOT RUN — LegacyDbConnectError (no local DB);
+                                     production not touched.
+
+--------------------------------------------------------------------------------
+REMAINING RISKS
+--------------------------------------------------------------------------------
+- RLS tests NOT actually run — F2/F3 implemented + statically sound but not
+  empirically proven. Run supabase test db on local/staging before trusting in
+  prod. auth.users fixture columns may need alignment with live auth schema.
+- F10 unreproduced (no DB) and unfixed — staff reservation status changes may
+  currently be broken in production. Confirm on staging, then apply proposed 0022.
+- Deploy ordering matters (below).
+- Out of scope still open: F1, F4/F5, F7/F8, F9, F22.
+
+--------------------------------------------------------------------------------
+DEPLOYMENT & ROLLBACK
+--------------------------------------------------------------------------------
+DEPLOY ORDER (important): CODE FIRST, MIGRATION SECOND.
+  1. Merge & deploy the code (branch -> Vercel). New code writes customers via
+     service role; old FOR ALL policy still allows it -> no gap.
+  2. Apply migration 0021 to STAGING; run `supabase test db`; verify F2/F3 pass and
+     no legit flow regressed (edit profile birthday, set default address, view own
+     bookings).
+  3. Apply 0021 to PRODUCTION only after explicit approval (supabase db push, or
+     paste SQL into the Supabase SQL editor). Do NOT run a remote migration without
+     go-ahead.
+  4. Smoke-test: customer views profile/bookings; birthday + default address save;
+     admin global search returns only in-scope results with masked gift-card codes.
+
+ROLLBACK.
+  Code: redeploy previous commit (or git revert).
+  Migration: restore prior policies:
+    drop policy if exists "own customer read" on public.customers;
+    create policy "own customer rw" on public.customers for all
+      using (id = auth.uid()) with check (id = auth.uid());
+    drop policy if exists "own reservations read" on public.reservations;
+    create policy "own reservations rw" on public.reservations for all
+      using (customer_id = auth.uid()) with check (customer_id = auth.uid());
+  Note: rolling back the migration while new code is live is safe (service-role
+  writes still work); rolling back the CODE while 0021 is live reopens the
+  birthday/default-address no-op gap — revert the migration too in that case.
+
+--------------------------------------------------------------------------------
+STATUS
+--------------------------------------------------------------------------------
+Changes are on branch security/batch1-f2-f3-f6, UNCOMMITTED, for review. Nothing
+committed, deployed, or applied to any remote/production DB. F4-F9 NOT started.
+
+================================================================================
+END OF REPORT
+================================================================================

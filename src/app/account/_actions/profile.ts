@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { getUserClient, getServiceClient } from "@/lib/supabase/clients";
 import { getCustomer, requireCustomer } from "@/lib/auth/customer";
+import { patchOwnCustomer } from "@/lib/account/customer-write";
 import { syncCustomerConsent } from "@/lib/marketing/contacts";
 import { type ActionState, fail, ok, str, bool } from "@/lib/admin/validation";
 
@@ -20,8 +21,10 @@ export async function updateProfile(_p: ActionState, form: FormData): Promise<Ac
   if (!supabase) return fail("Unavailable.");
   const { error } = await supabase.from("profiles").update({ full_name: fullName, phone: phone || null }).eq("id", ctx.userId);
   if (error) return fail(error.message);
-  // Birthday lives on the customers row (RLS: own).
-  await supabase.from("customers").update({ birthday: birthday || null }).eq("id", ctx.userId);
+  // Birthday lives on the customers row. `customers` is self-READ only under RLS
+  // (migration 0021); write it through the service-role allowlist, scoped to the
+  // authenticated user.
+  await patchOwnCustomer(ctx.userId, { birthday: birthday || null });
 
   revalidatePath("/account");
   revalidatePath("/account/preferences");
@@ -103,7 +106,9 @@ async function applyDefault(userId: string, addressId: string) {
   if (!supabase) return;
   await supabase.from("addresses").update({ is_default: false }).eq("customer_id", userId);
   await supabase.from("addresses").update({ is_default: true }).eq("id", addressId);
-  await supabase.from("customers").update({ default_address_id: addressId }).eq("id", userId);
+  // `customers` is self-READ only under RLS (migration 0021); write the default
+  // address pointer through the service-role allowlist.
+  await patchOwnCustomer(userId, { default_address_id: addressId });
 }
 
 export async function setDefaultAddress(_p: ActionState, form: FormData): Promise<ActionState> {
