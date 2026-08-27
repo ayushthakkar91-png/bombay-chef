@@ -6,6 +6,7 @@ import { checkDelivery, suggestNearestBranch, type DeliveryCheck, type BranchSug
 import { isStripeConfigured, createCheckoutSession } from "@/lib/stripe/client";
 import { planRedemption } from "@/lib/giftcards/service";
 import { confirmPaidOrder } from "@/lib/ordering/confirm";
+import { getCustomer } from "@/lib/auth/customer";
 import type { CartLineInput } from "@/lib/ordering/types";
 import type { Fulfilment } from "@/lib/ordering/constants";
 import { rateLimit } from "@/lib/ratelimit";
@@ -42,7 +43,8 @@ export async function priceCartAction(input: {
 }): Promise<PriceResult> {
   const locationId = await locationIdFromSlug(input.locationSlug);
   if (!locationId) return { ok: false, error: "That location isn't available." };
-  return priceCart(locationId, input.fulfilment, input.lines, input.promoCode);
+  const customer = await getCustomer();
+  return priceCart(locationId, input.fulfilment, input.lines, input.promoCode, customer?.userId ?? null);
 }
 
 export type CheckoutInput = {
@@ -104,8 +106,13 @@ export async function createCheckout(input: CheckoutInput): Promise<CheckoutResu
     if (!check.served) return { ok: false, error: check.error ?? "We don't deliver to that postcode." };
   }
 
+  // Resolve the signed-in customer (null for guests). Used to owner-scope personal
+  // vouchers (F4), enforce per-customer promo limits (F5), and attribute loyalty.
+  const customer = await getCustomer();
+  const customerId = customer?.userId ?? null;
+
   // Authoritative pricing.
-  const price = await priceCart(locationId, input.fulfilment, input.lines, input.promoCode);
+  const price = await priceCart(locationId, input.fulfilment, input.lines, input.promoCode, customerId);
   if (!price.ok) return { ok: false, error: price.error };
 
   // Gift card redemption (partial balance). Applied after promo + delivery.
@@ -129,6 +136,7 @@ export async function createCheckout(input: CheckoutInput): Promise<CheckoutResu
     .from("orders")
     .insert({
       location_id: locationId,
+      customer_id: customerId,
       fulfilment: input.fulfilment,
       status: "pending_payment",
       subtotal_pence: price.subtotalPence,
@@ -166,6 +174,22 @@ export async function createCheckout(input: CheckoutInput): Promise<CheckoutResu
     })),
   );
 
+  // F5: reserve the promo atomically before any payment is taken. A row lock in
+  // reserve_promo serialises concurrent checkouts, so a single-use code can't be
+  // spent twice. On rejection, roll back the order we just created.
+  if (price.promoId) {
+    const { error: reserveErr } = await supabase.rpc("reserve_promo", {
+      p_promo_id: price.promoId,
+      p_order_id: orderId,
+      p_customer_id: customerId,
+    });
+    if (reserveErr) {
+      await supabase.from("order_items").delete().eq("order_id", orderId);
+      await supabase.from("orders").delete().eq("id", orderId);
+      return { ok: false, error: "That promo code can no longer be applied." };
+    }
+  }
+
   // Fully covered by the gift card → no card payment; confirm immediately.
   if (chargePence <= 0) {
     await confirmPaidOrder(orderId, { method: "gift_card", amountPence: giftRedeem, paymentIntent: null });
@@ -184,6 +208,8 @@ export async function createCheckout(input: CheckoutInput): Promise<CheckoutResu
     });
     return { ok: true, url: session.url };
   } catch {
+    // Free the promo so an unpaid, abandoned order doesn't consume a single-use code.
+    if (price.promoId) await supabase.rpc("release_promo", { p_order_id: orderId });
     return { ok: false, error: "We couldn't reach the payment provider — please try again." };
   }
 }

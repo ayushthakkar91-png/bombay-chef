@@ -35,6 +35,7 @@ export type PriceResult =
       etaMin: number;
       minOrderPence: number;
       promoApplied: string | null;
+      promoId: string | null;
     }
   | { ok: false; error: string };
 
@@ -55,6 +56,7 @@ export async function priceCart(
   fulfilment: Fulfilment,
   lines: CartLineInput[],
   promoCode?: string | null,
+  customerId?: string | null,
 ): Promise<PriceResult> {
   const supabase = getServiceClient();
   if (!supabase) return { ok: false, error: "Ordering is temporarily unavailable." };
@@ -132,12 +134,14 @@ export async function priceCart(
   // Promo
   let discountPence = 0;
   let promoApplied: string | null = null;
+  let promoId: string | null = null;
   if (promoCode?.trim()) {
-    const result = await applyPromo(promoCode.trim(), subtotalPence, deliveryFeePence, locationId);
+    const result = await applyPromo(promoCode.trim(), subtotalPence, deliveryFeePence, locationId, customerId ?? null);
     if (result.error) return { ok: false, error: result.error };
     discountPence = result.discountPence;
     if (result.freesDelivery) deliveryFeePence = 0;
     promoApplied = result.code;
+    promoId = result.promoId;
   }
 
   const totalPence = Math.max(0, subtotalPence - discountPence + deliveryFeePence);
@@ -156,39 +160,51 @@ export async function priceCart(
     etaMin,
     minOrderPence: config.min_order_pence,
     promoApplied,
+    promoId,
   };
 }
+
+type PromoResult = { discountPence: number; freesDelivery: boolean; code: string | null; promoId: string | null; error?: string };
 
 async function applyPromo(
   code: string,
   subtotalPence: number,
   deliveryFeePence: number,
   locationId: string,
-): Promise<{ discountPence: number; freesDelivery: boolean; code: string | null; error?: string }> {
+  customerId: string | null,
+): Promise<PromoResult> {
   const supabase = getServiceClient();
-  if (!supabase) return { discountPence: 0, freesDelivery: false, code: null };
+  if (!supabase) return { discountPence: 0, freesDelivery: false, code: null, promoId: null };
 
   const { data: promo } = await supabase
     .from("promo_codes")
-    .select("code, kind, value, min_spend_pence, global_limit, used_count, location_id, starts_at, ends_at, is_active")
+    .select("id, code, kind, value, min_spend_pence, global_limit, used_count, location_id, customer_id, starts_at, ends_at, is_active")
     .ilike("code", code)
     .maybeSingle();
 
-  if (!promo || !promo.is_active) return { discountPence: 0, freesDelivery: false, code: null, error: "That promo code isn't valid." };
+  const invalid: PromoResult = { discountPence: 0, freesDelivery: false, code: null, promoId: null, error: "That promo code isn't valid." };
+  if (!promo || !promo.is_active) return invalid;
+
+  // F4: a personal voucher (customer_id set) is usable ONLY by its owner. Guests
+  // (customerId null) can never redeem a personal code. Returning the generic
+  // "isn't valid" message avoids leaking which codes are personal.
+  if (promo.customer_id && promo.customer_id !== customerId) return invalid;
 
   const now = Date.now();
-  if (promo.starts_at && new Date(promo.starts_at as string).getTime() > now) return { discountPence: 0, freesDelivery: false, code: null, error: "That promo code isn't active yet." };
-  if (promo.ends_at && new Date(promo.ends_at as string).getTime() < now) return { discountPence: 0, freesDelivery: false, code: null, error: "That promo code has expired." };
-  if (promo.location_id && promo.location_id !== locationId) return { discountPence: 0, freesDelivery: false, code: null, error: "That code isn't valid for this location." };
-  if (promo.global_limit != null && (promo.used_count as number) >= (promo.global_limit as number)) return { discountPence: 0, freesDelivery: false, code: null, error: "That promo code has been fully redeemed." };
+  const fail = (error: string): PromoResult => ({ discountPence: 0, freesDelivery: false, code: null, promoId: null, error });
+  if (promo.starts_at && new Date(promo.starts_at as string).getTime() > now) return fail("That promo code isn't active yet.");
+  if (promo.ends_at && new Date(promo.ends_at as string).getTime() < now) return fail("That promo code has expired.");
+  if (promo.location_id && promo.location_id !== locationId) return fail("That code isn't valid for this location.");
+  if (promo.global_limit != null && (promo.used_count as number) >= (promo.global_limit as number)) return fail("That promo code has been fully redeemed.");
   if (subtotalPence < (promo.min_spend_pence as number)) {
-    return { discountPence: 0, freesDelivery: false, code: null, error: `Spend at least £${((promo.min_spend_pence as number) / 100).toFixed(2)} to use this code.` };
+    return fail(`Spend at least £${((promo.min_spend_pence as number) / 100).toFixed(2)} to use this code.`);
   }
 
+  const promoId = promo.id as string;
   const kind = promo.kind as string;
   const value = promo.value as number;
-  if (kind === "free_delivery") return { discountPence: 0, freesDelivery: true, code: promo.code as string };
-  if (kind === "percent") return { discountPence: Math.min(subtotalPence, Math.round((subtotalPence * value) / 100)), freesDelivery: false, code: promo.code as string };
+  if (kind === "free_delivery") return { discountPence: 0, freesDelivery: true, code: promo.code as string, promoId };
+  if (kind === "percent") return { discountPence: Math.min(subtotalPence, Math.round((subtotalPence * value) / 100)), freesDelivery: false, code: promo.code as string, promoId };
   // fixed
-  return { discountPence: Math.min(subtotalPence, value), freesDelivery: false, code: promo.code as string };
+  return { discountPence: Math.min(subtotalPence, value), freesDelivery: false, code: promo.code as string, promoId };
 }

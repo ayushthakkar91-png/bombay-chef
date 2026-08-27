@@ -50,6 +50,14 @@ export async function setOrderStatus(_p: ActionState, form: FormData): Promise<A
   const { error } = await supabase.from("orders").update({ status: next }).eq("id", id);
   if (error) return fail(error.message);
 
+  // F5: a cancelled (unpaid) order frees its promo code. release_promo is a
+  // SECURITY DEFINER function with EXECUTE revoked from authenticated, so it must
+  // be called with the service client, not the RLS user client.
+  if (next === "cancelled") {
+    const service = getServiceClient();
+    if (service) await service.rpc("release_promo", { p_order_id: id });
+  }
+
   const tmpl = STATUS_EMAIL[next];
   if (tmpl) await enqueueOrderEmail(id, tmpl);
 
@@ -114,6 +122,7 @@ export async function refundOrder(_p: ActionState, form: FormData): Promise<Acti
     await supabase.from("orders").update({ status: "refunded" }).eq("id", id);
     await enqueueOrderEmail(id, "order_cancelled");
     await reverseEarnForOrder(id); // claw back loyalty points earned on this order
+    await service.rpc("release_promo", { p_order_id: id }); // free the promo on a full refund
   }
 
   await service.from("audit_log").insert({

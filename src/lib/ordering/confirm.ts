@@ -46,10 +46,9 @@ export async function confirmPaidOrder(
     await debitGiftCard(claimed.gift_card_id as string, claimed.gift_card_pence as number, orderId);
   }
 
-  if (claimed.promo_code) {
-    const { data: promo } = await supabase.from("promo_codes").select("id, used_count").ilike("code", claimed.promo_code as string).maybeSingle();
-    if (promo) await supabase.from("promo_codes").update({ used_count: (promo.used_count as number) + 1 }).eq("id", promo.id);
-  }
+  // Promo usage is reserved atomically at order-create (reserve_promo, F5) and
+  // promo_codes.used_count is kept in sync by the promo_redemptions trigger, so
+  // there is no non-atomic read-then-write increment to do here.
 
   await enqueueOrderEmail(orderId, "order_confirmation");
   await enqueueOrderEmail(orderId, "admin_new_order", undefined, ADMIN_NOTIFY_EMAIL);
