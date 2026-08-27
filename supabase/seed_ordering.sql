@@ -11,6 +11,13 @@ set price_pence = round((replace(price, '£', '')::numeric) * 100)
 where price_pence is null
   and price ~ '^£?[0-9]+(\.[0-9]+)?$';
 
+-- 1b. Ordering provider alignment (defense-in-depth second gate). Only Balham
+-- takes orders on our own system today; Battersea/Kilburn route to the external
+-- platform, so their collection/delivery are OFF in the DB too. This mirrors
+-- src/data/locations.ts `ordering.provider` and getOrderLocations()'s filter.
+update locations set collection_enabled = true,  delivery_enabled = true  where slug = 'balham';
+update locations set collection_enabled = false, delivery_enabled = false where slug in ('battersea','kilburn');
+
 -- 2. Delivery zones per branch (postcode districts they deliver to).
 do $$
 declare loc record;

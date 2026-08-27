@@ -4,14 +4,20 @@ import Link from "next/link";
 import { getOrderingMenu, getOrderLocations } from "@/lib/repositories/ordering-menu";
 import { getCustomer } from "@/lib/auth/customer";
 import { getMyFavouriteIds } from "@/lib/repositories/account";
+import { isInternalOrdering } from "@/lib/ordering/routing";
 import { MenuBrowser } from "@/components/order/MenuBrowser";
 
 export default async function OrderMenuPage({ searchParams }: { searchParams: Promise<{ loc?: string }> }) {
   const { loc } = await searchParams;
 
-  // Resolve branches once (lightweight) so we can default + drive the location switcher.
-  const orderable = (await getOrderLocations()).filter((l) => l.collectionEnabled || l.deliveryEnabled);
-  if (orderable.length === 0) redirect("/order"); // single hop → /order shows the unavailable state
+  // Resolve branches once (lightweight) so we can default + drive the location
+  // switcher. A branch is orderable only when it is BOTH configured for
+  // collection/delivery in the DB AND routed internally (isInternalOrdering) —
+  // so an external branch can never be ordered from, even by a typed ?loc=.
+  const orderable = (await getOrderLocations()).filter(
+    (l) => (l.collectionEnabled || l.deliveryEnabled) && isInternalOrdering(l.slug),
+  );
+  if (orderable.length === 0) redirect("/order"); // single hop → /order (branch picker)
   const slug = orderable.find((l) => l.slug === loc)?.slug ?? orderable[0].slug;
 
   const [menu, customer] = await Promise.all([getOrderingMenu(slug), getCustomer()]);

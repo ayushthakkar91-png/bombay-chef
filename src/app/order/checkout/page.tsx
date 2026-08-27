@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { getOrderingMenu } from "@/lib/repositories/ordering-menu";
+import { isInternalOrdering } from "@/lib/ordering/routing";
 import { CheckoutForm } from "@/components/order/CheckoutForm";
 
 export default async function CheckoutPage({
@@ -9,7 +10,9 @@ export default async function CheckoutPage({
   searchParams: Promise<{ loc?: string }>;
 }) {
   const { loc } = await searchParams;
-  const menu = loc ? await getOrderingMenu(loc) : null;
+  // Only internal branches can reach checkout — an external/typed loc falls through
+  // to the "unavailable" state below.
+  const menu = loc && isInternalOrdering(loc) ? await getOrderingMenu(loc) : null;
 
   if (!menu) {
     return (

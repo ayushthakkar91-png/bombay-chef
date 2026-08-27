@@ -7,6 +7,7 @@ import { isStripeConfigured, createCheckoutSession } from "@/lib/stripe/client";
 import { planRedemption, debitGiftCard } from "@/lib/giftcards/service";
 import { confirmPaidOrder } from "@/lib/ordering/confirm";
 import { getCustomer } from "@/lib/auth/customer";
+import { isInternalOrdering } from "@/lib/ordering/routing";
 import type { CartLineInput } from "@/lib/ordering/types";
 import type { Fulfilment } from "@/lib/ordering/constants";
 import { rateLimit } from "@/lib/ratelimit";
@@ -41,6 +42,7 @@ export async function priceCartAction(input: {
   lines: CartLineInput[];
   promoCode?: string | null;
 }): Promise<PriceResult> {
+  if (!isInternalOrdering(input.locationSlug)) return { ok: false, error: "Online ordering isn't available for that location." };
   const locationId = await locationIdFromSlug(input.locationSlug);
   if (!locationId) return { ok: false, error: "That location isn't available." };
   const customer = await getCustomer();
@@ -80,6 +82,11 @@ export async function checkGiftCard(code: string): Promise<{ ok: boolean; balanc
 export async function createCheckout(input: CheckoutInput): Promise<CheckoutResult> {
   if (!(await rateLimit("checkout", { limit: 10, windowSec: 60, failClosed: true })).ok) {
     return { ok: false, error: "Too many checkout attempts. Please wait a moment and try again." };
+  }
+  // Authoritative branch guard: only internal branches can create an order. This
+  // is the real boundary — the page-level guards are convenience.
+  if (!isInternalOrdering(input.locationSlug)) {
+    return { ok: false, error: "Online ordering isn't available for that location." };
   }
   const name = input.contact?.name?.trim();
   const email = input.contact?.email?.trim();
