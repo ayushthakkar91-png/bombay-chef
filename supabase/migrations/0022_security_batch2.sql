@@ -1,0 +1,7 @@
+-- Bombay Bicycle Chef — 0022 security batch 2 (F4, F5, F7-adjacent, F8).
+-- Stacks on 0021. Append-only. NOT applied automatically — run on staging first,
+-- run `supabase test db`, then apply to production with explicit approval.
+--
+-- Contents (appended by plan tasks):
+--   F8  loyalty double-earn        — unique index on loyalty_ledger(order_id, reason)
+--   F5  atomic promo single-use    — reserve_promo / release_promo RPCs + sync trigger
