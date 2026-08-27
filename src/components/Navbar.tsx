@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
-import { ORDER_URL } from "@/lib/flags";
+import { ORDER_ENTRY_HREF } from "@/lib/flags";
 
 const LEFT_LINKS = [
   { name: "Menu", href: "/menu" },
@@ -114,7 +114,7 @@ export function Navbar() {
               </div>
               <div className="flex items-center">
                 <Link
-                  href={ORDER_URL}
+                  href={ORDER_ENTRY_HREF}
                   className="flex items-center justify-center px-6 h-[40px] bg-[#5D0925] border border-[#5D0925] text-[#F8F4ED] text-[10px] xl:text-[11px] tracking-[0.2em] font-medium uppercase font-sans whitespace-nowrap hover:bg-[#420616] hover:border-[#420616] transition-all duration-500 ease-in-out"
                 >
                   Order Online
@@ -223,7 +223,7 @@ export function Navbar() {
                   Reserve Table
                 </Link>
                 <Link
-                  href={ORDER_URL}
+                  href={ORDER_ENTRY_HREF}
                   onClick={toggleMobileMenu}
                   className="w-full h-[46px] flex items-center justify-center bg-[#5D0925] border border-[#5D0925] text-[#F5F0E6] text-[12px] tracking-[0.12em] font-medium uppercase hover:bg-[#420616] hover:border-[#420616] transition-colors duration-300 shadow-md ease-in-out"
                 >

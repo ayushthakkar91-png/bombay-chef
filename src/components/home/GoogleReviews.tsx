@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 
-import { ORDER_URL } from "@/lib/flags";
+import { ORDER_ENTRY_HREF } from "@/lib/flags";
 
 type Testimonial = { quote: string; name: string; location: string };
 
@@ -143,7 +143,7 @@ export function GoogleReviews({ reviewCount }: { reviewCount?: number }) {
             Reserve A Table
           </Link>
           <a
-            href={ORDER_URL}
+            href={ORDER_ENTRY_HREF}
             className="inline-flex h-[52px] items-center justify-center border border-[#B08A3E] px-9 font-sans text-[12px] uppercase tracking-[0.18em] text-[#2B221D] transition-colors duration-500 hover:border-[#2B221D] hover:bg-[#2B221D] hover:text-[#F6F2EA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B08A3E] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F5F0E6]"
           >
             Order Online

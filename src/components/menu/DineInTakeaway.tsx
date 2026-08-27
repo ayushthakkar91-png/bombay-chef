@@ -4,7 +4,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { ORDER_URL } from "@/lib/flags";
+import { ORDER_ENTRY_HREF } from "@/lib/flags";
 
 export function DineInTakeaway() {
   return (
@@ -62,7 +62,7 @@ export function DineInTakeaway() {
             Bombay At<br />Home
           </h2>
           <Link
-            href={ORDER_URL}
+            href={ORDER_ENTRY_HREF}
             className="inline-flex items-center justify-center h-[40px] px-8 border border-[#C8A96B]/30 text-[#C8A96B] text-[10px] tracking-[0.2em] uppercase font-sans hover:border-[#C8A96B] hover:text-[#F3EEE8] transition-all duration-300"
           >
             Order Online

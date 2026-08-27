@@ -53,16 +53,6 @@ export const RESERVATIONS_ONLINE = flags.reservationsV2;
 export const EXTERNAL_ORDER_URL = "https://www.bombaybicyclechef.uk/locator";
 
 /**
- * Where every public "Order online" CTA points. When in-house ordering is on it's
- * the on-site flow (`/order`); otherwise it falls back to the external locator.
- *
- * @deprecated Prefer `ORDER_ENTRY_HREF` for the global CTA (branch picker) and
- * `orderHrefFor(branch)` (in `@/lib/ordering/routing`) for a branch-specific CTA.
- * Kept for any caller not yet migrated.
- */
-export const ORDER_URL = flags.ordering ? "/order" : EXTERNAL_ORDER_URL;
-
-/**
  * The global "Order Online" entry point. With in-house ordering on, this is the
  * branch picker at `/order` (which then routes each branch internal/external);
  * with it off, every CTA falls back to the external locator.

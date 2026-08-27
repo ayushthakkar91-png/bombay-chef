@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { ORDER_URL } from "@/lib/flags";
+import { ORDER_ENTRY_HREF } from "@/lib/flags";
 import { branchBySlug } from "@/data/locations";
 import { OpeningHours } from "@/components/locations/OpeningHours";
 
@@ -8,7 +8,7 @@ const FOOTER_NAV = [
   { name: "Menu", href: "/menu" },
   { name: "Locations", href: "/locations" },
   { name: "Reservations", href: "/reservations" },
-  { name: "Order Online", href: ORDER_URL },
+  { name: "Order Online", href: ORDER_ENTRY_HREF },
   { name: "Contact", href: "/contact" },
 ];
 
