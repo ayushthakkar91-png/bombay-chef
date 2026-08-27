@@ -6,7 +6,8 @@ import { MapPin, Clock, Phone, Mail, UtensilsCrossed, CalendarDays, Bike, ArrowR
 import { BRANCHES, branchBySlug } from "@/data/locations";
 import { BranchSchema, BreadcrumbSchema } from "@/components/seo/Schema";
 import { OpeningHours } from "@/components/locations/OpeningHours";
-import { ORDER_URL, RESERVATIONS_ONLINE } from "@/lib/flags";
+import { RESERVATIONS_ONLINE } from "@/lib/flags";
+import { orderHrefFor } from "@/lib/ordering/routing";
 
 export function generateStaticParams() {
   return BRANCHES.map((b) => ({ slug: b.slug }));
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!b) return {};
   return {
     title: `${b.name} — Modern Indian Restaurant, ${b.locality} ${b.postcode} | Bombay Bicycle Chef`,
-    description: `Bombay Bicycle Chef ${b.name} at ${b.street}, ${b.locality} ${b.postcode}. ${b.blurb} Reserve a table${b.orderingEnabled ? " or order online for collection & delivery" : ""}.`,
+    description: `Bombay Bicycle Chef ${b.name} at ${b.street}, ${b.locality} ${b.postcode}. ${b.blurb} Reserve a table${b.ordering.provider === "internal" ? " or order online for collection & delivery" : ""}.`,
     alternates: { canonical: `/locations/${b.slug}` },
     openGraph: { title: `Bombay Bicycle Chef — ${b.name}`, description: b.blurb, url: `/locations/${b.slug}`, images: [b.image], type: "website" },
   };
@@ -31,6 +32,8 @@ export default async function LocationLandingPage({ params }: { params: Promise<
 
   const canBookOnline = RESERVATIONS_ONLINE && b.reservable;
   const telHref = `tel:${b.phone.replace(/\s/g, "")}`;
+  const order = orderHrefFor(b);
+  const orderProps = order.external ? { target: "_blank", rel: "noopener noreferrer" } : {};
 
   return (
     <main className="min-h-screen bg-[#F6F2EA] pt-[110px] selection:bg-[#B08A3E] selection:text-[#F6F2EA]">
@@ -50,9 +53,7 @@ export default async function LocationLandingPage({ params }: { params: Promise<
             <p className="mt-5 max-w-md font-sans text-[16px] leading-relaxed text-[#5A524B]">{b.blurb}</p>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              {b.orderingEnabled && (
-                <a href={ORDER_URL} className="inline-flex h-[54px] items-center justify-center gap-2 bg-[#5D0925] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#F6F2EA] transition-colors hover:bg-[#420616]"><Bike className="h-4 w-4" /> Order Online</a>
-              )}
+              <a href={order.href} {...orderProps} className="inline-flex h-[54px] items-center justify-center gap-2 bg-[#5D0925] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#F6F2EA] transition-colors hover:bg-[#420616]"><Bike className="h-4 w-4" /> Order Online</a>
               {b.reservable && (canBookOnline ? (
                 <Link href="/reservations" className="inline-flex h-[54px] items-center justify-center gap-2 border border-[#2B221D] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#2B221D] transition-colors hover:bg-[#2B221D] hover:text-[#F6F2EA]"><CalendarDays className="h-4 w-4" /> Reserve a Table</Link>
               ) : (
@@ -75,10 +76,10 @@ export default async function LocationLandingPage({ params }: { params: Promise<
           <Detail icon={Mail} label="Email us"><a href={`mailto:${b.email}`} className="break-all hover:text-[#B08A3E]">{b.email}</a></Detail>
         </div>
 
-        {b.orderingEnabled ? (
-          <p className="mt-8 font-sans text-[14px] text-[#5A524B]">Delivery across {b.outcodes.join(", ")}. <a href={ORDER_URL} className="font-medium text-[#5D0925] underline underline-offset-2">Check your postcode →</a></p>
+        {order.external ? (
+          <p className="mt-8 font-sans text-[14px] text-[#5A524B]">Order from {b.name} for collection & delivery on our partner platform. <a href={order.href} {...orderProps} className="font-medium text-[#5D0925] underline underline-offset-2">Order online →</a></p>
         ) : (
-          <p className="mt-8 font-sans text-[14px] text-[#5A524B]">Online ordering for {b.name} is coming soon — <Link href="/reservations" className="font-medium text-[#5D0925] underline underline-offset-2">reserve a table</Link> in the meantime.</p>
+          <p className="mt-8 font-sans text-[14px] text-[#5A524B]">Delivery across {b.outcodes.join(", ")}. <a href={order.href} className="font-medium text-[#5D0925] underline underline-offset-2">Check your postcode →</a></p>
         )}
 
         <div className="mt-14 flex flex-wrap items-center justify-between gap-4 border-t border-[#2A211C]/10 pt-10">

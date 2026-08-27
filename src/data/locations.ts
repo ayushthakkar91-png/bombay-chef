@@ -1,5 +1,5 @@
 /** Canonical branch data — one source for the locations page, SEO landing pages,
- *  and JSON-LD schema. (Ordering is gated per branch via `orderingEnabled`,
+ *  and JSON-LD schema. (Ordering is routed per branch via `ordering.provider`,
  *  online table booking via `reservable`.) */
 
 import type { ServiceHours } from "@/lib/hours";
@@ -17,7 +17,10 @@ export type Branch = {
    *  and drives the JSON-LD opening hours. */
   hours: ServiceHours[];
   outcodes: string[];
-  orderingEnabled: boolean; // only Balham today; flip on as branches go live
+  /** How this branch takes online orders. `internal` → our own ordering flow
+   *  (only when the master NEXT_PUBLIC_FEATURE_ORDERING flag is on); `external` →
+   *  a third-party platform at `externalUrl` (defaults to EXTERNAL_ORDER_URL). */
+  ordering: { provider: "internal" | "external"; externalUrl?: string };
   reservable: boolean; // online table booking — only Balham today
   image: string;
   blurb: string;
@@ -72,7 +75,7 @@ export const BRANCHES: Branch[] = [
       },
     ],
     outcodes: ["SW12", "SW17", "SW11", "SW16"],
-    orderingEnabled: true,
+    ordering: { provider: "internal" },
     reservable: true,
     image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2000&auto=format&fit=crop",
     blurb: "Our Balham kitchen on Balham High Road — the lamplit room where the Bombay Bicycle Chef story began. Collection and delivery across South West London.",
@@ -101,7 +104,7 @@ export const BRANCHES: Branch[] = [
       },
     ],
     outcodes: ["SW11", "SW18", "SW8", "SW15"],
-    orderingEnabled: false,
+    ordering: { provider: "external" },
     reservable: false,
     image: "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?q=80&w=2000&auto=format&fit=crop",
     blurb: "On the buzz of Queenstown Road — modern Indian cooking, warm hospitality and a room made for gathering.",
@@ -130,7 +133,7 @@ export const BRANCHES: Branch[] = [
       },
     ],
     outcodes: ["NW6", "NW2", "NW10", "W9"],
-    orderingEnabled: false,
+    ordering: { provider: "external" },
     reservable: false,
     image: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=2000&auto=format&fit=crop",
     blurb: "Our North London home on Willesden Lane — the flavours of Bombay, reimagined for a modern London table.",

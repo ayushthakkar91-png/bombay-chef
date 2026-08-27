@@ -5,7 +5,8 @@ import { MapPin, Clock, Phone, UtensilsCrossed, CalendarDays, Bike, Star } from 
 import type { Branch } from "@/data/locations";
 import { BranchSchema } from "./Schema";
 import { OpeningHours } from "@/components/locations/OpeningHours";
-import { ORDER_URL, RESERVATIONS_ONLINE } from "@/lib/flags";
+import { RESERVATIONS_ONLINE } from "@/lib/flags";
+import { orderHrefFor } from "@/lib/ordering/routing";
 
 /** Keyword-targeted local SEO landing for "Indian restaurant {city}" searches.
  *  Premium copy, real links, LocalBusiness schema — built to rank + convert. */
@@ -13,6 +14,8 @@ export function LocalSeoLanding({ branch }: { branch: Branch }) {
   const c = branch.name;
   const canBookOnline = RESERVATIONS_ONLINE && branch.reservable;
   const telHref = `tel:${branch.phone.replace(/\s/g, "")}`;
+  const order = orderHrefFor(branch);
+  const orderProps = order.external ? { target: "_blank", rel: "noopener noreferrer" } : {};
   return (
     <main className="min-h-screen bg-[#F6F2EA] pt-[110px] selection:bg-[#B08A3E] selection:text-[#F6F2EA]">
       <BranchSchema branch={branch} />
@@ -33,9 +36,7 @@ export function LocalSeoLanding({ branch }: { branch: Branch }) {
         </p>
 
         <div className="mt-8 flex flex-wrap gap-3">
-          {branch.orderingEnabled && (
-            <a href={ORDER_URL} className="inline-flex h-[54px] items-center justify-center gap-2 bg-[#5D0925] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#F6F2EA] transition-colors hover:bg-[#420616]"><Bike className="h-4 w-4" /> Order Online</a>
-          )}
+          <a href={order.href} {...orderProps} className="inline-flex h-[54px] items-center justify-center gap-2 bg-[#5D0925] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#F6F2EA] transition-colors hover:bg-[#420616]"><Bike className="h-4 w-4" /> Order Online</a>
           {branch.reservable && (canBookOnline ? (
             <Link href="/reservations" className="inline-flex h-[54px] items-center justify-center gap-2 border border-[#2B221D] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#2B221D] transition-colors hover:bg-[#2B221D] hover:text-[#F6F2EA]"><CalendarDays className="h-4 w-4" /> Reserve a Table</Link>
           ) : (
@@ -54,9 +55,9 @@ export function LocalSeoLanding({ branch }: { branch: Branch }) {
             From our {branch.street} kitchen we serve fresh, modern Indian food to {c} and the surrounding area. Whether it&apos;s a relaxed dinner, a family feast or a quick lunch, you&apos;ll find the flavours of Bombay just around the corner.
           </Block>
           <Block title={`Indian takeaway & delivery in ${c}`}>
-            {branch.orderingEnabled
-              ? <>Order online for collection or delivery across {branch.outcodes.join(", ")}. Freshly prepared, ready in minutes — the easiest Indian takeaway in {c}.</>
-              : <>Online ordering for {c} is coming soon. In the meantime, reserve a table to dine in with us.</>}
+            {order.external
+              ? <>Order online for collection or delivery in {c} on our partner platform — freshly prepared, ready in minutes.</>
+              : <>Order online for collection or delivery across {branch.outcodes.join(", ")}. Freshly prepared, ready in minutes — the easiest Indian takeaway in {c}.</>}
           </Block>
           <Block title={`Best Indian restaurant in ${c}`}>
             Rated 4.8/5 by our guests, Bombay Bicycle Chef pairs authentic recipes with a warm, candle-lit room — a special-occasion favourite and an everyday treat alike.
@@ -73,7 +74,7 @@ export function LocalSeoLanding({ branch }: { branch: Branch }) {
         <div className="mt-12 border-t border-[#2A211C]/10 pt-8 text-center">
           <p className="font-serif text-[24px] text-[#2B221D]">Hungry for Indian food in {c}?</p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
-            {branch.orderingEnabled && <a href={ORDER_URL} className="inline-flex h-[52px] items-center justify-center bg-[#5D0925] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#F6F2EA] transition-colors hover:bg-[#420616]">Order Online</a>}
+            <a href={order.href} {...orderProps} className="inline-flex h-[52px] items-center justify-center bg-[#5D0925] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#F6F2EA] transition-colors hover:bg-[#420616]">Order Online</a>
             {branch.reservable && (canBookOnline ? (
               <Link href="/reservations" className="inline-flex h-[52px] items-center justify-center border border-[#2B221D] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#2B221D] transition-colors hover:bg-[#2B221D] hover:text-[#F6F2EA]">Book a Table</Link>
             ) : (
