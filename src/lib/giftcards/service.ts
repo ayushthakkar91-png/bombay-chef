@@ -155,30 +155,57 @@ export async function planRedemption(code: string, totalPence: number): Promise<
   return { giftCardId: card.id as string, redeemPence: Math.min(balance, totalPence), balancePence: balance };
 }
 
-/** Debit a card for a confirmed order (optimistic concurrency; idempotent-ish). */
-export async function debitGiftCard(giftCardId: string, amountPence: number, orderId: string): Promise<void> {
-  const supabase = getServiceClient();
-  if (!supabase || amountPence <= 0) return;
+export type DebitResult = { ok: boolean; debitedPence: number };
 
-  // Don't double-debit the same order.
-  const { data: existing } = await supabase.from("gift_card_transactions").select("id").eq("gift_card_id", giftCardId).eq("order_id", orderId).eq("kind", "redeem").limit(1);
-  if (existing && existing.length) return;
+/**
+ * Debit a card for an order (optimistic concurrency; idempotent per order).
+ *
+ * Returns `ok:false` when it could NOT debit the full requested amount — an
+ * inactive card, insufficient balance, or a lost optimistic race. Callers that
+ * mark an order paid on the strength of the gift card (the fully-covered path,
+ * F7) MUST check `ok` and refuse to complete the order when it is false, so a
+ * concurrent drain can never yield a free order. Idempotent: a prior redeem for
+ * the same order returns `ok:true` with the already-debited amount.
+ */
+export async function debitGiftCard(giftCardId: string, amountPence: number, orderId: string): Promise<DebitResult> {
+  const supabase = getServiceClient();
+  if (!supabase) return { ok: false, debitedPence: 0 };
+  if (amountPence <= 0) return { ok: true, debitedPence: 0 };
+
+  // Idempotent: if this order already debited the card, report success with the
+  // amount that was taken (don't debit again).
+  const { data: existing } = await supabase
+    .from("gift_card_transactions")
+    .select("delta_pence")
+    .eq("gift_card_id", giftCardId)
+    .eq("order_id", orderId)
+    .eq("kind", "redeem")
+    .limit(1);
+  if (existing && existing.length) {
+    const prior = Math.abs(existing[0].delta_pence as number);
+    return { ok: prior >= amountPence, debitedPence: prior };
+  }
 
   const { data: card } = await supabase.from("gift_cards").select("balance_pence, status").eq("id", giftCardId).maybeSingle();
-  if (!card || card.status !== "active") return;
-  const amount = Math.min(amountPence, card.balance_pence as number);
-  if (amount <= 0) return;
-  const newBalance = (card.balance_pence as number) - amount;
+  if (!card || card.status !== "active") return { ok: false, debitedPence: 0 };
+
+  const balance = card.balance_pence as number;
+  const amount = Math.min(amountPence, balance); // best-effort: take up to the balance
+  if (amount <= 0) return { ok: false, debitedPence: 0 };
+  const newBalance = balance - amount;
 
   const { data: updated } = await supabase
     .from("gift_cards")
     .update({ balance_pence: newBalance, status: newBalance === 0 ? "redeemed" : "active" })
     .eq("id", giftCardId)
-    .eq("balance_pence", card.balance_pence) // optimistic guard
+    .eq("balance_pence", balance) // optimistic guard — loses the race → 0 rows
     .select("id");
-  if (!updated || updated.length === 0) return;
+  if (!updated || updated.length === 0) return { ok: false, debitedPence: 0 };
 
   await supabase.from("gift_card_transactions").insert({ gift_card_id: giftCardId, delta_pence: -amount, kind: "redeem", order_id: orderId });
+  // ok only when the FULL requested amount was taken — the fully-covered order
+  // path (F7) relies on this to refuse completing an under-covered order.
+  return { ok: amount === amountPence, debitedPence: amount };
 }
 
 /* ---- Admin ------------------------------------------------------------ */

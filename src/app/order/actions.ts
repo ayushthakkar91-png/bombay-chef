@@ -4,7 +4,7 @@ import { getServiceClient } from "@/lib/supabase/clients";
 import { priceCart, type PriceResult } from "@/lib/ordering/pricing";
 import { checkDelivery, suggestNearestBranch, type DeliveryCheck, type BranchSuggestion } from "@/lib/ordering/delivery";
 import { isStripeConfigured, createCheckoutSession } from "@/lib/stripe/client";
-import { planRedemption } from "@/lib/giftcards/service";
+import { planRedemption, debitGiftCard } from "@/lib/giftcards/service";
 import { confirmPaidOrder } from "@/lib/ordering/confirm";
 import { getCustomer } from "@/lib/auth/customer";
 import type { CartLineInput } from "@/lib/ordering/types";
@@ -190,9 +190,22 @@ export async function createCheckout(input: CheckoutInput): Promise<CheckoutResu
     }
   }
 
-  // Fully covered by the gift card → no card payment; confirm immediately.
+  // Fully covered by the gift card → no card payment. F7: debit the card FIRST
+  // and mark the order paid only if the full amount was taken. A concurrent
+  // drain of the same card makes the debit return ok:false, so we cancel this
+  // order instead of completing it — no free order on a race.
   if (chargePence <= 0) {
-    await confirmPaidOrder(orderId, { method: "gift_card", amountPence: giftRedeem, paymentIntent: null });
+    const debit = giftCardId
+      ? await debitGiftCard(giftCardId, giftRedeem, orderId)
+      : { ok: true, debitedPence: 0 };
+    if (!debit.ok) {
+      if (price.promoId) await supabase.rpc("release_promo", { p_order_id: orderId });
+      await supabase.from("orders").update({ status: "cancelled" }).eq("id", orderId);
+      return { ok: false, error: "That gift card no longer covers your order — please try again." };
+    }
+    // confirmPaidOrder re-runs debitGiftCard, but it is idempotent per order, so
+    // the balance is not taken twice.
+    await confirmPaidOrder(orderId, { method: "gift_card", amountPence: debit.debitedPence, paymentIntent: null });
     return { ok: true, url: `${siteUrl()}/order/track/${order.track_token as string}?paid=1` };
   }
 
