@@ -44,7 +44,9 @@ export async function earnForOrder(orderId: string): Promise<void> {
     .maybeSingle();
   if (!order || !order.customer_id) return;
 
-  // Idempotency: never earn twice for the same order.
+  // Idempotency: never earn twice for the same order. The pre-check short-circuits
+  // the common case; the unique index loyalty_ledger_order_reason_uidx (0022) is
+  // the race backstop, so the insert ignores conflicts.
   const { data: existing } = await supabase.from("loyalty_ledger").select("id").eq("order_id", orderId).eq("reason", "earn").limit(1);
   if (existing && existing.length) return;
 
@@ -52,12 +54,10 @@ export async function earnForOrder(orderId: string): Promise<void> {
   const points = pointsForPence(net);
   if (points <= 0) return;
 
-  await supabase.from("loyalty_ledger").insert({
-    customer_id: order.customer_id,
-    delta: points,
-    reason: "earn",
-    order_id: orderId,
-  });
+  await supabase.from("loyalty_ledger").upsert(
+    { customer_id: order.customer_id, delta: points, reason: "earn", order_id: orderId },
+    { onConflict: "order_id,reason", ignoreDuplicates: true },
+  );
   await recomputeTier(order.customer_id as string);
 }
 
@@ -71,12 +71,10 @@ export async function reverseEarnForOrder(orderId: string): Promise<void> {
   const { data: already } = await supabase.from("loyalty_ledger").select("id").eq("order_id", orderId).eq("reason", "refund_reversal").limit(1);
   if (already && already.length) return;
 
-  await supabase.from("loyalty_ledger").insert({
-    customer_id: earn.customer_id,
-    delta: -(earn.delta as number),
-    reason: "refund_reversal",
-    order_id: orderId,
-  });
+  await supabase.from("loyalty_ledger").upsert(
+    { customer_id: earn.customer_id, delta: -(earn.delta as number), reason: "refund_reversal", order_id: orderId },
+    { onConflict: "order_id,reason", ignoreDuplicates: true },
+  );
 }
 
 type RedeemResult = { ok: true; code: string } | { ok: false; error: string };

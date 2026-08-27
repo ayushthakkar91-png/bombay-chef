@@ -5,3 +5,12 @@
 -- Contents (appended by plan tasks):
 --   F8  loyalty double-earn        — unique index on loyalty_ledger(order_id, reason)
 --   F5  atomic promo single-use    — reserve_promo / release_promo RPCs + sync trigger
+
+-- ============================================================================
+-- F8: prevent loyalty double-earn / double-reversal on webhook retries.
+-- NULL order_id rows (redeem/adjustment/birthday) stay unconstrained because
+-- NULLs are distinct in a unique index — only order-linked rows are capped.
+-- ============================================================================
+create unique index if not exists loyalty_ledger_order_reason_uidx
+  on loyalty_ledger (order_id, reason)
+  where order_id is not null;
