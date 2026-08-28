@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * Mobile-only sticky category rail. Scroll-spy highlights the section in view;
@@ -8,6 +8,12 @@ import { useEffect, useState } from "react";
  */
 export function MenuCategoryNav({ categories }: { categories: { id: string; title: string }[] }) {
   const [active, setActive] = useState(categories[0]?.id ?? "");
+  const railRef = useRef<HTMLDivElement>(null);
+
+  // Keep the active chip visible as scroll-spy moves through sections.
+  useEffect(() => {
+    railRef.current?.querySelector<HTMLElement>(`[data-cat="${active}"]`)?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+  }, [active]);
 
   useEffect(() => {
     const obs = new IntersectionObserver(
@@ -34,11 +40,12 @@ export function MenuCategoryNav({ categories }: { categories: { id: string; titl
   if (categories.length < 2) return null;
 
   return (
-    <nav className="sticky top-[84px] z-20 border-b border-[#2A211C]/8 bg-[#F6F2EA]/95 backdrop-blur lg:hidden">
-      <div className="flex gap-2 overflow-x-auto px-5 py-2.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <nav className="sticky top-[140px] z-20 border-b border-[#2A211C]/8 bg-[#F6F2EA]/95 backdrop-blur lg:hidden">
+      <div ref={railRef} className="flex gap-2 overflow-x-auto px-5 py-2.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {categories.map((c) => (
           <button
             key={c.id}
+            data-cat={c.id}
             onClick={() => go(c.id)}
             className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 font-sans text-[12px] uppercase tracking-[0.1em] transition-colors ${
               active === c.id ? "bg-[#5D0925] text-[#F6F2EA]" : "border border-[#2A211C]/15 text-[#5A524B]"

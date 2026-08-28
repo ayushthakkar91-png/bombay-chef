@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { X, Flame, Plus } from "lucide-react";
+import { X, Flame, Plus, Search } from "lucide-react";
 
 import type { OrderingMenu, OrderMenuItem } from "@/lib/repositories/ordering-menu";
 import { useOrder } from "./OrderProvider";
@@ -18,6 +18,18 @@ export function MenuBrowser({ menu, locationSlug, branches = [], favouriteIds = 
   const { lines, itemCount, addLine, setLocation, locationSlug: ctxSlug } = useOrder();
   const [modalItem, setModalItem] = useState<OrderMenuItem | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [query, setQuery] = useState("");
+
+  // Search filters items by name/description across all categories; empty
+  // categories drop out. No search → the full menu, unchanged.
+  const visibleCategories = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return menu.categories;
+    return menu.categories
+      .map((c) => ({ ...c, items: c.items.filter((it) => it.name.toLowerCase().includes(q) || (it.description ?? "").toLowerCase().includes(q)) }))
+      .filter((c) => c.items.length > 0);
+  }, [menu.categories, query]);
+  const noResults = query.trim().length > 0 && visibleCategories.length === 0;
 
   // Quick-add: items with a required options group open the chooser; everything
   // else drops straight into the basket (with any default options pre-selected).
@@ -41,12 +53,37 @@ export function MenuBrowser({ menu, locationSlug, branches = [], favouriteIds = 
   return (
     <main className="min-h-screen bg-[#F6F2EA] pt-[84px] pb-28 lg:pt-[88px] lg:pb-12">
       <OrderBar menu={menu} branches={branches} locationSlug={locationSlug} />
-      <MenuCategoryNav categories={menu.categories.map((c) => ({ id: c.id, title: c.title }))} />
+
+      {/* Search — sticky under the order bar, quick to reach one-handed. */}
+      <div className="sticky top-[84px] z-30 border-b border-[#2A211C]/8 bg-[#F6F2EA]/95 px-5 py-2.5 backdrop-blur lg:static lg:z-auto lg:mx-auto lg:max-w-[1200px] lg:border-0 lg:bg-transparent lg:px-8 lg:pt-6">
+        <div className="relative mx-auto max-w-[1200px]">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5A524B]" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            type="search"
+            inputMode="search"
+            placeholder="Search the menu…"
+            aria-label="Search the menu"
+            className="w-full rounded-full border border-[#2A211C]/15 bg-white py-2.5 pl-10 pr-10 font-sans text-[15px] text-[#2B221D] focus:border-[#B08A3E] focus:outline-none"
+          />
+          {query && (
+            <button onClick={() => setQuery("")} aria-label="Clear search" className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-[#5A524B] hover:text-[#2B221D]">
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {!query && <MenuCategoryNav categories={menu.categories.map((c) => ({ id: c.id, title: c.title }))} />}
       <div className="max-w-[1200px] mx-auto px-5 lg:px-8 pt-6 lg:pt-7">
         <div className="lg:grid lg:grid-cols-[1fr_360px] lg:gap-10">
           {/* Menu */}
           <div>
-            {menu.categories.map((cat) => (
+            {noResults && (
+              <p className="py-16 text-center font-sans text-[15px] text-[#5A524B]">No dishes match &ldquo;{query}&rdquo;. Try another search.</p>
+            )}
+            {visibleCategories.map((cat) => (
               <section key={cat.id} id={`cat-${cat.id}`} className="mb-10 scroll-mt-[140px] lg:scroll-mt-0">
                 <h2 className="mb-4 font-serif text-[24px] text-[#2B221D] sm:text-[26px]">{cat.title}</h2>
                 {/* Phones: a typography-first divided list. Tablet/desktop keep the card grid (unchanged). */}
