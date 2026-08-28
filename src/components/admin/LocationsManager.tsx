@@ -142,6 +142,47 @@ function LocationForm({
         <TextInput id="imageUrl" name="imageUrl" defaultValue={v?.imageUrl ?? location?.imageUrl ?? ""} placeholder="https://…" />
       </Field>
 
+      {/* Ordering / delivery config */}
+      <div className="rounded-lg border border-sand p-4">
+        <p className="mb-3 text-sm font-medium text-text">Delivery &amp; collection</p>
+        <div className="mb-3 flex flex-wrap gap-5">
+          <label className="flex items-center gap-2.5 text-sm text-text">
+            <input type="checkbox" name="collectionEnabled" defaultChecked={location ? location.collectionEnabled : true} className="h-4 w-4 accent-[#3a6b2e]" />
+            Collection
+          </label>
+          <label className="flex items-center gap-2.5 text-sm text-text">
+            <input type="checkbox" name="deliveryEnabled" defaultChecked={location ? location.deliveryEnabled : false} className="h-4 w-4 accent-[#3a6b2e]" />
+            Delivery
+          </label>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Delivery fee (£)" htmlFor="deliveryFeeGbp">
+            <TextInput id="deliveryFeeGbp" name="deliveryFeeGbp" inputMode="decimal" defaultValue={location ? (location.deliveryFeePence / 100).toFixed(2) : "3.50"} placeholder="3.50" />
+          </Field>
+          <Field label="Free delivery over (£)" htmlFor="freeDeliveryOverGbp" hint="Leave blank for no free-delivery threshold." error={state.errors?.freeDeliveryOverGbp}>
+            <TextInput id="freeDeliveryOverGbp" name="freeDeliveryOverGbp" inputMode="decimal" defaultValue={location?.freeDeliveryOverPence != null ? (location.freeDeliveryOverPence / 100).toFixed(2) : ""} placeholder="30.00" />
+          </Field>
+          <Field label="Minimum order (£)" htmlFor="minOrderGbp">
+            <TextInput id="minOrderGbp" name="minOrderGbp" inputMode="decimal" defaultValue={location ? (location.minOrderPence / 100).toFixed(2) : "15.00"} placeholder="15.00" />
+          </Field>
+          <Field label="Delivery radius (miles)" htmlFor="deliveryRadiusMiles" hint="Distance from the branch. Blank = use postcode zones." error={state.errors?.deliveryRadiusMiles}>
+            <TextInput id="deliveryRadiusMiles" name="deliveryRadiusMiles" inputMode="decimal" defaultValue={location?.deliveryRadiusMiles != null ? String(location.deliveryRadiusMiles) : ""} placeholder="2" />
+          </Field>
+          <Field label="Latitude" htmlFor="latitude" hint="Branch coordinates (for radius delivery)." error={state.errors?.latitude}>
+            <TextInput id="latitude" name="latitude" inputMode="decimal" defaultValue={location?.latitude != null ? String(location.latitude) : ""} placeholder="51.4433" />
+          </Field>
+          <Field label="Longitude" htmlFor="longitude" error={state.errors?.longitude}>
+            <TextInput id="longitude" name="longitude" inputMode="decimal" defaultValue={location?.longitude != null ? String(location.longitude) : ""} placeholder="-0.1526" />
+          </Field>
+          <Field label="Prep time (min)" htmlFor="prepTimeMin">
+            <TextInput id="prepTimeMin" name="prepTimeMin" inputMode="numeric" defaultValue={location ? String(location.prepTimeMin) : "30"} placeholder="30" />
+          </Field>
+          <Field label="Delivery time (min)" htmlFor="deliveryTimeMin">
+            <TextInput id="deliveryTimeMin" name="deliveryTimeMin" inputMode="numeric" defaultValue={location ? String(location.deliveryTimeMin) : "45"} placeholder="45" />
+          </Field>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between gap-4">
         <label className="flex items-center gap-2.5 text-sm text-text">
           <input type="checkbox" name="isActive" defaultChecked={location ? location.isActive : true} className="h-4 w-4 accent-[#3a6b2e]" />

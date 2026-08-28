@@ -30,7 +30,38 @@ type LocationFields = {
   image_url: string | null;
   is_active: boolean;
   sort_order: number;
+  // Ordering / delivery config
+  collection_enabled: boolean;
+  delivery_enabled: boolean;
+  delivery_fee_pence: number;
+  free_delivery_over_pence: number | null;
+  min_order_pence: number;
+  delivery_radius_miles: number | null;
+  latitude: number | null;
+  longitude: number | null;
+  prep_time_min: number;
+  delivery_time_min: number;
 };
+
+/** Parse a "£12.34" / "12.34" money field to integer pence (0 if blank/invalid). */
+function gbpToPence(form: FormData, name: string): number {
+  const n = parseFloat(str(form, name).replace(/[£,\s]/g, ""));
+  return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) : 0;
+}
+/** Optional money field → pence, or null when blank. */
+function gbpToPenceOrNull(form: FormData, name: string): number | null {
+  const raw = str(form, name).replace(/[£,\s]/g, "");
+  if (!raw) return null;
+  const n = parseFloat(raw);
+  return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) : null;
+}
+/** Optional decimal field (radius/lat/lng) → number or null. */
+function floatOrNull(form: FormData, name: string): number | null {
+  const raw = str(form, name).trim();
+  if (!raw) return null;
+  const n = parseFloat(raw);
+  return Number.isFinite(n) ? n : null;
+}
 
 function parseLocation(form: FormData) {
   const slug = str(form, "slug").toLowerCase();
@@ -48,6 +79,14 @@ function parseLocation(form: FormData) {
 
   if (Object.keys(errors).length) return { errors, values };
 
+  const latitude = floatOrNull(form, "latitude");
+  const longitude = floatOrNull(form, "longitude");
+  const radius = floatOrNull(form, "deliveryRadiusMiles");
+  if (latitude != null && (latitude < -90 || latitude > 90)) errors.latitude = "Latitude must be between −90 and 90.";
+  if (longitude != null && (longitude < -180 || longitude > 180)) errors.longitude = "Longitude must be between −180 and 180.";
+  if (radius != null && radius <= 0) errors.deliveryRadiusMiles = "Radius must be greater than 0.";
+  if (Object.keys(errors).length) return { errors, values };
+
   const data: LocationFields = {
     slug,
     name,
@@ -58,6 +97,16 @@ function parseLocation(form: FormData) {
     image_url,
     is_active: bool(form, "isActive"),
     sort_order: intOrNull(form, "sortOrder") ?? 0,
+    collection_enabled: bool(form, "collectionEnabled"),
+    delivery_enabled: bool(form, "deliveryEnabled"),
+    delivery_fee_pence: gbpToPence(form, "deliveryFeeGbp"),
+    free_delivery_over_pence: gbpToPenceOrNull(form, "freeDeliveryOverGbp"),
+    min_order_pence: gbpToPence(form, "minOrderGbp"),
+    delivery_radius_miles: radius,
+    latitude,
+    longitude,
+    prep_time_min: intOrNull(form, "prepTimeMin") ?? 30,
+    delivery_time_min: intOrNull(form, "deliveryTimeMin") ?? 45,
   };
   return { data, values };
 }

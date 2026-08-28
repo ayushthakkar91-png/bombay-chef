@@ -15,6 +15,17 @@ export type AdminLocation = {
   imageUrl: string | null;
   isActive: boolean;
   sortOrder: number;
+  // Ordering / delivery config
+  collectionEnabled: boolean;
+  deliveryEnabled: boolean;
+  deliveryFeePence: number;
+  freeDeliveryOverPence: number | null;
+  minOrderPence: number;
+  deliveryRadiusMiles: number | null;
+  latitude: number | null;
+  longitude: number | null;
+  prepTimeMin: number;
+  deliveryTimeMin: number;
 };
 
 export type AvailabilityCell = {
@@ -36,7 +47,7 @@ export async function listLocations(includeInactive = true): Promise<AdminLocati
   let query = supabase
     .from("locations")
     .select(
-      "id, slug, name, address, phone, hours, atmosphere, image_url, is_active, sort_order",
+      "id, slug, name, address, phone, hours, atmosphere, image_url, is_active, sort_order, collection_enabled, delivery_enabled, delivery_fee_pence, free_delivery_over_pence, min_order_pence, delivery_radius_miles, latitude, longitude, prep_time_min, delivery_time_min",
     )
     .order("sort_order", { ascending: true });
   if (!includeInactive) query = query.eq("is_active", true);
@@ -53,6 +64,16 @@ export async function listLocations(includeInactive = true): Promise<AdminLocati
     imageUrl: (l.image_url as string | null) ?? null,
     isActive: (l.is_active as boolean) ?? true,
     sortOrder: (l.sort_order as number) ?? 0,
+    collectionEnabled: (l.collection_enabled as boolean) ?? true,
+    deliveryEnabled: (l.delivery_enabled as boolean) ?? true,
+    deliveryFeePence: (l.delivery_fee_pence as number) ?? 0,
+    freeDeliveryOverPence: (l.free_delivery_over_pence as number | null) ?? null,
+    minOrderPence: (l.min_order_pence as number) ?? 0,
+    deliveryRadiusMiles: (l.delivery_radius_miles as number | null) ?? null,
+    latitude: (l.latitude as number | null) ?? null,
+    longitude: (l.longitude as number | null) ?? null,
+    prepTimeMin: (l.prep_time_min as number) ?? 30,
+    deliveryTimeMin: (l.delivery_time_min as number) ?? 45,
   }));
 }
 

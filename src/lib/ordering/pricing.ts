@@ -49,6 +49,7 @@ type LocationConfig = {
   min_order_pence: number;
   prep_time_min: number;
   delivery_time_min: number;
+  free_delivery_over_pence: number | null;
 };
 
 export async function priceCart(
@@ -64,7 +65,7 @@ export async function priceCart(
 
   const { data: loc } = await supabase
     .from("locations")
-    .select("id, delivery_enabled, collection_enabled, delivery_fee_pence, min_order_pence, prep_time_min, delivery_time_min")
+    .select("id, delivery_enabled, collection_enabled, delivery_fee_pence, min_order_pence, prep_time_min, delivery_time_min, free_delivery_over_pence")
     .eq("id", locationId)
     .eq("is_active", true)
     .maybeSingle();
@@ -130,6 +131,14 @@ export async function priceCart(
   }
 
   let deliveryFeePence = fulfilment === "delivery" ? config.delivery_fee_pence : 0;
+  // Free delivery once the subtotal reaches the branch's threshold (if set).
+  if (
+    fulfilment === "delivery" &&
+    config.free_delivery_over_pence != null &&
+    subtotalPence >= config.free_delivery_over_pence
+  ) {
+    deliveryFeePence = 0;
+  }
 
   // Promo
   let discountPence = 0;

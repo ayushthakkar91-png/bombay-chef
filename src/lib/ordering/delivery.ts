@@ -2,6 +2,7 @@ import "server-only";
 
 import { getServiceClient } from "@/lib/supabase/clients";
 import { outcodeOf, formatPostcode } from "./postcode";
+import { geocodePostcode, distanceMiles } from "./geocode";
 
 export type DeliveryCheck = {
   served: boolean;
@@ -10,6 +11,10 @@ export type DeliveryCheck = {
   feePence?: number;
   minOrderPence?: number;
   etaMin?: number;
+  /** Distance from the branch in miles (radius deliveries only). */
+  distanceMiles?: number;
+  /** Order subtotal (pence) at/above which delivery is free, if configured. */
+  freeOverPence?: number | null;
   error?: string;
 };
 
@@ -49,10 +54,19 @@ export async function suggestNearestBranch(rawPostcode: string): Promise<BranchS
 }
 
 /**
- * Is a postcode within a location's delivery area? Validates format, extracts
- * the outcode, and checks it against `delivery_zones`. Returns the fee/minimum/
- * ETA when served. Postcode-district (outcode) matching is the Phase 3 model;
- * true radius matching (geocode + distance) is a later enhancement.
+ * Is a postcode within a location's delivery area?
+ *
+ * Radius model (preferred): when the branch has latitude/longitude and a
+ * `delivery_radius_miles`, the customer postcode is geocoded (postcodes.io) and
+ * served iff the great-circle distance is within the radius.
+ *
+ * Outcode model (fallback): if the branch has no coordinates, or geocoding is
+ * transiently unavailable, we fall back to the `delivery_zones` outcode list so
+ * nothing breaks. An invalid postcode is always rejected.
+ *
+ * Returns the fee / minimum / ETA (and, for radius, the distance + free-over
+ * threshold) when served. The free-delivery threshold is applied against the
+ * subtotal later, in priceCart.
  */
 export async function checkDelivery(locationSlug: string, rawPostcode: string): Promise<DeliveryCheck> {
   const outcode = outcodeOf(rawPostcode);
@@ -63,13 +77,51 @@ export async function checkDelivery(locationSlug: string, rawPostcode: string): 
 
   const { data: loc } = await supabase
     .from("locations")
-    .select("id, delivery_enabled, delivery_fee_pence, min_order_pence, prep_time_min, delivery_time_min")
+    .select("id, delivery_enabled, delivery_fee_pence, min_order_pence, prep_time_min, delivery_time_min, latitude, longitude, delivery_radius_miles, free_delivery_over_pence")
     .eq("slug", locationSlug)
     .eq("is_active", true)
     .maybeSingle();
   if (!loc) return { served: false, error: "That location isn't available." };
   if (!loc.delivery_enabled) return { served: false, error: "This location doesn't offer delivery." };
 
+  const feePence = loc.delivery_fee_pence as number;
+  const minOrderPence = loc.min_order_pence as number;
+  const etaMin = (loc.prep_time_min as number) + (loc.delivery_time_min as number);
+  const freeOverPence = (loc.free_delivery_over_pence as number | null) ?? null;
+  const lat = loc.latitude as number | null;
+  const lng = loc.longitude as number | null;
+  const radius = loc.delivery_radius_miles as number | null;
+
+  // Radius model — branch has coordinates + a radius.
+  if (lat != null && lng != null && radius != null) {
+    const dest = await geocodePostcode(rawPostcode);
+    if (dest) {
+      const miles = distanceMiles({ lat, lng }, dest);
+      if (miles <= radius) {
+        return {
+          served: true,
+          postcode: formatPostcode(rawPostcode),
+          outcode,
+          feePence,
+          minOrderPence,
+          etaMin,
+          distanceMiles: Math.round(miles * 10) / 10,
+          freeOverPence,
+        };
+      }
+      return {
+        served: false,
+        outcode,
+        postcode: formatPostcode(rawPostcode),
+        distanceMiles: Math.round(miles * 10) / 10,
+        error: `Sorry — that's ${(Math.round(miles * 10) / 10).toFixed(1)} miles away, just outside our ${radius}-mile delivery area.`,
+      };
+    }
+    // Geocode unavailable (API down). Fall through to the outcode check so a
+    // transient outage doesn't block legitimate orders.
+  }
+
+  // Outcode model (fallback / branches without coordinates).
   const { data: zone } = await supabase
     .from("delivery_zones")
     .select("id")
@@ -82,12 +134,5 @@ export async function checkDelivery(locationSlug: string, rawPostcode: string): 
     return { served: false, outcode, postcode: formatPostcode(rawPostcode), error: `Sorry, we don't deliver to ${outcode} from here yet.` };
   }
 
-  return {
-    served: true,
-    postcode: formatPostcode(rawPostcode),
-    outcode,
-    feePence: loc.delivery_fee_pence as number,
-    minOrderPence: loc.min_order_pence as number,
-    etaMin: (loc.prep_time_min as number) + (loc.delivery_time_min as number),
-  };
+  return { served: true, postcode: formatPostcode(rawPostcode), outcode, feePence, minOrderPence, etaMin, freeOverPence };
 }

@@ -18,6 +18,17 @@ where price_pence is null
 update locations set collection_enabled = true,  delivery_enabled = true  where slug = 'balham';
 update locations set collection_enabled = false, delivery_enabled = false where slug in ('battersea','kilburn');
 
+-- Balham radius delivery: 2 miles from 88 Balham High Rd (SW12 9AG), £3.50 fee,
+-- free over £30, £15 minimum. Editable later in admin → Locations. (Requires 0024.)
+update locations set
+  latitude = 51.4433,
+  longitude = -0.1526,
+  delivery_radius_miles = 2,
+  delivery_fee_pence = 350,
+  free_delivery_over_pence = 3000,
+  min_order_pence = 1500
+where slug = 'balham';
+
 -- 2. Delivery zones per branch (postcode districts they deliver to).
 do $$
 declare loc record;
