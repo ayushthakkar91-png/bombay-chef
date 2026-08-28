@@ -8,6 +8,7 @@ import { planRedemption, debitGiftCard } from "@/lib/giftcards/service";
 import { confirmPaidOrder } from "@/lib/ordering/confirm";
 import { getCustomer } from "@/lib/auth/customer";
 import { isInternalOrdering } from "@/lib/ordering/routing";
+import { recordOrderEvent } from "@/lib/ordering/events";
 import type { CartLineInput } from "@/lib/ordering/types";
 import type { Fulfilment } from "@/lib/ordering/constants";
 import { rateLimit } from "@/lib/ratelimit";
@@ -59,6 +60,9 @@ export type CheckoutInput = {
   notes?: string;
   marketingOptIn?: boolean;
   giftCardCode?: string | null;
+  /** Client-generated UUID, one per checkout attempt, stable across refresh/retry.
+   *  Makes double-click / network-retry safe — the same key returns the same order. */
+  idempotencyKey?: string | null;
 };
 
 export type CheckoutResult = { ok: true; url: string } | { ok: false; error: string };
@@ -100,6 +104,18 @@ export async function createCheckout(input: CheckoutInput): Promise<CheckoutResu
 
   const supabase = getServiceClient();
   if (!supabase) return { ok: false, error: "Ordering is temporarily unavailable." };
+
+  // Idempotency: a retried submit with the same key (double-click, lost response,
+  // WiFi→4G) must return the ORIGINAL order, never a duplicate or second charge.
+  const idem = input.idempotencyKey?.trim() || null;
+  if (idem) {
+    const { data: existing } = await supabase
+      .from("orders")
+      .select("id, code, track_token, status, total_pence, gift_card_pence")
+      .eq("idempotency_key", idem)
+      .maybeSingle();
+    if (existing) return resumeExistingOrder(existing);
+  }
 
   const locationId = await locationIdFromSlug(input.locationSlug);
   if (!locationId) return { ok: false, error: "That location isn't available." };
@@ -144,6 +160,7 @@ export async function createCheckout(input: CheckoutInput): Promise<CheckoutResu
     .insert({
       location_id: locationId,
       customer_id: customerId,
+      idempotency_key: idem,
       fulfilment: input.fulfilment,
       status: "pending_payment",
       subtotal_pence: price.subtotalPence,
@@ -164,9 +181,22 @@ export async function createCheckout(input: CheckoutInput): Promise<CheckoutResu
     .select("id, code, track_token")
     .single();
 
-  if (error || !order) return { ok: false, error: "We couldn't start your order — please try again." };
+  if (error || !order) {
+    // Concurrent submit with the same key lost the unique-index race — resume the
+    // order the winner created instead of erroring.
+    if (idem) {
+      const { data: raced } = await supabase
+        .from("orders")
+        .select("id, code, track_token, status, total_pence, gift_card_pence")
+        .eq("idempotency_key", idem)
+        .maybeSingle();
+      if (raced) return resumeExistingOrder(raced);
+    }
+    return { ok: false, error: "We couldn't start your order — please try again." };
+  }
 
   const orderId = order.id as string;
+  await recordOrderEvent(orderId, "ORDER_CREATED", { code: order.code, totalPence: price.totalPence, fulfilment: input.fulfilment });
 
   await supabase.from("order_items").insert(
     price.lines.map((l) => ({
@@ -216,20 +246,56 @@ export async function createCheckout(input: CheckoutInput): Promise<CheckoutResu
     return { ok: true, url: `${siteUrl()}/order/track/${order.track_token as string}?paid=1` };
   }
 
+  return resumeCheckout(orderId, order.code as string, order.track_token as string, chargePence, email);
+}
+
+type ExistingOrder = { id: string; code: string; track_token: string; status: string; total_pence: number; gift_card_pence: number };
+
+/**
+ * Return the right CheckoutResult for an order that already exists for this
+ * idempotency key (network retry / double-submit). Never creates a new order.
+ */
+async function resumeExistingOrder(o: ExistingOrder): Promise<CheckoutResult> {
+  const track = `${siteUrl()}/order/track/${o.track_token}?paid=1`;
+  if (o.status === "cancelled" || o.status === "refunded") {
+    return { ok: false, error: "That order was cancelled. Please start a new order." };
+  }
+  if (o.status !== "pending_payment") {
+    // Already paid / in the kitchen — send them to tracking, don't re-charge.
+    return { ok: true, url: track };
+  }
+  // Still awaiting payment: re-open a Stripe session for the outstanding amount.
+  const charge = o.total_pence - (o.gift_card_pence ?? 0);
+  if (charge <= 0) return { ok: true, url: track };
+  return resumeCheckout(o.id, o.code, o.track_token, charge, undefined);
+}
+
+/** Create (or idempotently re-create) the Stripe session for an order. */
+async function resumeCheckout(
+  orderId: string,
+  code: string,
+  trackToken: string,
+  chargePence: number,
+  email: string | undefined,
+): Promise<CheckoutResult> {
   try {
     const session = await createCheckoutSession({
       amountPence: chargePence,
-      orderCode: order.code as string,
-      description: price.lines.map((l) => `${l.qty}× ${l.name}`).join(", "),
-      successUrl: `${siteUrl()}/order/track/${order.track_token as string}?paid=1`,
+      orderCode: code,
+      description: `Order ${code}`,
+      successUrl: `${siteUrl()}/order/track/${trackToken}?paid=1`,
       cancelUrl: `${siteUrl()}/order/checkout?canceled=1`,
       customerEmail: email,
-      metadata: { order_id: orderId, code: order.code as string },
+      metadata: { order_id: orderId, code },
+      // Stripe idempotency: a retried session-create for this order can't double-charge.
+      idempotencyKey: `session_${orderId}`,
     });
     return { ok: true, url: session.url };
   } catch {
-    // Free the promo so an unpaid, abandoned order doesn't consume a single-use code.
-    if (price.promoId) await supabase.rpc("release_promo", { p_order_id: orderId });
+    // Free any reserved promo so an unpaid, abandoned order doesn't consume a
+    // single-use code (release_promo is a no-op when nothing was reserved).
+    const supabase = getServiceClient();
+    if (supabase) await supabase.rpc("release_promo", { p_order_id: orderId });
     return { ok: false, error: "We couldn't reach the payment provider — please try again." };
   }
 }

@@ -91,7 +91,12 @@ export function OrderProvider({ children }: { children: ReactNode }) {
           lines: qty <= 0 ? s.lines.filter((l) => l.key !== key) : s.lines.map((l) => (l.key === key ? { ...l, qty } : l)),
         })),
       removeLine: (key) => setState((s) => ({ ...s, lines: s.lines.filter((l) => l.key !== key) })),
-      clear: () => setState((s) => ({ ...s, lines: [], promoCode: null })),
+      clear: () => {
+        // Drop the checkout idempotency key too, so the next order gets a fresh
+        // one (a re-order of identical items must not resume the completed order).
+        try { localStorage.removeItem("bbc.order.idem"); } catch { /* ignore */ }
+        setState((s) => ({ ...s, lines: [], promoCode: null }));
+      },
     };
   }, [state, ready]);
 

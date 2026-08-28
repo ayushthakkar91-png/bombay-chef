@@ -6,6 +6,8 @@ import { ADMIN_NOTIFY_EMAIL } from "@/lib/email/provider";
 import { earnForOrder } from "@/lib/loyalty/service";
 import { subscribeContact } from "@/lib/marketing/contacts";
 import { debitGiftCard } from "@/lib/giftcards/service";
+import { enqueueOrderTelegram } from "@/lib/ordering/telegram-notify";
+import { recordOrderEvent } from "@/lib/ordering/events";
 import { flags } from "@/lib/flags";
 
 /**
@@ -50,8 +52,12 @@ export async function confirmPaidOrder(
   // promo_codes.used_count is kept in sync by the promo_redemptions trigger, so
   // there is no non-atomic read-then-write increment to do here.
 
+  await recordOrderEvent(orderId, "PAYMENT_CONFIRMED", { method: opts.method, amountPence: opts.amountPence });
   await enqueueOrderEmail(orderId, "order_confirmation");
   await enqueueOrderEmail(orderId, "admin_new_order", undefined, ADMIN_NOTIFY_EMAIL);
+  // Telegram order notification — persisted as an outbox job (channel 'telegram')
+  // so a Telegram outage can never lose the order; the dispatcher retries.
+  await enqueueOrderTelegram(orderId);
   await earnForOrder(orderId);
 
   if (flags.marketing) {

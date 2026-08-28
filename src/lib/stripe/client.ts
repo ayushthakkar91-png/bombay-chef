@@ -19,13 +19,17 @@ export function isStripeConfigured(): boolean {
   return Boolean(SECRET);
 }
 
-async function stripePost(path: string, params: URLSearchParams): Promise<Record<string, unknown>> {
+async function stripePost(path: string, params: URLSearchParams, idempotencyKey?: string): Promise<Record<string, unknown>> {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${SECRET}`,
+    "Content-Type": "application/x-www-form-urlencoded",
+  };
+  // Stripe idempotency: retrying a create with the same key returns the original
+  // result instead of creating/charging twice.
+  if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
   const res = await fetch(`${API}${path}`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${SECRET}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
+    headers,
     body: params,
   });
   const data = (await res.json()) as Record<string, unknown>;
@@ -49,6 +53,7 @@ export async function createCheckoutSession(opts: {
   cancelUrl: string;
   customerEmail?: string;
   metadata: Record<string, string>;
+  idempotencyKey?: string;
 }): Promise<{ id: string; url: string }> {
   const p = new URLSearchParams();
   p.set("mode", "payment");
@@ -65,7 +70,7 @@ export async function createCheckoutSession(opts: {
     p.set(`metadata[${k}]`, v);
     p.set(`payment_intent_data[metadata][${k}]`, v);
   }
-  const session = await stripePost("/checkout/sessions", p);
+  const session = await stripePost("/checkout/sessions", p, opts.idempotencyKey);
   return { id: session.id as string, url: session.url as string };
 }
 

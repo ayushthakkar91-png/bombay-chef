@@ -22,6 +22,20 @@ export function CheckoutForm({ menu, locationSlug }: { menu: OrderingMenu; locat
   const [giftBalance, setGiftBalance] = useState<number | null>(null);
   const [giftMsg, setGiftMsg] = useState<string | null>(null);
 
+  // A stable idempotency key for THIS cart: the same across refresh/retry (so a
+  // lost response never creates a duplicate order), but freshly generated when
+  // the cart contents change. Persisted in localStorage.
+  const idempotencyKey = (): string => {
+    const hash = JSON.stringify(lines.map((l) => [l.itemId, l.qty, l.modifiers.map((m) => m.id).sort(), l.notes ?? ""])) + "|" + fulfilment;
+    try {
+      const raw = localStorage.getItem("bbc.order.idem");
+      if (raw) { const o = JSON.parse(raw) as { hash?: string; key?: string }; if (o.hash === hash && o.key) return o.key; }
+    } catch { /* storage unavailable — fall through to a fresh key */ }
+    const key = (typeof crypto !== "undefined" && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    try { localStorage.setItem("bbc.order.idem", JSON.stringify({ hash, key })); } catch { /* ignore */ }
+    return key;
+  };
+
   const applyGift = () => {
     setGiftMsg(null);
     startGift(async () => {
@@ -53,6 +67,7 @@ export function CheckoutForm({ menu, locationSlug }: { menu: OrderingMenu; locat
       notes,
       marketingOptIn,
       giftCardCode: giftBalance != null ? giftCode : null,
+      idempotencyKey: idempotencyKey(),
     };
     startTransition(async () => {
       const res = await createCheckout(input);
