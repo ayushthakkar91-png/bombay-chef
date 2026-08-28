@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { X, Flame } from "lucide-react";
+import { X, Flame, Plus } from "lucide-react";
 
 import type { OrderingMenu, OrderMenuItem } from "@/lib/repositories/ordering-menu";
 import { useOrder } from "./OrderProvider";
@@ -15,9 +15,20 @@ const money = (p: number) => `£${(p / 100).toFixed(2)}`;
 
 export function MenuBrowser({ menu, locationSlug, branches = [], favouriteIds = [] }: { menu: OrderingMenu; locationSlug: string; branches?: { slug: string; name: string }[]; favouriteIds?: string[] }) {
   const router = useRouter();
-  const { lines, itemCount, setLocation, locationSlug: ctxSlug } = useOrder();
+  const { lines, itemCount, addLine, setLocation, locationSlug: ctxSlug } = useOrder();
   const [modalItem, setModalItem] = useState<OrderMenuItem | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Quick-add: items with a required options group open the chooser; everything
+  // else drops straight into the basket (with any default options pre-selected).
+  const quickAdd = (item: OrderMenuItem) => {
+    const needsChoice = item.modifierGroups.some((g) => g.minSelect > 0);
+    if (needsChoice) { setModalItem(item); return; }
+    const defaults = item.modifierGroups.flatMap((g) =>
+      g.options.filter((o) => o.isDefault).map((o) => ({ id: o.id, name: o.name, pricePence: o.priceDeltaPence })),
+    );
+    addLine({ itemId: item.id, name: item.name, basePence: item.pricePence, modifiers: defaults, qty: 1 });
+  };
 
   // Keep the cart's location in sync with the URL (changing it clears the cart).
   useEffect(() => {
@@ -41,24 +52,33 @@ export function MenuBrowser({ menu, locationSlug, branches = [], favouriteIds = 
                 {/* Phones: a typography-first divided list. Tablet/desktop keep the card grid (unchanged). */}
                 <div className="divide-y divide-[#2A211C]/10 sm:grid sm:grid-cols-2 sm:gap-4 sm:divide-y-0">
                   {cat.items.map((item) => (
-                    <button
+                    <div
                       key={item.id}
-                      onClick={() => setModalItem(item)}
-                      className="flex w-full items-start gap-4 py-5 text-left transition-colors duration-300 sm:gap-3 sm:border sm:border-[#2A211C]/10 sm:bg-white/50 sm:p-4 sm:py-4 sm:hover:border-[#B08A3E]/50"
+                      className="relative flex w-full items-start gap-4 py-5 transition-colors duration-300 sm:gap-3 sm:border sm:border-[#2A211C]/10 sm:bg-white/50 sm:p-4 sm:py-4 sm:hover:border-[#B08A3E]/50"
                     >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <h3 className="font-serif text-[17px] text-[#2B221D] sm:text-[18px]">{item.name}</h3>
-                          {item.spiceLevel ? <Flame className="h-3.5 w-3.5 shrink-0 text-[#5D0925]" /> : null}
+                      <button onClick={() => setModalItem(item)} className="flex min-w-0 flex-1 items-start gap-4 pr-12 text-left sm:gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="font-serif text-[17px] text-[#2B221D] sm:text-[18px]">{item.name}</h3>
+                            {item.spiceLevel ? <Flame className="h-3.5 w-3.5 shrink-0 text-[#5D0925]" /> : null}
+                          </div>
+                          {item.description && <p className="mt-1 line-clamp-2 font-sans text-[13px] leading-relaxed text-[#5A524B]">{item.description}</p>}
+                          <p className="mt-2 font-sans text-[15px] tracking-wide text-[#2B221D]">{money(item.pricePence)}</p>
                         </div>
-                        {item.description && <p className="mt-1 line-clamp-2 font-sans text-[13px] leading-relaxed text-[#5A524B]">{item.description}</p>}
-                        <p className="mt-2 font-sans text-[15px] tracking-wide text-[#2B221D]">{money(item.pricePence)}</p>
-                      </div>
-                      {item.imageUrl && (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={item.imageUrl} alt={item.name} className="h-[68px] w-[68px] shrink-0 object-cover sm:h-20 sm:w-20" />
-                      )}
-                    </button>
+                        {item.imageUrl && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={item.imageUrl} alt={item.name} className="h-[68px] w-[68px] shrink-0 object-cover sm:h-20 sm:w-20" />
+                        )}
+                      </button>
+                      {/* Explicit add affordance — one tap for simple items, opens options when required. */}
+                      <button
+                        onClick={() => quickAdd(item)}
+                        aria-label={`Add ${item.name}`}
+                        className="absolute bottom-4 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-[#5D0925] text-[#F6F2EA] shadow-sm transition-transform hover:bg-[#420616] active:scale-90 sm:bottom-3 sm:right-3"
+                      >
+                        <Plus className="h-5 w-5" />
+                      </button>
+                    </div>
                   ))}
                 </div>
               </section>
