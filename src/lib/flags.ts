@@ -6,11 +6,12 @@
  */
 export const flags = {
   /**
-   * The in-house online-ordering system (cart, checkout, Stripe). Built behind
-   * this flag and shipped OFF until Phase 3. While off, ordering links fall
-   * back to the external locator below.
+   * The in-house online-ordering system (cart, checkout, Stripe). Default ON.
+   * Kill switch: set NEXT_PUBLIC_FEATURE_ORDERING="false" to force it off (falls
+   * back to the external locator). Any other value / unset = on. (Default-on
+   * because some hosts block setting a NEXT_PUBLIC_ var to a truthy value.)
    */
-  ordering: process.env.NEXT_PUBLIC_FEATURE_ORDERING === "true",
+  ordering: process.env.NEXT_PUBLIC_FEATURE_ORDERING !== "false",
 
   /**
    * Backend-wired reservations (live availability, waitlist, confirmation &
