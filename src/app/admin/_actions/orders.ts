@@ -65,6 +65,31 @@ export async function setOrderStatus(_p: ActionState, form: FormData): Promise<A
   return ok(`Order ${next.replace(/_/g, " ")}.`);
 }
 
+/** Requeue a dead-lettered (failed) notification for an order so it retries now. */
+export async function retryOrderNotification(_p: ActionState, form: FormData): Promise<ActionState> {
+  const orderId = str(form, "orderId");
+  const locationId = str(form, "locationId");
+  if (!orderId || !locationId) return fail("Missing order.");
+
+  await requireRole("staff", locationId);
+  const service = getServiceClient();
+  if (!service) return fail("Database not connected.");
+
+  // Scope: only this order's failed notifications, and only if the order is at a
+  // location the staffer manages (re-checked here defensively).
+  const { data: order } = await service.from("orders").select("id, location_id").eq("id", orderId).maybeSingle();
+  if (!order || order.location_id !== locationId) return fail("Order not found for this location.");
+
+  await service
+    .from("notifications")
+    .update({ status: "queued", attempts: 0, send_after: new Date().toISOString(), last_error: null })
+    .eq("order_id", orderId)
+    .eq("status", "failed");
+
+  revalidateOrders();
+  return ok("Notification requeued — it will retry within a minute.");
+}
+
 /** Refund (full or partial) via Stripe, then mark the order refunded on full. */
 export async function refundOrder(_p: ActionState, form: FormData): Promise<ActionState> {
   const id = str(form, "id");

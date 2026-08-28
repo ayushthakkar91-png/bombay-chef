@@ -122,6 +122,40 @@ export async function getOrderAdmin(id: string): Promise<OrderDetail | null> {
   return toDetail(data as Record<string, unknown>);
 }
 
+/* ---- Notification failures (dead-letter) for the dashboard alarm ------- */
+
+export type NotificationFailure = { orderId: string; code: string; channel: string; lastError: string | null; attempts: number };
+
+/**
+ * Telegram/email notifications that hit the dead-letter (`failed`) for orders at
+ * this location. Surfaced as a dashboard alarm so a paid order whose restaurant
+ * notification couldn't be delivered is never silently missed. Uses the service
+ * client (the outbox has no RLS policy) but scopes strictly by location.
+ */
+export async function listNotificationFailures(locationId: string): Promise<NotificationFailure[]> {
+  const supabase = getServiceClient();
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("notifications")
+    .select("channel, last_error, attempts, order_id, orders!inner(code, location_id)")
+    .eq("status", "failed")
+    .in("channel", ["telegram", "email"])
+    .eq("orders.location_id", locationId)
+    .order("updated_at", { ascending: false })
+    .limit(50);
+  return (data as Record<string, unknown>[] | null ?? []).map((r) => {
+    const o = r.orders as { code: string } | { code: string }[] | null;
+    const order = Array.isArray(o) ? o[0] : o;
+    return {
+      orderId: r.order_id as string,
+      code: order?.code ?? "—",
+      channel: r.channel as string,
+      lastError: (r.last_error as string | null) ?? null,
+      attempts: (r.attempts as number) ?? 0,
+    };
+  });
+}
+
 /* ---- Guest read by track token (service client) ----------------------- */
 
 export async function getOrderByToken(token: string): Promise<OrderDetail | null> {
