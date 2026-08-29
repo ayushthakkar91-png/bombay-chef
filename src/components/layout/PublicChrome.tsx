@@ -6,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { MobileBottomBar } from "@/components/common/MobileBottomBar";
 import { CookieNotice } from "@/components/common/CookieNotice";
+import { EventPopup } from "@/components/marketing/EventPopup";
 import { Maintenance } from "@/components/layout/Maintenance";
 import { SITE_ENABLED } from "@/lib/flags";
 
@@ -58,6 +59,7 @@ export function PublicChrome({
       <Footer />
       <MobileBottomBar />
       <CookieNotice />
+      <EventPopup />
     </SmoothScroll>
   );
 }

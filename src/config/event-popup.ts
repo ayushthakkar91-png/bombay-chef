@@ -41,24 +41,24 @@ export type EventPopupConfig = {
 
 export const eventPopup: EventPopupConfig = {
   enabled: true,
-  label: "This week only",
-  title: "Live Football at Balham",
-  message: "Watch England vs Panama with us over food, drinks and Bombay atmosphere.",
+  label: "Holidays are ending",
+  title: "Back to School Offer",
+  message: "Wave off the holidays in style at our Balham kitchen — before term begins.",
   location: "Balham",
-  match: { home: "England", away: "Panama", date: "Saturday 27 June" },
-  offerHeadline: "Get 25% Off",
-  offer: "On Takeaway Orders",
+  offerHeadline: "50% Off",
+  offer: "Reservations at Balham",
   details: [
-    "Limited tables available",
-    "Reserve early for the best seats",
+    "Valid on table reservations at our Balham branch",
+    "Book online in seconds",
+    "Limited-time back-to-school treat",
   ],
-  ctaText: "Reserve a Table",
+  ctaText: "Reserve at Balham",
   ctaHref: "/reservations?location=balham",
   secondaryText: "View Menu",
   secondaryHref: "/menu",
-  note: "Tables are limited",
+  note: "While the offer lasts",
   startDate: null,
   endDate: null,
   routes: ["/", "/locations/balham"],
-  dismissHours: 0, // show on every refresh; set to 24 to suppress for a day after closing
+  dismissHours: 12, // after a visitor closes it, stay hidden for 12h (set 0 to show every load)
 };
