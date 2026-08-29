@@ -98,6 +98,7 @@ export function EventPopup({ config }: { config: EventPopupConfig }) {
           </div>
 
           {cfg.note && <p className="mt-4 font-sans text-[11px] uppercase tracking-[0.15em] text-[#5A524B]">{cfg.note}</p>}
+          <p className="mt-2 font-sans text-[10px] tracking-[0.08em] text-[#5A524B]/70">T&amp;Cs apply.</p>
         </div>
       </div>
     </div>
