@@ -46,10 +46,10 @@ export const eventPopup: EventPopupConfig = {
   message: "Wave off the holidays in style at our Balham kitchen — before term begins.",
   location: "Balham",
   offerHeadline: "50% Off",
-  offer: "Reservations at Balham",
+  offer: "On Food · Balham",
   details: [
-    "Valid on table reservations at our Balham branch",
-    "Book online in seconds",
+    "50% off food at our Balham branch",
+    "Book a table online in seconds",
     "Limited-time back-to-school treat",
   ],
   ctaText: "Reserve at Balham",

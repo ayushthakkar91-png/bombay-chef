@@ -7,6 +7,7 @@ import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { MobileBottomBar } from "@/components/common/MobileBottomBar";
 import { CookieNotice } from "@/components/common/CookieNotice";
 import { EventPopup } from "@/components/marketing/EventPopup";
+import type { EventPopupConfig } from "@/config/event-popup";
 import { Maintenance } from "@/components/layout/Maintenance";
 import { SITE_ENABLED } from "@/lib/flags";
 
@@ -19,8 +20,10 @@ import { SITE_ENABLED } from "@/lib/flags";
  */
 export function PublicChrome({
   children,
+  popup,
 }: {
   children: React.ReactNode;
+  popup?: EventPopupConfig;
 }) {
   const pathname = usePathname();
 
@@ -59,7 +62,7 @@ export function PublicChrome({
       <Footer />
       <MobileBottomBar />
       <CookieNotice />
-      <EventPopup />
+      {popup && <EventPopup config={popup} />}
     </SmoothScroll>
   );
 }

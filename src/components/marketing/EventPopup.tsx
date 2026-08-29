@@ -5,22 +5,23 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 
-import { eventPopup } from "@/config/event-popup";
+import type { EventPopupConfig } from "@/config/event-popup";
 
 const STORAGE_KEY = "bbc.eventpopup.dismissedAt";
 
 /**
- * Public marketing pop-up, driven entirely by `src/config/event-popup.ts`.
- * Appears on the allowed routes shortly after the page loads, within the
- * optional date window, unless the visitor dismissed it inside `dismissHours`.
- * Fully client-side — no data fetch, no layout shift.
+ * Public marketing pop-up. Content comes from the DB (`marketing_popup`,
+ * editable in admin → Marketing → Popup) via `getEventPopup()`, passed in as
+ * `config`; structural fields (routes, dates, dismissHours, details) come from
+ * the static fallback merged inside that loader. Appears on the allowed routes
+ * shortly after load, within the date window, unless dismissed recently.
  */
-export function EventPopup() {
+export function EventPopup({ config }: { config: EventPopupConfig }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const cfg = eventPopup;
+    const cfg = config;
     if (!cfg.enabled) return;
     if (!pathname || !cfg.routes.includes(pathname)) return;
 
@@ -40,10 +41,10 @@ export function EventPopup() {
     // Let the page settle, then reveal.
     const t = setTimeout(() => setOpen(true), 900);
     return () => clearTimeout(t);
-  }, [pathname]);
+  }, [pathname, config]);
 
   if (!open) return null;
-  const cfg = eventPopup;
+  const cfg = config;
 
   const dismiss = () => {
     try { localStorage.setItem(STORAGE_KEY, String(Date.now())); } catch { /* ignore */ }
