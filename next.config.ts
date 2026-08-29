@@ -43,6 +43,8 @@ const nextConfig: NextConfig = {
     // AVIF first (≈20% smaller than WebP), WebP fallback. Next re-encodes the
     // source PNG on delivery, so the hero LCP image is never shipped as PNG.
     formats: ['image/avif', 'image/webp'],
+    // Next 16 requires every <Image quality> value used in the app to be declared.
+    qualities: [70, 75, 78],
     remotePatterns: [
       {
         protocol: 'https',
