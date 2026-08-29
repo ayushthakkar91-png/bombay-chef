@@ -6,12 +6,12 @@
  */
 export const flags = {
   /**
-   * The in-house online-ordering system (cart, checkout, Stripe). FORCED ON in
-   * code — the hosting env had a stale NEXT_PUBLIC_FEATURE_ORDERING="false" that
-   * kept overriding it. To disable ordering later, change this back to
-   * `process.env.NEXT_PUBLIC_FEATURE_ORDERING !== "false"` and set that var.
+   * The in-house online-ordering system (cart, checkout, Stripe). Currently OFF —
+   * every "Order Online" CTA falls back to the external .uk locator. To switch the
+   * in-house ordering back on, set this to `true` (or restore the env check
+   * `process.env.NEXT_PUBLIC_FEATURE_ORDERING !== "false"`).
    */
-  ordering: true,
+  ordering: false,
 
   /**
    * Backend-wired reservations (live availability, waitlist, confirmation &
