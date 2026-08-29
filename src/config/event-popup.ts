@@ -60,5 +60,5 @@ export const eventPopup: EventPopupConfig = {
   startDate: null,
   endDate: null,
   routes: ["/", "/locations/balham"],
-  dismissHours: 12, // after a visitor closes it, stay hidden for 12h (set 0 to show every load)
+  dismissHours: 0, // show on every site load (no suppression after closing)
 };
