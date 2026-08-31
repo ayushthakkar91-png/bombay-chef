@@ -7,7 +7,7 @@ import { requireStaff, requireRole } from "@/lib/auth/dal";
 import { ROLES, canGrantRole, rankAt, ROLE_RANK, type Role } from "@/lib/auth/roles";
 import { type ActionState, fail, ok, str } from "@/lib/admin/validation";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { EMAIL_RE } from "@/lib/patterns";
 
 async function audit(action: string, entityId: string, locationId: string | null, after: Record<string, unknown>) {
   const service = getServiceClient();

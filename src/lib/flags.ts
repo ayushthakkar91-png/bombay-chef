@@ -6,12 +6,11 @@
  */
 export const flags = {
   /**
-   * The in-house online-ordering system (cart, checkout, Stripe). Currently OFF —
-   * every "Order Online" CTA falls back to the external .uk locator. To switch the
-   * in-house ordering back on, set this to `true` (or restore the env check
-   * `process.env.NEXT_PUBLIC_FEATURE_ORDERING !== "false"`).
+   * The in-house online-ordering system (cart, checkout, Stripe). Env-driven and
+   * OFF by default — every "Order Online" CTA falls back to the external .uk
+   * locator. Turn it on by setting NEXT_PUBLIC_FEATURE_ORDERING="true".
    */
-  ordering: false,
+  ordering: process.env.NEXT_PUBLIC_FEATURE_ORDERING === "true",
 
   /**
    * Backend-wired reservations (live availability, waitlist, confirmation &

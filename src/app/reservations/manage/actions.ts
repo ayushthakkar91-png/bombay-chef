@@ -18,8 +18,7 @@ import { rateLimit } from "@/lib/ratelimit";
  * view or change the reservation. All entry points are rate-limited.
  */
 
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const MAX_PARTY = 12;
+import { DATE_RE, MAX_PARTY } from "@/lib/patterns";
 const GENERIC_ERR = "We couldn't find a booking matching those details.";
 const RATE_ERR = "Too many attempts. Please wait a moment and try again.";
 

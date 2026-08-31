@@ -5,7 +5,7 @@ import { flags } from "@/lib/flags";
 import { type ActionState, fail, ok, str } from "@/lib/admin/validation";
 import { rateLimit } from "@/lib/ratelimit";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { EMAIL_RE } from "@/lib/patterns";
 
 export async function subscribeNewsletter(_p: ActionState, form: FormData): Promise<ActionState> {
   if (!(await rateLimit("newsletter", { limit: 3, windowSec: 60 })).ok) {

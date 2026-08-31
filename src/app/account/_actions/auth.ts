@@ -8,7 +8,7 @@ import { earnForOrder } from "@/lib/loyalty/service";
 import { type ActionState, fail, ok, str } from "@/lib/admin/validation";
 import { rateLimit } from "@/lib/ratelimit";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { EMAIL_RE } from "@/lib/patterns";
 const REVENUE_STATUSES = new Set(["paid", "accepted", "preparing", "ready_for_collection", "out_for_delivery", "completed"]);
 
 function safeNext(next: string): string {

@@ -13,7 +13,7 @@ import type { CartLineInput } from "@/lib/ordering/types";
 import type { Fulfilment } from "@/lib/ordering/constants";
 import { rateLimit } from "@/lib/ratelimit";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { EMAIL_RE } from "@/lib/patterns";
 
 function siteUrl(): string {
   return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");

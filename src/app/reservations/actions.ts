@@ -29,9 +29,7 @@ export type SubmitResult =
   | { ok: true; reference: string; manageToken: string }
   | { ok: false; full?: true; error: string };
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const MAX_PARTY = 12;
+import { EMAIL_RE, DATE_RE, MAX_PARTY } from "@/lib/patterns";
 
 async function resolveLocation(slug: string): Promise<{ id: string; name: string } | null> {
   const supabase = getServiceClient();

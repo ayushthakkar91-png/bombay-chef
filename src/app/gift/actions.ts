@@ -6,7 +6,7 @@ import { GIFT_MIN_PENCE, GIFT_MAX_PENCE, gbp } from "@/lib/giftcards/constants";
 import { getCustomer } from "@/lib/auth/customer";
 import { rateLimit } from "@/lib/ratelimit";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { EMAIL_RE } from "@/lib/patterns";
 
 function siteUrl(): string {
   return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
