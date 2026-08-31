@@ -44,13 +44,16 @@ export function PublicChrome({
           which is the main cause of scroll jank. translateZ(0) promotes this
           to its own layer so the noise rasterizes once and the compositor
           just keeps it pinned while you scroll. */}
+      {/* Grain: desktop only. On mobile the live SVG filter is the main scroll-
+          jank source (weak GPUs re-rasterize it every frame), so it's dropped
+          there for a smoother feel. numOctaves lowered 3→1 to cut filter cost. */}
       <div
-        className="pointer-events-none fixed inset-0 z-[100] opacity-[0.06]"
+        className="pointer-events-none fixed inset-0 z-[100] hidden opacity-[0.06] md:block"
         style={{ transform: "translateZ(0)" }}
       >
         <svg className="w-full h-full opacity-60" xmlns="http://www.w3.org/2000/svg">
           <filter id="noise">
-            <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch" />
+            <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="1" stitchTiles="stitch" />
           </filter>
           <rect width="100%" height="100%" filter="url(#noise)" />
         </svg>
