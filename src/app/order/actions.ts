@@ -15,9 +15,7 @@ import { rateLimit } from "@/lib/ratelimit";
 
 import { EMAIL_RE } from "@/lib/patterns";
 
-function siteUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
-}
+import { siteUrl } from "@/lib/format";
 
 async function locationIdFromSlug(slug: string): Promise<string | null> {
   const supabase = getServiceClient();

@@ -13,7 +13,8 @@ import type { InlineButton } from "@/lib/notifications/telegram";
  * channel, never a source of truth — enqueue failures never touch order state.
  */
 
-const money = (p: number) => `£${(p / 100).toFixed(2)}`;
+import { money } from "@/lib/format";
+
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 /** Friendly button label per target status. */

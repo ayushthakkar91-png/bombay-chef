@@ -4,9 +4,8 @@ import { BRANCHES } from "@/data/locations";
 import type { ReservationEmailPayload } from "@/lib/email/templates";
 
 /** Public site origin for building manage links in emails. */
-export function siteUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
-}
+import { siteUrl } from "@/lib/format";
+export { siteUrl };
 
 /** Short human reference shown to guests, e.g. "BBC-3F9A2C". */
 export function reservationReference(id: string): string {

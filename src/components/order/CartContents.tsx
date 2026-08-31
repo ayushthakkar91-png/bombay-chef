@@ -9,7 +9,7 @@ import type { CartLineInput } from "@/lib/ordering/types";
 import { priceCartAction } from "@/app/order/actions";
 import { useOrder } from "./OrderProvider";
 
-const money = (p: number) => `£${(p / 100).toFixed(2)}`;
+import { money } from "@/lib/format";
 
 export function CartContents({
   menu,

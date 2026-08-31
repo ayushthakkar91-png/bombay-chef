@@ -12,9 +12,7 @@ import { gbp } from "./constants";
  * append-only `gift_card_transactions` ledger for audit + reporting.
  */
 
-function siteUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
-}
+import { siteUrl } from "@/lib/format";
 
 function newCode(): string {
   return crypto.randomBytes(8).toString("hex").toUpperCase().match(/.{1,4}/g)!.join("-");

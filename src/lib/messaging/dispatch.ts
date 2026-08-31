@@ -4,9 +4,7 @@ import { getServiceClient } from "@/lib/supabase/clients";
 import { sendMessage } from "./provider";
 import type { Channel } from "./constants";
 
-function siteUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
-}
+import { siteUrl } from "@/lib/format";
 
 /** Send due queued messages. Retries with exponential backoff; terminal after max_attempts. */
 export async function dispatchQueued(nowMs: number, limit = 50): Promise<{ sent: number; failed: number }> {

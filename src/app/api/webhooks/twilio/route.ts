@@ -9,9 +9,7 @@ export const dynamic = "force-dynamic";
 const STOP_WORDS = new Set(["STOP", "STOPALL", "UNSUBSCRIBE", "CANCEL", "END", "QUIT"]);
 const START_WORDS = new Set(["START", "YES", "UNSTOP"]);
 
-function siteUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
-}
+import { siteUrl } from "@/lib/format";
 
 /** Twilio signs requests: base64(HMAC-SHA1(authToken, url + sorted key+value concat)). */
 function verifyTwilio(url: string, params: Record<string, string>, signature: string | null): boolean {

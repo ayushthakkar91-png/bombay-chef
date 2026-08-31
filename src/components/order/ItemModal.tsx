@@ -9,7 +9,7 @@ import type { CartModifier } from "@/lib/ordering/types";
 import { toggleFavourite } from "@/app/account/_actions/profile";
 import { useOrder } from "./OrderProvider";
 
-const money = (p: number) => `£${(p / 100).toFixed(2)}`;
+import { money } from "@/lib/format";
 
 export function ItemModal({ item, onClose, isFavourite }: { item: OrderMenuItem; onClose: () => void; isFavourite?: boolean }) {
   const { addLine } = useOrder();

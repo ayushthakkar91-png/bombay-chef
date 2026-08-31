@@ -6,7 +6,7 @@ import { Badge, EmptyState } from "@/components/admin/primitives";
 import { Td, Th } from "@/components/admin/ui";
 import { OrderActions } from "./OrderActions";
 
-const money = (p: number) => `£${(p / 100).toFixed(2)}`;
+import { money } from "@/lib/format";
 
 const TONE: Record<OrderStatus, "neutral" | "on" | "off" | "accent"> = {
   pending_payment: "off",

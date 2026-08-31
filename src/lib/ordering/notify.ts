@@ -9,9 +9,7 @@ function money(pence: number): string {
   return `£${(pence / 100).toFixed(2)}`;
 }
 
-function siteUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
-}
+import { siteUrl } from "@/lib/format";
 
 /**
  * Build an order email payload and enqueue it. Loads the order + items +

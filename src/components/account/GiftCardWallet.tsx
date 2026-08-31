@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import type { AccountGiftCard } from "@/lib/repositories/account";
 
-const money = (p: number) => `£${(p / 100).toFixed(2)}`;
+import { money } from "@/lib/format";
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
 const STATUS: Record<string, { label: string; cls: string }> = {

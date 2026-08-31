@@ -11,9 +11,7 @@ import { flags } from "@/lib/flags";
  * and newsletter signups. All writes are service-client.
  */
 
-function siteUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
-}
+import { siteUrl } from "@/lib/format";
 export function unsubscribeUrl(token: string): string {
   return `${siteUrl()}/unsubscribe?token=${token}`;
 }

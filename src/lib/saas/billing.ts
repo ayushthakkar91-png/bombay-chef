@@ -8,9 +8,7 @@ const API = "https://api.stripe.com/v1";
 export function isBillingConfigured(): boolean {
   return Boolean(STRIPE_KEY);
 }
-function siteUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
-}
+import { siteUrl } from "@/lib/format";
 
 async function stripe(path: string, params: Record<string, string>): Promise<Record<string, unknown>> {
   const res = await fetch(`${API}/${path}`, {

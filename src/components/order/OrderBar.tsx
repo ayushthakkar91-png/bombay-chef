@@ -9,7 +9,7 @@ import { useOrder } from "./OrderProvider";
 import { checkDeliveryAction, suggestBranchAction } from "@/app/order/actions";
 import type { DeliveryCheck, BranchSuggestion } from "@/lib/ordering/delivery";
 
-const money = (p: number) => `£${(p / 100).toFixed(2)}`;
+import { money } from "@/lib/format";
 type Branch = { slug: string; name: string };
 
 /**

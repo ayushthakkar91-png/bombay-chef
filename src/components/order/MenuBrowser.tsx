@@ -11,7 +11,7 @@ import { CartContents } from "./CartContents";
 import { OrderBar } from "./OrderBar";
 import { MenuCategoryNav } from "./MenuCategoryNav";
 
-const money = (p: number) => `£${(p / 100).toFixed(2)}`;
+import { money } from "@/lib/format";
 
 export function MenuBrowser({ menu, locationSlug, branches = [], favouriteIds = [] }: { menu: OrderingMenu; locationSlug: string; branches?: { slug: string; name: string }[]; favouriteIds?: string[] }) {
   const router = useRouter();

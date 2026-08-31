@@ -8,7 +8,7 @@ import { ORDER_STATUS_LABEL } from "@/lib/ordering/constants";
 import { Badge, EmptyState } from "@/components/admin/primitives";
 import { OrderActions } from "./OrderActions";
 
-const money = (p: number) => `£${(p / 100).toFixed(2)}`;
+import { money } from "@/lib/format";
 
 function timeLabel(iso: string): string {
   return new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));

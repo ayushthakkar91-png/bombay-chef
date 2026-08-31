@@ -5,9 +5,7 @@ import { enqueueEmail } from "@/lib/notifications/outbox";
 import { subscribeContact, unsubscribeUrl } from "./contacts";
 import { flags } from "@/lib/flags";
 
-function siteUrl(): string {
-  return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
-}
+import { siteUrl } from "@/lib/format";
 
 /**
  * Abandoned-cart reminders: pending_payment orders 30 min–24 h old where the
