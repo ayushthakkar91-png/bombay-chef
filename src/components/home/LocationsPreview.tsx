@@ -2,35 +2,33 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { branchBySlug } from "@/data/locations";
+import { branchBySlug, BRANCHES } from "@/data/locations";
 import { RESERVATIONS_ONLINE } from "@/lib/flags";
 
-const LOCATIONS = [
-  {
-    name: "Balham",
+// Name / address / phone come from BRANCHES (single source); the establishment
+// year + atmosphere copy are presentation-only and live here.
+const COPY: Record<string, { established: string; atmosphere: string }> = {
+  balham: {
     established: "Est. 2014",
-    address: "88 Balham High Rd, London SW12 9AG",
-    phone: "020 8772 3222",
     atmosphere: "Bombay Bicycle Chef in Balham offers a diverse selection of Indian cuisine, featuring a blend of traditional and modern dishes. The menu includes popular items like Chicken Tikka Masala, Lamb Dum Biryani, and Shahi Paneer.",
-    // image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?q=80&w=2000&auto=format&fit=crop"
   },
-  {
-    name: "Battersea",
+  battersea: {
     established: "Est. 2018",
-    address: "28 Queenstown Rd, London SW8 3RX",
-    phone: "020 7720 0500",
     atmosphere: "Bombay Bicycle Chef in Battersea offers a diverse selection of Indian cuisine, featuring a blend of traditional and modern dishes. The menu includes popular items like Tandoori Lamb Chops, Shahi Paneer, and Chicken Biryani.",
-    // image: "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?q=80&w=2000&auto=format&fit=crop"
   },
-  {
-    name: "Kilburn",
+  kilburn: {
     established: "Est. 2021",
-    address: "24 Willesden Ln, London NW6 7ST",
-    phone: "020 7624 0300",
     atmosphere: "Bombay Bicycle Chef in Kilburn offers a diverse selection of Indian cuisine, featuring a blend of traditional and modern dishes. The menu includes popular items like Chicken Tikka Masala, Chicken Biryani, and Lamb Dum Biryani.",
-    // image: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?q=80&w=2000&auto=format&fit=crop"
-  }
-];
+  },
+};
+
+const LOCATIONS = BRANCHES.map((b) => ({
+  name: b.name,
+  established: COPY[b.slug].established,
+  address: `${b.street}, ${b.locality} ${b.postcode}`,
+  phone: b.phone,
+  atmosphere: COPY[b.slug].atmosphere,
+}));
 
 export function Locations() {
   return (

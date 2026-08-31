@@ -3,7 +3,11 @@
  * On-brand, dark + gold. The /admin panel is unaffected (gated upstream in
  * PublicChrome), so staff can keep working while this is up.
  */
+import { branchBySlug } from "@/data/locations";
+
 export function Maintenance() {
+  const balham = branchBySlug("balham")!;
+  const balhamTel = `+44${balham.phone.replace(/\s/g, "").replace(/^0/, "")}`;
   return (
     <main className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#1A130D] px-6 py-16 text-center selection:bg-[#C8A96B] selection:text-[#1A130D]">
       {/* Brand mark */}
@@ -35,11 +39,11 @@ export function Maintenance() {
       </p>
 
       <div className="mt-12 flex flex-col items-center gap-4 font-sans text-[13px] tracking-[0.05em] text-[#F5F0E6]/80">
-        <a href="tel:+442087723222" className="transition-colors hover:text-[#C8A96B]">
-          Balham &middot; 020 8772 3222
+        <a href={`tel:${balhamTel}`} className="transition-colors hover:text-[#C8A96B]">
+          {balham.name} &middot; {balham.phone}
         </a>
-        <a href="mailto:info@bombaybicyclechef.com" className="transition-colors hover:text-[#C8A96B]">
-          info@bombaybicyclechef.com
+        <a href={`mailto:${balham.email}`} className="transition-colors hover:text-[#C8A96B]">
+          {balham.email}
         </a>
       </div>
     </main>

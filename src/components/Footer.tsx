@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { ORDER_ENTRY_HREF } from "@/lib/flags";
-import { branchBySlug } from "@/data/locations";
+import { branchBySlug, BRANCHES } from "@/data/locations";
 import { OpeningHours } from "@/components/locations/OpeningHours";
 
 const FOOTER_NAV = [
@@ -12,26 +12,13 @@ const FOOTER_NAV = [
   { name: "Contact", href: "/contact" },
 ];
 
-const LOCATIONS_DATA = [
-  {
-    name: "Balham",
-    address: "88 Balham High Rd\nLondon SW12 9AG",
-    phone: "020 8772 3222",
-    href: "/locations"
-  },
-  {
-    name: "Battersea",
-    address: "28 Queenstown Rd\nLondon SW8 3RX",
-    phone: "020 7720 0500",
-    href: "/locations"
-  },
-  {
-    name: "Kilburn",
-    address: "24 Willesden Ln\nLondon NW6 7ST",
-    phone: "020 7624 0300",
-    href: "/locations"
-  }
-];
+// Single source of truth — derived from BRANCHES (src/data/locations.ts).
+const LOCATIONS_DATA = BRANCHES.map((b) => ({
+  name: b.name,
+  address: `${b.street}\n${b.locality} ${b.postcode}`,
+  phone: b.phone,
+  href: "/locations",
+}));
 
 const SOCIALS = [
   { name: "Instagram", href: "#" },

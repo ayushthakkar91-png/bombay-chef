@@ -41,9 +41,15 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
       ref={lenisRef}
       autoRaf={false}
       root
-      options={{ 
-        lerp: 0.07, 
+      options={{
+        // Smoother, more controlled glide: a gentle exponential ease-out over a
+        // fixed duration reads more "buttery" than a raw lerp, without feeling
+        // floaty or laggy. Slightly reduced wheel gain softens fast flicks.
+        duration: 1.15,
+        easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
         smoothWheel: true,
+        wheelMultiplier: 0.9,
+        touchMultiplier: 1.2,
       }}
     >
       {children}
