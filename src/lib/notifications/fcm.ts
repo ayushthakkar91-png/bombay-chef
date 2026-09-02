@@ -81,15 +81,13 @@ export async function sendFcmData(
   if (!isFcmConfigured()) return { sent: 0, invalidTokens: [] };
   if (tokens.length === 0) return { sent: 0, invalidTokens: [] };
 
-  let accessToken: string;
-  try {
-    accessToken = await getAccessToken();
-  } catch {
-    // Can't mint a token — treat as a transient failure, not invalid tokens.
-    return { sent: 0, invalidTokens: [] };
-  }
+  // Let a mint failure throw — the caller (dispatchFcmDue) must see this as a
+  // real failure so it retries/dead-letters instead of silently marking the
+  // row "sent". Never include the key/token/JWT in the thrown message.
+  const accessToken = await getAccessToken();
 
   let sent = 0;
+  let realFailure = false;
   const invalidTokens: string[] = [];
 
   for (const token of tokens) {
@@ -118,10 +116,22 @@ export async function sendFcmData(
       const bodyText = await res.text().catch(() => "");
       if (res.status === 404 || bodyText.includes("UNREGISTERED") || bodyText.includes("NOT_FOUND")) {
         invalidTokens.push(token);
+      } else {
+        realFailure = true;
       }
     } catch {
-      // Network/other error on this one token — skip it, don't abort the batch.
+      // Network/other error on this one token — skip it, don't abort the batch,
+      // but this is a real (transport) failure, not an invalid token.
+      realFailure = true;
     }
+  }
+
+  // If every token failed for a real (non-invalid-token) reason, surface that
+  // as a thrown error so dispatchFcmDue retries/dead-letters the row instead
+  // of marking it "sent". If at least one token sent, or every failure was an
+  // invalid/unregistered token (handled via pruning), return normally.
+  if (tokens.length > 0 && sent === 0 && invalidTokens.length === 0 && realFailure) {
+    throw new Error("FCM send failed for all tokens");
   }
 
   return { sent, invalidTokens };
