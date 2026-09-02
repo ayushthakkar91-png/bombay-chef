@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { Fulfilment, OrderStatus } from "@/lib/ordering/constants";
+import { ORDER_TRANSITIONS, type Fulfilment, type OrderStatus } from "@/lib/ordering/constants";
 
 const money = (pence: number | null | undefined) => (pence ?? 0) / 100;
 
@@ -19,6 +19,32 @@ export function bbcStatusToApp(s: OrderStatus): "pending" | "preparing" | "ready
 export function appStatusToBbc(appStatus: string, fulfilment: Fulfilment): OrderStatus | null {
   if (appStatus === "preparing") return "accepted"; // ACCEPT button
   if (appStatus === "ready") return fulfilment === "delivery" ? "out_for_delivery" : "ready_for_collection";
+  return null;
+}
+
+/**
+ * Ordered list of statuses to step THROUGH (excluding `from`, including `to`)
+ * to walk `from` forward to `to` along the happy path only — a BFS over
+ * ORDER_TRANSITIONS that prunes the "cancelled"/"refunded" side-transitions,
+ * since the POS must never auto-advance an order into either of those.
+ * Returns null if `to` isn't forward-reachable from `from` this way.
+ */
+export function forwardStatusPath(from: OrderStatus, to: OrderStatus): OrderStatus[] | null {
+  if (from === to) return [];
+  const seen = new Set<OrderStatus>([from]);
+  const queue: OrderStatus[][] = [[from]];
+  while (queue.length) {
+    const path = queue.shift()!;
+    const last = path[path.length - 1];
+    for (const next of ORDER_TRANSITIONS[last] ?? []) {
+      if (next === "cancelled" || next === "refunded") continue; // never auto-advance into these
+      if (seen.has(next)) continue;
+      const nextPath = [...path, next];
+      if (next === to) return nextPath.slice(1);
+      seen.add(next);
+      queue.push(nextPath);
+    }
+  }
   return null;
 }
 

@@ -1,9 +1,9 @@
 import "server-only";
 
 import { getServiceClient } from "@/lib/supabase/clients";
-import { LIVE_STATUSES, ORDER_TRANSITIONS, type Fulfilment, type OrderStatus } from "@/lib/ordering/constants";
+import { LIVE_STATUSES, type Fulfilment, type OrderStatus } from "@/lib/ordering/constants";
 import { recordOrderEvent } from "@/lib/ordering/events";
-import { orderToPosJson, appStatusToBbc } from "./mapping";
+import { orderToPosJson, appStatusToBbc, forwardStatusPath } from "./mapping";
 
 const ORDER_COLS =
   "id, code, status, fulfilment, contact_name, total_pence, subtotal_pence, delivery_fee_pence, discount_pence, promo_code, notes, delivery_address, placed_at, created_at, printed_at";
@@ -52,7 +52,8 @@ export async function markPrinted(orderId: string, locationId: string): Promise<
   if (!(await orderAtLocation(orderId, locationId))) return false;
   const { error } = await supabase.from("orders")
     .update({ printed_at: new Date().toISOString(), print_error: null, print_failed_at: null })
-    .eq("id", orderId);
+    .eq("id", orderId)
+    .eq("location_id", locationId);
   if (error) return false;
   await recordOrderEvent(orderId, "POS_PRINTED", {});
   return true;
@@ -64,12 +65,19 @@ export async function markPrintFailed(orderId: string, locationId: string, error
   if (!(await orderAtLocation(orderId, locationId))) return false;
   const { error: updateError } = await supabase.from("orders")
     .update({ print_failed_at: new Date().toISOString(), print_error: error.slice(0, 300) })
-    .eq("id", orderId);
+    .eq("id", orderId)
+    .eq("location_id", locationId);
   if (updateError) return false;
   await recordOrderEvent(orderId, "POS_PRINT_FAILED", { error: error.slice(0, 300) });
   return true;
 }
 
+/**
+ * The Sunmi POS only has two buttons (ACCEPT / READY), but the BBC status
+ * chain has intermediate states between them (e.g. accepted → preparing →
+ * ready_for_collection). So a button press must auto-advance through any
+ * legal intermediate hops rather than attempt a single illegal jump.
+ */
 export async function updateOrderStatusPos(orderId: string, locationId: string, appStatus: string): Promise<{ ok: boolean; error?: string }> {
   const supabase = getServiceClient();
   if (!supabase) return { ok: false, error: "Unavailable." };
@@ -78,11 +86,23 @@ export async function updateOrderStatusPos(orderId: string, locationId: string, 
 
   const target = appStatusToBbc(appStatus, cur.fulfilment);
   if (!target) return { ok: false, error: "Unknown status." };
-  if (!ORDER_TRANSITIONS[cur.status]?.includes(target)) {
-    return { ok: false, error: `Can't move a ${cur.status} order to ${target}.` };
+  if (target === cur.status) return { ok: true }; // idempotent no-op
+
+  const path = forwardStatusPath(cur.status, target);
+  if (!path) return { ok: false, error: `Can't move a ${cur.status} order to ${target}.` };
+
+  let current = cur.status;
+  for (const next of path) {
+    const { data, error } = await supabase.from("orders")
+      .update({ status: next })
+      .eq("id", orderId)
+      .eq("location_id", locationId)
+      .eq("status", current)
+      .select("id");
+    if (error) return { ok: false, error: "Update failed." };
+    if (!data || data.length === 0) return { ok: false, error: "Order changed — please refresh." };
+    await recordOrderEvent(orderId, "POS_STATUS_CHANGED", { from: current, to: next, via: "pos" });
+    current = next;
   }
-  const { error } = await supabase.from("orders").update({ status: target }).eq("id", orderId).eq("status", cur.status);
-  if (error) return { ok: false, error: "Update failed." };
-  await recordOrderEvent(orderId, "POS_STATUS_CHANGED", { from: cur.status, to: target, via: "pos" });
   return { ok: true };
 }
