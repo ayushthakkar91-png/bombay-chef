@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Too many attempts. Try again shortly." }, { status: 429 });
   }
   const body = (await request.json().catch(() => null)) as { email?: string; password?: string } | null;
-  if (!body?.email || !body?.password) return NextResponse.json({ error: "Email and password required." }, { status: 400 });
+  if (typeof body?.email !== "string" || typeof body?.password !== "string" || !body.email.trim() || !body.password) return NextResponse.json({ error: "Email and password required." }, { status: 400 });
 
   const result = await posLogin(body.email.trim(), body.password);
   if ("error" in result) return NextResponse.json({ error: result.error }, { status: 401 });

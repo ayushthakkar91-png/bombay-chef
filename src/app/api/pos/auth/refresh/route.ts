@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Too many attempts." }, { status: 429 });
   }
   const body = (await request.json().catch(() => null)) as { refreshToken?: string } | null;
-  if (!body?.refreshToken) return NextResponse.json({ error: "refreshToken required." }, { status: 400 });
+  if (typeof body?.refreshToken !== "string" || !body.refreshToken) return NextResponse.json({ error: "refreshToken required." }, { status: 400 });
   const result = await posRefresh(body.refreshToken);
   if ("error" in result) return NextResponse.json({ error: result.error }, { status: 401 });
   return NextResponse.json(result);
