@@ -7,6 +7,7 @@ import { earnForOrder } from "@/lib/loyalty/service";
 import { subscribeContact } from "@/lib/marketing/contacts";
 import { debitGiftCard } from "@/lib/giftcards/service";
 import { enqueueOrderTelegram } from "@/lib/ordering/telegram-notify";
+import { enqueueOrderFcm } from "@/lib/ordering/fcm-notify";
 import { recordOrderEvent } from "@/lib/ordering/events";
 import { flags } from "@/lib/flags";
 
@@ -74,6 +75,9 @@ export async function confirmPaidOrder(
   // Telegram order notification — persisted as an outbox job (channel 'telegram')
   // so a Telegram outage can never lose the order; the dispatcher retries.
   await enqueueOrderTelegram(orderId);
+  // FCM push to registered Sunmi POS terminals — pure latency optimisation on
+  // top of the existing 5s poll; no-ops cleanly when FCM env isn't configured.
+  await enqueueOrderFcm(orderId);
   await earnForOrder(orderId);
 
   if (flags.marketing) {

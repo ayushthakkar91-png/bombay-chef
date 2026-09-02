@@ -7,6 +7,7 @@ import { confirmPaidOrder } from "@/lib/ordering/confirm";
 import { confirmGiftCardPurchase } from "@/lib/giftcards/service";
 import { recordOrderEvent } from "@/lib/ordering/events";
 import { dispatchTelegramDue } from "@/lib/notifications/telegram-dispatch";
+import { dispatchFcmDue } from "@/lib/notifications/fcm-dispatch";
 
 export const dynamic = "force-dynamic";
 
@@ -65,7 +66,7 @@ export async function POST(request: Request) {
         await recordOrderEvent(metadata.order_id, "PAYMENT_AMOUNT_MISMATCH", { expected, amountTotal, currency });
       } else {
         const ok = await confirmPaidOrder(metadata.order_id, { paymentIntent, amountPence: amountTotal, method: "card" });
-        if (ok) after(() => dispatchTelegramDue());
+        if (ok) after(() => { dispatchTelegramDue(); dispatchFcmDue(); });
       }
     } else if (metadata.gift_card_id) {
       await confirmGiftCardPurchase(metadata.gift_card_id, paymentIntent);
