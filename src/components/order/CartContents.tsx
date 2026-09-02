@@ -33,7 +33,11 @@ export function CartContents({
   const sig = JSON.stringify({ locationSlug, fulfilment, inputLines, promoCode, postcode: fulfilment === "delivery" ? postcode : null });
   const [priced, setPriced] = useState<{ sig: string; result: PriceResult | null }>({ sig: "", result: null });
   const loading = lines.length > 0 && priced.sig !== sig;
-  const result = priced.sig === sig ? priced.result : null;
+  // Keep the LAST server-priced result visible (dimmed) while a new price loads,
+  // rather than dropping to a client guess. The client can't know the delivery
+  // fee (free-over-threshold, distance tiers), so guessing it made the total
+  // flash a phantom +£3 on every add until the server responded.
+  const result = priced.result;
 
   useEffect(() => {
     if (lines.length === 0) return; // empty cart renders an early return below
@@ -101,9 +105,9 @@ export function CartContents({
       {/* Totals */}
       <dl className="mt-4 border-t border-[#2A211C]/10 pt-4 flex flex-col gap-1.5 font-sans text-[14px]">
         <Row label="Subtotal" value={money(ok?.subtotalPence ?? clientSubtotal)} muted={loading} />
-        {fulfilment === "delivery" && <Row label="Delivery" value={money(ok?.deliveryFeePence ?? menu.deliveryFeePence)} muted={loading} />}
+        {fulfilment === "delivery" && <Row label="Delivery" value={ok ? money(ok.deliveryFeePence) : "…"} muted={loading} />}
         {ok && ok.discountPence > 0 && <Row label="Discount" value={`−${money(ok.discountPence)}`} accent />}
-        <Row label="Total" value={money(ok?.totalPence ?? clientSubtotal + (fulfilment === "delivery" ? menu.deliveryFeePence : 0))} bold muted={loading} />
+        <Row label="Total" value={ok ? money(ok.totalPence) : money(clientSubtotal)} bold muted={loading} />
       </dl>
 
       {error && <p className="mt-3 text-[13px] text-[#5D0925] font-sans">{error}</p>}
