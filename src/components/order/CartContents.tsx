@@ -20,7 +20,7 @@ export function CartContents({
   locationSlug: string;
   onCheckout?: () => void;
 }) {
-  const { lines, fulfilment, promoCode, setQty, removeLine, setPromoCode } = useOrder();
+  const { lines, fulfilment, promoCode, postcode, setQty, removeLine, setPromoCode } = useOrder();
   const [promoInput, setPromoInput] = useState(promoCode ?? "");
 
   const inputLines: CartLineInput[] = useMemo(
@@ -29,7 +29,8 @@ export function CartContents({
   );
 
   // Server-authoritative totals, keyed by a cart signature.
-  const sig = JSON.stringify({ locationSlug, fulfilment, inputLines, promoCode });
+  // Include postcode so the tiered delivery fee re-prices when it changes.
+  const sig = JSON.stringify({ locationSlug, fulfilment, inputLines, promoCode, postcode: fulfilment === "delivery" ? postcode : null });
   const [priced, setPriced] = useState<{ sig: string; result: PriceResult | null }>({ sig: "", result: null });
   const loading = lines.length > 0 && priced.sig !== sig;
   const result = priced.sig === sig ? priced.result : null;
@@ -37,7 +38,7 @@ export function CartContents({
   useEffect(() => {
     if (lines.length === 0) return; // empty cart renders an early return below
     let cancelled = false;
-    priceCartAction({ locationSlug, fulfilment, lines: inputLines, promoCode })
+    priceCartAction({ locationSlug, fulfilment, lines: inputLines, promoCode, postcode: fulfilment === "delivery" ? postcode : null })
       .then((r) => { if (!cancelled) setPriced({ sig, result: r }); })
       .catch(() => { if (!cancelled) setPriced({ sig, result: null }); });
     return () => { cancelled = true; };
@@ -55,8 +56,8 @@ export function CartContents({
   const error = result && !result.ok ? result.error : null;
 
   return (
-    <div className="flex flex-col">
-      <ul className="flex flex-col divide-y divide-[#2A211C]/10">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <ul className="min-h-0 flex-1 overflow-y-auto flex flex-col divide-y divide-[#2A211C]/10">
         {lines.map((l) => {
           const unit = l.basePence + l.modifiers.reduce((a, m) => a + m.pricePence, 0);
           return (
@@ -105,9 +106,7 @@ export function CartContents({
         <Row label="Total" value={money(ok?.totalPence ?? clientSubtotal + (fulfilment === "delivery" ? menu.deliveryFeePence : 0))} bold muted={loading} />
       </dl>
 
-      {fulfilment === "delivery" && error && error.includes("minimum") && (
-        <p className="mt-3 text-[13px] text-[#5D0925] font-sans">{error}</p>
-      )}
+      {error && <p className="mt-3 text-[13px] text-[#5D0925] font-sans">{error}</p>}
 
       {onCheckout && (
         <button

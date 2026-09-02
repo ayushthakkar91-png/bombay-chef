@@ -20,6 +20,18 @@ export type DeliveryCheck = {
 
 export type BranchSuggestion = { slug: string; name: string; feePence: number; minOrderPence: number; etaMin: number; outcode: string; servesExact: boolean };
 
+/**
+ * Distance-tiered delivery fee: £1 per started mile (minimum £1). 0.4mi → £1,
+ * 1.2mi → £2, 2.7mi → £3. The branch radius (delivery_radius_miles) caps how far
+ * we deliver, so this naturally tops out at £<radius>. Used only in the radius
+ * model where an actual distance is known; the flat delivery_fee_pence remains
+ * the fallback when geocoding is unavailable or a branch has no coordinates.
+ */
+export const DELIVERY_PENCE_PER_MILE = 100;
+export function deliveryFeeForMiles(miles: number): number {
+  return Math.max(1, Math.ceil(miles)) * DELIVERY_PENCE_PER_MILE;
+}
+
 type ZoneLoc = { slug: string; name: string; is_active: boolean; delivery_enabled: boolean; delivery_fee_pence: number; min_order_pence: number; prep_time_min: number; delivery_time_min: number };
 const oneLoc = (j: unknown): ZoneLoc | null => { const x = j as ZoneLoc | ZoneLoc[] | null; return (Array.isArray(x) ? x[0] : x) ?? null; };
 
@@ -102,7 +114,8 @@ export async function checkDelivery(locationSlug: string, rawPostcode: string): 
           served: true,
           postcode: formatPostcode(rawPostcode),
           outcode,
-          feePence,
+          // Distance-tiered: £1 per started mile (see deliveryFeeForMiles).
+          feePence: deliveryFeeForMiles(miles),
           minOrderPence,
           etaMin,
           distanceMiles: Math.round(miles * 10) / 10,

@@ -19,12 +19,15 @@ update locations set collection_enabled = true,  delivery_enabled = true  where 
 update locations set collection_enabled = false, delivery_enabled = false where slug in ('battersea','kilburn');
 
 -- Balham radius delivery: 2 miles from 88 Balham High Rd (SW12 9AG), £3.50 fee,
--- free over £30, £15 minimum. Editable later in admin → Locations. (Requires 0024.)
+-- £15 minimum, 3-mile radius. Delivery fee is distance-tiered in code (£1 per
+-- started mile: ≤1mi £1, ≤2mi £2, ≤3mi £3 — see deliveryFeeForMiles). The flat
+-- delivery_fee_pence below is only the fallback used if geocoding is unavailable.
+-- Editable later in admin → Locations. (Requires 0024.)
 update locations set
   latitude = 51.4433,
   longitude = -0.1526,
-  delivery_radius_miles = 2,
-  delivery_fee_pence = 350,
+  delivery_radius_miles = 3,
+  delivery_fee_pence = 300,
   free_delivery_over_pence = 3000,
   min_order_pence = 1500
 where slug = 'balham';

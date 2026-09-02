@@ -40,12 +40,22 @@ export async function priceCartAction(input: {
   fulfilment: Fulfilment;
   lines: CartLineInput[];
   promoCode?: string | null;
+  /** Delivery postcode, if known — lets the cart show the real distance-tiered
+   *  fee (£1/started mile) instead of the flat estimate. */
+  postcode?: string | null;
 }): Promise<PriceResult> {
   if (!isInternalOrdering(input.locationSlug)) return { ok: false, error: "Online ordering isn't available for that location." };
   const locationId = await locationIdFromSlug(input.locationSlug);
   if (!locationId) return { ok: false, error: "That location isn't available." };
   const customer = await getCustomer();
-  return priceCart(locationId, input.fulfilment, input.lines, input.promoCode, customer?.userId ?? null);
+  // Resolve the tiered delivery fee from the postcode when we have one, so the
+  // summary matches what checkout will charge.
+  let deliveryFeeOverride: number | null = null;
+  if (input.fulfilment === "delivery" && input.postcode?.trim()) {
+    const check = await checkDelivery(input.locationSlug, input.postcode);
+    if (check.served) deliveryFeeOverride = check.feePence ?? null;
+  }
+  return priceCart(locationId, input.fulfilment, input.lines, input.promoCode, customer?.userId ?? null, deliveryFeeOverride);
 }
 
 export type CheckoutInput = {
@@ -123,13 +133,17 @@ export async function createCheckout(input: CheckoutInput): Promise<CheckoutResu
   const locationId = await locationIdFromSlug(input.locationSlug);
   if (!locationId) return { ok: false, error: "That location isn't available." };
 
-  // Delivery must be to a served postcode.
+  // Delivery must be to a served postcode. The tiered fee (£1/started mile) is
+  // resolved here from the distance and passed to priceCart so the charged fee
+  // matches the distance — never trust a client-sent fee.
+  let deliveryFeeOverride: number | null = null;
   if (input.fulfilment === "delivery") {
     if (!input.deliveryAddress?.postcode || !input.deliveryAddress.line1 || !input.deliveryAddress.city) {
       return { ok: false, error: "Please enter your full delivery address." };
     }
     const check = await checkDelivery(input.locationSlug, input.deliveryAddress.postcode);
     if (!check.served) return { ok: false, error: check.error ?? "We don't deliver to that postcode." };
+    deliveryFeeOverride = check.feePence ?? null;
   }
 
   // Resolve the signed-in customer (null for guests). Used to owner-scope personal
@@ -137,8 +151,8 @@ export async function createCheckout(input: CheckoutInput): Promise<CheckoutResu
   const customer = await getCustomer();
   const customerId = customer?.userId ?? null;
 
-  // Authoritative pricing.
-  const price = await priceCart(locationId, input.fulfilment, input.lines, input.promoCode, customerId);
+  // Authoritative pricing (delivery fee = the distance-tiered fee resolved above).
+  const price = await priceCart(locationId, input.fulfilment, input.lines, input.promoCode, customerId, deliveryFeeOverride);
   if (!price.ok) return { ok: false, error: price.error };
 
   // Gift card redemption (partial balance). Applied after promo + delivery.
@@ -281,23 +295,31 @@ async function resumeCheckout(
   chargePence: number,
   email: string | undefined,
 ): Promise<CheckoutResult> {
+  // Embedded Checkout (card entry stays in our /order/checkout page) is used only
+  // when the publishable key is configured; otherwise we fall back to hosted
+  // Checkout (redirect to Stripe) so checkout keeps working with no client key.
+  const embedded = Boolean(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+  const track = `${siteUrl()}/order/track/${trackToken}?paid=1`;
   try {
     const session = await createCheckoutSession({
       amountPence: chargePence,
       orderCode: code,
       description: `Order ${code}`,
-      // Embedded Checkout: card entry is mounted inside our own /order/checkout
-      // page (no redirect to Stripe). A single return_url replaces success/cancel;
-      // Stripe returns the browser there after payment and the webhook confirms.
-      uiMode: "embedded",
-      returnUrl: `${siteUrl()}/order/track/${trackToken}?paid=1`,
+      ...(embedded
+        ? { uiMode: "embedded" as const, returnUrl: track }
+        : { successUrl: track, cancelUrl: `${siteUrl()}/order/checkout?canceled=1` }),
       customerEmail: email,
       metadata: { order_id: orderId, code },
       // Stripe idempotency: a retried session-create for this order can't double-charge.
-      idempotencyKey: `session_${orderId}`,
+      // Keyed by mode too, so enabling embedded later doesn't replay a hosted session.
+      idempotencyKey: `session_${orderId}_${embedded ? "emb" : "hos"}`,
     });
-    if (!session.clientSecret) return { ok: false, error: "We couldn't start the payment — please try again." };
-    return { ok: true, clientSecret: session.clientSecret };
+    if (embedded) {
+      if (!session.clientSecret) return { ok: false, error: "We couldn't start the payment — please try again." };
+      return { ok: true, clientSecret: session.clientSecret };
+    }
+    if (!session.url) return { ok: false, error: "We couldn't start the payment — please try again." };
+    return { ok: true, url: session.url };
   } catch {
     // Free any reserved promo so an unpaid, abandoned order doesn't consume a
     // single-use code (release_promo is a no-op when nothing was reserved).

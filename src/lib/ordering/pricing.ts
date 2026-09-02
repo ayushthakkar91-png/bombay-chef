@@ -58,6 +58,10 @@ export async function priceCart(
   lines: CartLineInput[],
   promoCode?: string | null,
   customerId?: string | null,
+  /** Distance-tiered delivery fee (pence) resolved from the postcode by
+   *  checkDelivery. When provided (delivery to a served postcode), it replaces
+   *  the flat delivery_fee_pence; falls back to the flat fee otherwise. */
+  deliveryFeePenceOverride?: number | null,
 ): Promise<PriceResult> {
   const supabase = getServiceClient();
   if (!supabase) return { ok: false, error: "Ordering is temporarily unavailable." };
@@ -130,7 +134,7 @@ export async function priceCart(
     return { ok: false, error: `The minimum delivery order is £${(config.min_order_pence / 100).toFixed(2)}.` };
   }
 
-  let deliveryFeePence = fulfilment === "delivery" ? config.delivery_fee_pence : 0;
+  let deliveryFeePence = fulfilment === "delivery" ? (deliveryFeePenceOverride ?? config.delivery_fee_pence) : 0;
   // Free delivery once the subtotal reaches the branch's threshold (if set).
   if (
     fulfilment === "delivery" &&
