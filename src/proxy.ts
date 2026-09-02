@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+import { isAdminPathEnabled } from "@/lib/admin/enabled-sections";
+
 /**
  * Proxy (Next.js 16's renamed middleware). Scoped to `/admin/*` and `/account/*`
  * via the matcher below, so the public marketing site is never intercepted,
@@ -76,6 +78,13 @@ export async function proxy(request: NextRequest) {
   // "is this an admin?" depends on staff_roles (RLS-aware), so the login *page*
   // owns that redirect — avoiding an /admin ⇄ /admin/login loop for a non-staff
   // session. The /account login/register pages do the same with requireCustomer.
+
+  // Slimmed-down panel: hidden admin sections (see enabled-sections.ts) are
+  // unreachable even by a typed/bookmarked URL — bounce them to the dashboard.
+  // Only /admin/* panel routes are gated (not /admin/login, /account, /platform).
+  if (pathname.startsWith("/admin/") && !isPublicAuthPath(pathname) && !isAdminPathEnabled(pathname)) {
+    return NextResponse.redirect(new URL("/admin", request.url));
+  }
 
   return response;
 }

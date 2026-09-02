@@ -52,6 +52,7 @@ import {
 } from "lucide-react";
 
 import { logout } from "@/app/admin/_actions/auth";
+import { isAdminPathEnabled } from "@/lib/admin/enabled-sections";
 import { ROLE_LABEL, type Role } from "@/lib/auth/roles";
 import { flags } from "@/lib/flags";
 import { Badge, cx } from "./primitives";
@@ -168,7 +169,7 @@ export function AdminShell({
   const nav = (
     <nav className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-3 py-4">
       {NAV.map((group, gi) => {
-        const items = group.items.filter((i) => rank >= i.minRank && (i.href !== "/platform" || flags.platform));
+        const items = group.items.filter((i) => rank >= i.minRank && (i.href !== "/platform" || flags.platform) && isAdminPathEnabled(i.href));
         if (items.length === 0) return null;
         return (
           <div key={gi} className="flex flex-col gap-1">
