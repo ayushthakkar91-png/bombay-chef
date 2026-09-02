@@ -50,7 +50,10 @@ export async function markPrinted(orderId: string, locationId: string): Promise<
   const supabase = getServiceClient();
   if (!supabase) return false;
   if (!(await orderAtLocation(orderId, locationId))) return false;
-  await supabase.from("orders").update({ printed_at: new Date().toISOString(), print_error: null }).eq("id", orderId);
+  const { error } = await supabase.from("orders")
+    .update({ printed_at: new Date().toISOString(), print_error: null, print_failed_at: null })
+    .eq("id", orderId);
+  if (error) return false;
   await recordOrderEvent(orderId, "POS_PRINTED", {});
   return true;
 }
@@ -59,9 +62,10 @@ export async function markPrintFailed(orderId: string, locationId: string, error
   const supabase = getServiceClient();
   if (!supabase) return false;
   if (!(await orderAtLocation(orderId, locationId))) return false;
-  await supabase.from("orders")
+  const { error: updateError } = await supabase.from("orders")
     .update({ print_failed_at: new Date().toISOString(), print_error: error.slice(0, 300) })
     .eq("id", orderId);
+  if (updateError) return false;
   await recordOrderEvent(orderId, "POS_PRINT_FAILED", { error: error.slice(0, 300) });
   return true;
 }
