@@ -1,5 +1,7 @@
 import "server-only";
 
+import { unstable_cache } from "next/cache";
+
 import { getServiceClient } from "@/lib/supabase/clients";
 
 /** Read model for the customer ordering menu, scoped to one location. */
@@ -43,7 +45,7 @@ export type OrderLocation = {
 };
 
 /** Active locations with their ordering config, for the start screen. */
-export async function getOrderLocations(): Promise<OrderLocation[]> {
+async function fetchOrderLocations(): Promise<OrderLocation[]> {
   const supabase = getServiceClient();
   if (!supabase) return [];
   const { data } = await supabase
@@ -64,7 +66,7 @@ export async function getOrderLocations(): Promise<OrderLocation[]> {
   }));
 }
 
-export async function getOrderingMenu(locationSlug: string): Promise<OrderingMenu | null> {
+async function fetchOrderingMenu(locationSlug: string): Promise<OrderingMenu | null> {
   const supabase = getServiceClient();
   if (!supabase) return null;
 
@@ -173,3 +175,15 @@ function mapItem(
     modifierGroups: groups,
   };
 }
+
+/**
+ * Public ordering menu + location list are identical for every visitor and
+ * change only when an admin edits the menu, yet the /order/menu and /checkout
+ * pages are dynamic (they read the auth cookie for favourites), so without this
+ * the heavy category/item/modifier query ran on every single request. Cache the
+ * read for 5 minutes — TTFB drops ~10x on warm hits and an admin menu edit shows
+ * within the window. Time-based only (no tags) to avoid Next 16's revalidateTag
+ * signature change; a shorter propagation is the trade for zero cache-plumbing.
+ */
+export const getOrderingMenu = unstable_cache(fetchOrderingMenu, ["ordering-menu"], { revalidate: 300 });
+export const getOrderLocations = unstable_cache(fetchOrderLocations, ["order-locations"], { revalidate: 300 });
