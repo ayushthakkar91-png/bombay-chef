@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
+  Activity,
   UtensilsCrossed,
   FolderTree,
   ListOrdered,
@@ -68,6 +69,7 @@ const NAV: NavGroup[] = [
     heading: "Operations",
     items: [
       { href: "/admin", label: "Dashboard", icon: LayoutDashboard, minRank: 1 },
+      { href: "/admin/activity", label: "Activity & logs", icon: Activity, minRank: 1 },
       { href: "/admin/operations", label: "Daily service", icon: Gauge, minRank: 2 },
       { href: "/admin/kitchen", label: "Kitchen", icon: ChefHat, minRank: 1 },
       { href: "/admin/orders", label: "Orders", icon: ShoppingBag, minRank: 1 },

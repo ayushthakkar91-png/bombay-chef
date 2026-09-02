@@ -15,6 +15,7 @@
  * The "/admin" dashboard is always allowed.
  */
 export const ADMIN_ENABLED_PREFIXES = [
+  "/admin/activity", // visitor behaviour + event log + site issues
   "/admin/orders", // core: live + history
   "/admin/reservations", // bookings, calendar, waitlist, tables & hours
   "/admin/menu/availability", // mark dishes sold-out (full menu editing stays hidden)

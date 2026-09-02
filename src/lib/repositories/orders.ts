@@ -156,6 +156,61 @@ export async function listNotificationFailures(locationId: string): Promise<Noti
   });
 }
 
+/* ---- Activity / behaviour log (admin observability) ------------------- */
+
+export type ActivityOrder = Order & { items: OrderLine[]; abandoned: boolean };
+
+/**
+ * Recent orders at a location INCLUDING abandoned ones (never left
+ * `pending_payment`). This is the "what did visitors put in their basket" feed:
+ * a paid order is a sale; an abandoned one shows intent + where checkout dropped
+ * off. Service client (we want every status), strictly scoped by location.
+ */
+export async function listRecentBaskets(locationId: string, limit = 40): Promise<ActivityOrder[]> {
+  const supabase = getServiceClient();
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("orders")
+    .select(`${SELECT}, order_items(name, unit_price_pence, qty, modifiers, line_total_pence, notes)`)
+    .eq("location_id", locationId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return (data as Record<string, unknown>[] | null ?? []).map((r) => {
+    const o = map(r);
+    return { ...o, items: mapItems(r.order_items as Record<string, unknown>[] | null), abandoned: o.status === "pending_payment" };
+  });
+}
+
+export type ActivityEvent = { orderId: string; code: string; type: string; data: Record<string, unknown>; createdAt: string };
+
+/**
+ * Recent order-event audit trail at a location — the raw "log": ORDER_CREATED,
+ * PAYMENT_CONFIRMED/FAILED/AMOUNT_MISMATCH, status changes, TELEGRAM_* sends.
+ * Reading this top-to-bottom shows exactly what happened (and where it stalled,
+ * e.g. many ORDER_CREATED with no PAYMENT_CONFIRMED = a broken webhook).
+ */
+export async function listRecentEvents(locationId: string, limit = 60): Promise<ActivityEvent[]> {
+  const supabase = getServiceClient();
+  if (!supabase) return [];
+  const { data } = await supabase
+    .from("order_events")
+    .select("type, data, created_at, order_id, orders!inner(code, location_id)")
+    .eq("orders.location_id", locationId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  return (data as Record<string, unknown>[] | null ?? []).map((r) => {
+    const o = r.orders as { code: string } | { code: string }[] | null;
+    const order = Array.isArray(o) ? o[0] : o;
+    return {
+      orderId: r.order_id as string,
+      code: order?.code ?? "—",
+      type: r.type as string,
+      data: (r.data as Record<string, unknown> | null) ?? {},
+      createdAt: r.created_at as string,
+    };
+  });
+}
+
 /* ---- Guest read by track token (service client) ----------------------- */
 
 export async function getOrderByToken(token: string): Promise<OrderDetail | null> {
