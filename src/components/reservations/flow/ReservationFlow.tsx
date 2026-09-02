@@ -1,15 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence, Variants, useReducedMotion } from "framer-motion";
 import { BookingState, BookingStep } from "./types";
 import { BookingProgress } from "./BookingProgress";
 import { StepLocation } from "./StepLocation";
-import { StepExperience } from "./StepExperience";
-import { StepDateTime } from "./StepDateTime";
-import { StepGuests } from "./StepGuests";
-import { StepDetails } from "./StepDetails";
-import { StepConfirm } from "./StepConfirm";
+
+// Only step 1 (StepLocation) is needed for first paint; the rest are code-split
+// and fetched when the guest advances, cutting initial JS on this heavy flow
+// (large mobile Real-Experience-Score win — the page loaded all 6 steps upfront).
+const StepExperience = dynamic(() => import("./StepExperience").then((m) => ({ default: m.StepExperience })));
+const StepDateTime = dynamic(() => import("./StepDateTime").then((m) => ({ default: m.StepDateTime })));
+const StepGuests = dynamic(() => import("./StepGuests").then((m) => ({ default: m.StepGuests })));
+const StepDetails = dynamic(() => import("./StepDetails").then((m) => ({ default: m.StepDetails })));
+const StepConfirm = dynamic(() => import("./StepConfirm").then((m) => ({ default: m.StepConfirm })));
 
 export function ReservationFlow({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
   const reduceMotion = useReducedMotion();
