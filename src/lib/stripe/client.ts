@@ -49,16 +49,29 @@ export async function createCheckoutSession(opts: {
   amountPence: number;
   orderCode: string;
   description: string;
-  successUrl: string;
-  cancelUrl: string;
+  /** Hosted redirect (default): where Stripe sends the browser after pay/cancel. */
+  successUrl?: string;
+  cancelUrl?: string;
+  /** Embedded (ui_mode='embedded'): the single URL Stripe returns the browser to
+   *  after payment. Provided instead of success/cancel when uiMode is 'embedded'. */
+  returnUrl?: string;
+  uiMode?: "hosted" | "embedded";
   customerEmail?: string;
   metadata: Record<string, string>;
   idempotencyKey?: string;
-}): Promise<{ id: string; url: string }> {
+}): Promise<{ id: string; url: string | null; clientSecret: string | null }> {
+  const embedded = opts.uiMode === "embedded";
   const p = new URLSearchParams();
   p.set("mode", "payment");
-  p.set("success_url", opts.successUrl);
-  p.set("cancel_url", opts.cancelUrl);
+  if (embedded) {
+    // Embedded Checkout stays on our site (Stripe mounts an iframe); a single
+    // return_url replaces success/cancel, and the session returns a client_secret.
+    p.set("ui_mode", "embedded");
+    if (opts.returnUrl) p.set("return_url", opts.returnUrl);
+  } else {
+    if (opts.successUrl) p.set("success_url", opts.successUrl);
+    if (opts.cancelUrl) p.set("cancel_url", opts.cancelUrl);
+  }
   if (opts.customerEmail) p.set("customer_email", opts.customerEmail);
   p.set("line_items[0][quantity]", "1");
   p.set("line_items[0][price_data][currency]", "gbp");
@@ -71,7 +84,11 @@ export async function createCheckoutSession(opts: {
     p.set(`payment_intent_data[metadata][${k}]`, v);
   }
   const session = await stripePost("/checkout/sessions", p, opts.idempotencyKey);
-  return { id: session.id as string, url: session.url as string };
+  return {
+    id: session.id as string,
+    url: (session.url as string | null) ?? null,
+    clientSecret: (session.client_secret as string | null) ?? null,
+  };
 }
 
 export async function createRefund(opts: {

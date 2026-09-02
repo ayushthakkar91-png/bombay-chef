@@ -2,17 +2,28 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { loadStripe } from "@stripe/stripe-js";
+import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 
 import type { OrderingMenu } from "@/lib/repositories/ordering-menu";
 import { useOrder } from "./OrderProvider";
 import { CartContents } from "./CartContents";
 import { createCheckout, checkGiftCard, type CheckoutInput } from "@/app/order/actions";
 
+// Stripe.js is loaded once for the whole app. The publishable key is safe to
+// expose (that's its purpose). Null when unset → we surface a clear message
+// rather than crashing the checkout.
+const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = PUBLISHABLE_KEY ? loadStripe(PUBLISHABLE_KEY) : null;
+
 export function CheckoutForm({ menu, locationSlug }: { menu: OrderingMenu; locationSlug: string }) {
   const { lines, fulfilment, promoCode, postcode } = useOrder();
   const [pending, startTransition] = useTransition();
   const [giftPending, startGift] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  // Set once createCheckout returns an embedded Stripe session — swaps the form
+  // for the in-page card entry.
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
 
   const [contact, setContact] = useState({ name: "", email: "", phone: "" });
   const [addr, setAddr] = useState({ line1: "", line2: "", city: "", postcode: postcode ?? "" });
@@ -55,6 +66,37 @@ export function CheckoutForm({ menu, locationSlug }: { menu: OrderingMenu; locat
     );
   }
 
+  // Payment step: Stripe's card form mounted in-page (no redirect off-site).
+  if (clientSecret) {
+    return (
+      <main className="min-h-screen bg-[#F6F2EA] pt-[92px] lg:pt-[104px] pb-24 px-5 lg:px-8">
+        <div className="max-w-[720px] mx-auto">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="font-serif text-[32px] lg:text-[40px] text-[#2B221D] font-light">Payment</h1>
+            <button
+              type="button"
+              onClick={() => setClientSecret(null)}
+              className="text-[#2B221D] text-[12px] uppercase tracking-[0.15em] font-sans hover:text-[#B08A3E]"
+            >
+              Back
+            </button>
+          </div>
+          {stripePromise ? (
+            <div className="bg-white border border-[#2A211C]/15 p-4 lg:p-6">
+              <EmbeddedCheckoutProvider stripe={stripePromise} options={{ clientSecret }}>
+                <EmbeddedCheckout />
+              </EmbeddedCheckoutProvider>
+            </div>
+          ) : (
+            <p className="font-sans text-[15px] text-[#5A524B]">
+              Online payment isn&apos;t available right now. Please try again shortly.
+            </p>
+          )}
+        </div>
+      </main>
+    );
+  }
+
   const pay = () => {
     setError(null);
     const input: CheckoutInput = {
@@ -71,10 +113,12 @@ export function CheckoutForm({ menu, locationSlug }: { menu: OrderingMenu; locat
     };
     startTransition(async () => {
       const res = await createCheckout(input);
-      if (res.ok) {
-        window.location.href = res.url; // hand off to Stripe hosted Checkout
-      } else {
+      if (!res.ok) {
         setError(res.error);
+      } else if ("clientSecret" in res) {
+        setClientSecret(res.clientSecret); // mount Stripe Embedded Checkout in-page
+      } else {
+        window.location.href = res.url; // gift-card covered / already paid → tracking
       }
     });
   };

@@ -63,7 +63,12 @@ export type CheckoutInput = {
   idempotencyKey?: string | null;
 };
 
-export type CheckoutResult = { ok: true; url: string } | { ok: false; error: string };
+export type CheckoutResult =
+  // Embedded Stripe Checkout: card entry stays on our site, mounted from this secret.
+  | { ok: true; clientSecret: string }
+  // Redirect: gift-card fully covers the order, or it's already paid → go to tracking.
+  | { ok: true; url: string }
+  | { ok: false; error: string };
 
 /** Validate a gift card code at checkout and return its balance. */
 export async function checkGiftCard(code: string): Promise<{ ok: boolean; balancePence?: number; error?: string }> {
@@ -281,14 +286,18 @@ async function resumeCheckout(
       amountPence: chargePence,
       orderCode: code,
       description: `Order ${code}`,
-      successUrl: `${siteUrl()}/order/track/${trackToken}?paid=1`,
-      cancelUrl: `${siteUrl()}/order/checkout?canceled=1`,
+      // Embedded Checkout: card entry is mounted inside our own /order/checkout
+      // page (no redirect to Stripe). A single return_url replaces success/cancel;
+      // Stripe returns the browser there after payment and the webhook confirms.
+      uiMode: "embedded",
+      returnUrl: `${siteUrl()}/order/track/${trackToken}?paid=1`,
       customerEmail: email,
       metadata: { order_id: orderId, code },
       // Stripe idempotency: a retried session-create for this order can't double-charge.
       idempotencyKey: `session_${orderId}`,
     });
-    return { ok: true, url: session.url };
+    if (!session.clientSecret) return { ok: false, error: "We couldn't start the payment — please try again." };
+    return { ok: true, clientSecret: session.clientSecret };
   } catch {
     // Free any reserved promo so an unpaid, abandoned order doesn't consume a
     // single-use code (release_promo is a no-op when nothing was reserved).

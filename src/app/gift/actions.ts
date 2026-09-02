@@ -58,6 +58,8 @@ export async function buyGiftCard(input: GiftBuyInput): Promise<GiftBuyResult> {
       customerEmail: customer?.email ?? undefined,
       metadata: { gift_card_id: card.id },
     });
+    // Gift purchase uses hosted Checkout (redirect), so a url is always returned.
+    if (!session.url) return { ok: false, error: "We couldn't start your purchase — please try again." };
     return { ok: true, url: session.url };
   } catch {
     return { ok: false, error: "We couldn't reach the payment provider — please try again." };
