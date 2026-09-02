@@ -185,10 +185,14 @@ async function applyPromo(
   const supabase = getServiceClient();
   if (!supabase) return { discountPence: 0, freesDelivery: false, code: null, promoId: null };
 
+  // Exact, case-insensitive match. Codes are stored/entered uppercase, so
+  // uppercasing the input lets us use .eq (not .ilike): a raw user string in an
+  // ilike pattern would let `_`/`%` act as wildcards and match codes the user
+  // shouldn't be able to guess. .eq treats the input as a literal.
   const { data: promo } = await supabase
     .from("promo_codes")
     .select("id, code, kind, value, min_spend_pence, global_limit, used_count, location_id, customer_id, starts_at, ends_at, is_active")
-    .ilike("code", code)
+    .eq("code", code.toUpperCase())
     .maybeSingle();
 
   const invalid: PromoResult = { discountPence: 0, freesDelivery: false, code: null, promoId: null, error: "That promo code isn't valid." };

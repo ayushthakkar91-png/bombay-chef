@@ -43,9 +43,25 @@ export async function confirmPaidOrder(
     status: "succeeded",
   });
 
-  // Gift card partial-balance redemption.
+  // Gift card partial-balance redemption. The card was NOT reserved at order
+  // create (unlike the fully-covered path), so its balance may have been drained
+  // by a concurrent order in the meantime. debitGiftCard returns ok:false when it
+  // could not take the FULL requested amount — that means this order is
+  // under-covered (customer paid the card leg on Stripe but the gift-card leg
+  // fell short). We must NOT silently absorb the shortfall: flag it for staff /
+  // refund reconciliation. The order stays paid (the Stripe leg cleared) but the
+  // gap is now visible instead of being a free double-spend of the card balance.
   if (claimed.gift_card_id && (claimed.gift_card_pence as number) > 0) {
-    await debitGiftCard(claimed.gift_card_id as string, claimed.gift_card_pence as number, orderId);
+    const expected = claimed.gift_card_pence as number;
+    const debit = await debitGiftCard(claimed.gift_card_id as string, expected, orderId);
+    if (!debit.ok) {
+      await recordOrderEvent(orderId, "GIFT_CARD_SHORTFALL", {
+        giftCardId: claimed.gift_card_id,
+        expectedPence: expected,
+        debitedPence: debit.debitedPence,
+        shortfallPence: expected - debit.debitedPence,
+      });
+    }
   }
 
   // Promo usage is reserved atomically at order-create (reserve_promo, F5) and

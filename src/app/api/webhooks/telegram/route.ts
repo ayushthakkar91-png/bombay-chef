@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getServiceClient } from "@/lib/supabase/clients";
-import { answerCallbackQuery, editMessageText } from "@/lib/notifications/telegram";
+import { answerCallbackQuery, editMessageText, restaurantChatId } from "@/lib/notifications/telegram";
 import { renderOrderMessage, buttonsForStatus, loadOrderForTelegram } from "@/lib/ordering/telegram-notify";
 import { recordOrderEvent } from "@/lib/ordering/events";
 import { enqueueOrderEmail } from "@/lib/ordering/notify";
@@ -43,6 +43,12 @@ export async function POST(request: Request) {
 
   const cb = update?.callback_query;
   if (!cb?.data || !cb.message) return NextResponse.json({ ok: true }); // ignore non-actionable updates
+
+  // Defence-in-depth: even past the secret-token gate, only accept actions coming
+  // from the configured restaurant chat. If the secret ever leaks, this stops any
+  // other chat from driving order state.
+  const chatId = restaurantChatId();
+  if (chatId && String(cb.message.chat.id) !== chatId) return NextResponse.json({ ok: true });
 
   const [action, orderId] = cb.data.split(":");
   const target = action as OrderStatus;

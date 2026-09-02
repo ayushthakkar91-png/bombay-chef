@@ -21,7 +21,8 @@ export type OrderEventType =
   | "TELEGRAM_NOTIFICATION_CREATED"
   | "TELEGRAM_NOTIFICATION_SENT"
   | "TELEGRAM_NOTIFICATION_FAILED"
-  | "STAFF_ACKNOWLEDGED";
+  | "STAFF_ACKNOWLEDGED"
+  | "GIFT_CARD_SHORTFALL";
 
 export async function recordOrderEvent(
   orderId: string,

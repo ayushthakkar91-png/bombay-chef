@@ -64,9 +64,16 @@ async function redisHit(rawKey: string, limit: number, windowSec: number, failCl
 
 async function clientIp(): Promise<string> {
   const h = await headers();
+  // Prefer x-real-ip: on Vercel this is set by the platform to the true client
+  // IP and is NOT client-spoofable. The leftmost x-forwarded-for entry, by
+  // contrast, is attacker-controllable (a client can send its own XFF header and
+  // proxies append), which would let an attacker rotate the value per request and
+  // slip past the per-IP limiter. XFF is only a fallback for non-Vercel hosts.
+  const realIp = h.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
   const xff = h.get("x-forwarded-for");
   if (xff) return xff.split(",")[0]!.trim();
-  return h.get("x-real-ip") ?? "unknown";
+  return "unknown";
 }
 
 /**
