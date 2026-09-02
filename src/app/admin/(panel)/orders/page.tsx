@@ -5,8 +5,10 @@ import { requireStaff } from "@/lib/auth/dal";
 import { scopedLocationIds, filterScoped } from "@/lib/auth/scope";
 import { listLocations } from "@/lib/repositories/admin-locations";
 import { listLiveOrders } from "@/lib/repositories/orders";
+import { getOrderingStatusById } from "@/lib/repositories/ordering-status";
 import { PageHeader, Stat } from "@/components/admin/ui";
 import { LocationSwitcher } from "@/components/admin/reservations/LocationSwitcher";
+import { OrderingToggle } from "@/components/admin/orders/OrderingToggle";
 
 export default async function OrdersOverviewPage({
   searchParams,
@@ -20,7 +22,7 @@ export default async function OrdersOverviewPage({
     return (<><PageHeader title="Orders" /><p className="text-sm text-body">No locations are assigned to your account yet.</p></>);
   }
   const locId = scoped.find((l) => (l.slug === sp.loc || l.id === sp.loc))?.id ?? scoped[0].id;
-  const live = await listLiveOrders(locId);
+  const [live, orderingStatus] = await Promise.all([listLiveOrders(locId), getOrderingStatusById(locId)]);
 
   const awaiting = live.filter((o) => o.status === "paid").length;
   const inKitchen = live.filter((o) => o.status === "accepted" || o.status === "preparing").length;
@@ -29,6 +31,10 @@ export default async function OrdersOverviewPage({
   return (
     <>
       <PageHeader title="Orders" description="Online collection & delivery orders." actions={<LocationSwitcher locations={scoped} current={locId} />} />
+
+      <div className="mb-6">
+        <OrderingToggle locationId={locId} initialAccepting={orderingStatus.accepting} initialMessage={orderingStatus.message} />
+      </div>
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Stat label="New (awaiting accept)" value={awaiting} />

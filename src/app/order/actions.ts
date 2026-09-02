@@ -8,6 +8,7 @@ import { planRedemption, debitGiftCard } from "@/lib/giftcards/service";
 import { confirmPaidOrder } from "@/lib/ordering/confirm";
 import { getCustomer } from "@/lib/auth/customer";
 import { isInternalOrdering } from "@/lib/ordering/routing";
+import { getOrderingStatusBySlug } from "@/lib/repositories/ordering-status";
 import { recordOrderEvent } from "@/lib/ordering/events";
 import type { CartLineInput } from "@/lib/ordering/types";
 import type { Fulfilment } from "@/lib/ordering/constants";
@@ -45,6 +46,8 @@ export async function priceCartAction(input: {
   postcode?: string | null;
 }): Promise<PriceResult> {
   if (!isInternalOrdering(input.locationSlug)) return { ok: false, error: "Online ordering isn't available for that location." };
+  const status = await getOrderingStatusBySlug(input.locationSlug);
+  if (!status.accepting) return { ok: false, error: status.message?.trim() || "We're not accepting online orders right now." };
   const locationId = await locationIdFromSlug(input.locationSlug);
   if (!locationId) return { ok: false, error: "That location isn't available." };
   const customer = await getCustomer();
@@ -104,6 +107,11 @@ export async function createCheckout(input: CheckoutInput): Promise<CheckoutResu
   // is the real boundary — the page-level guards are convenience.
   if (!isInternalOrdering(input.locationSlug)) {
     return { ok: false, error: "Online ordering isn't available for that location." };
+  }
+  // Admin pause switch — no orders while paused (mirrors the /order/menu screen).
+  const orderingStatus = await getOrderingStatusBySlug(input.locationSlug);
+  if (!orderingStatus.accepting) {
+    return { ok: false, error: orderingStatus.message?.trim() || "We're not accepting online orders right now." };
   }
   const name = input.contact?.name?.trim();
   const email = input.contact?.email?.trim();

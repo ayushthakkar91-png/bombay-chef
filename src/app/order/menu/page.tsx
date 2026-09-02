@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { getOrderingMenu, getOrderLocations } from "@/lib/repositories/ordering-menu";
+import { getOrderingStatusBySlug } from "@/lib/repositories/ordering-status";
 import { getCustomer } from "@/lib/auth/customer";
 import { getMyFavouriteIds } from "@/lib/repositories/account";
 import { isInternalOrdering } from "@/lib/ordering/routing";
@@ -19,6 +20,20 @@ export default async function OrderMenuPage({ searchParams }: { searchParams: Pr
   );
   if (orderable.length === 0) redirect("/order"); // single hop → /order (branch picker)
   const slug = orderable.find((l) => l.slug === loc)?.slug ?? orderable[0].slug;
+
+  // Live pause switch (admin → Orders). Uncached, so it reflects instantly.
+  const status = await getOrderingStatusBySlug(slug);
+  if (!status.accepting) {
+    return (
+      <main className="min-h-screen bg-[#F6F2EA] px-6 pb-24 pt-[120px] text-center">
+        <p className="mb-3 font-serif text-[30px] text-[#2B221D]">Online ordering is paused</p>
+        <p className="mx-auto mb-8 max-w-md font-sans text-[15px] leading-relaxed text-[#5A524B]">
+          {status.message?.trim() || "We're not taking online orders right now. Please check back soon or call the restaurant."}
+        </p>
+        <Link href="/" className="inline-flex h-[52px] items-center justify-center bg-[#5D0925] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#F6F2EA] transition-colors hover:bg-[#420616]">Back to home</Link>
+      </main>
+    );
+  }
 
   const [menu, customer] = await Promise.all([getOrderingMenu(slug), getCustomer()]);
 
