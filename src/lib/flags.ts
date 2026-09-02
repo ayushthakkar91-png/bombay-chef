@@ -6,11 +6,13 @@
  */
 export const flags = {
   /**
-   * The in-house online-ordering system (cart, checkout, Stripe). Env-driven and
-   * OFF by default — every "Order Online" CTA falls back to the external .uk
-   * locator. Turn it on by setting NEXT_PUBLIC_FEATURE_ORDERING="true".
+   * The in-house online-ordering system (cart, checkout, Stripe). ON by default;
+   * every "Order Online" CTA points at /order (Balham internal, others external).
+   * Kill switch: set NEXT_PUBLIC_FEATURE_ORDERING="false" (in Vercel, redeploy).
+   * NOTE: checkout still needs Stripe + Upstash env configured — without them the
+   * cart works but checkout returns "Online payments aren't configured yet".
    */
-  ordering: process.env.NEXT_PUBLIC_FEATURE_ORDERING === "true",
+  ordering: process.env.NEXT_PUBLIC_FEATURE_ORDERING !== "false",
 
   /**
    * Backend-wired reservations (live availability, waitlist, confirmation &
