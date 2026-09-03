@@ -95,6 +95,20 @@ export function StepLocation({ state, updateState, nextStep }: Props) {
                   {loc.address}
                 </p>
 
+                {/* Clear call-to-action so guests know the card is selectable */}
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleSelect(loc.id); }}
+                  className={`mt-5 inline-flex h-[48px] items-center justify-center gap-2 px-6 font-sans text-[11px] uppercase tracking-[0.18em] transition-colors duration-300 ${
+                    isSelected
+                      ? "bg-[#B08A3E] text-[#2A211C]"
+                      : "bg-[#5D0925] text-[#F6F2EA] hover:bg-[#420616]"
+                  }`}
+                >
+                  {isSelected ? "Selected" : SINGLE ? "Reserve a table" : `Book ${loc.name}`}
+                  <span aria-hidden>→</span>
+                </button>
+
                 {/* Animated Gold Line */}
                 <div className="absolute bottom-0 left-0 h-[1px] bg-[#B08A3E] transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]" style={{ width: isSelected ? "100%" : "0%" }} />
                 
