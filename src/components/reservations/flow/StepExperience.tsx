@@ -10,11 +10,11 @@ interface Props {
   prevStep: () => void;
 }
 
+// Slot-based experiences (live availability). Private dining & celebrations are
+// arranged personally — they route to a direct enquiry instead of a time slot.
 const EXPERIENCES = [
   { id: "dinner", title: "Dinner", desc: "The main event. Dim lights, deep spices, and shared stories." },
   { id: "brunch", title: "Weekend Gathering", desc: "Leisurely mornings melting into afternoons." },
-  { id: "private", title: "Private Dining", desc: "Exclusive spaces tailored for your most important gatherings." },
-  { id: "celebration", title: "Celebration", desc: "For the moments that matter. Let us handle the details." }
 ];
 
 export function StepExperience({ state, updateState, nextStep, prevStep }: Props) {
@@ -74,8 +74,21 @@ export function StepExperience({ state, updateState, nextStep, prevStep }: Props
         })}
       </div>
 
+      {/* Private dining & celebrations are personally arranged — direct enquiry. */}
+      <div className="mt-10 border-t border-[#2A211C]/10 pt-8 text-center">
+        <p className="text-[#5A524B] font-sans text-[14px]">
+          Planning <span className="text-[#2B221D]">private dining</span> or a <span className="text-[#2B221D]">celebration</span>? We arrange these personally.
+        </p>
+        <a
+          href="/contact"
+          className="mt-4 inline-flex h-[48px] items-center justify-center border border-[#2B221D]/25 px-8 font-sans text-[11px] uppercase tracking-[0.18em] text-[#2B221D] transition-colors hover:bg-[#2B221D] hover:text-[#F6F2EA]"
+        >
+          Enquire about a private event
+        </a>
+      </div>
+
       <div className="mt-12 flex justify-center">
-        <button 
+        <button
           onClick={prevStep}
           className="text-[#2B221D] text-[12px] uppercase tracking-[0.15em] font-medium hover:text-[#B08A3E] transition-colors"
         >
