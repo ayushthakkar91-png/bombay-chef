@@ -1,13 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { motion } from "framer-motion";
+
+import { submitEnquiry } from "./actions";
 
 export default function ContactPage() {
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [pending, start] = useTransition();
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleFocus = (field: string) => setFocusedField(field);
   const handleBlur = () => setFocusedField(null);
+
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+    const fd = new FormData(e.currentTarget);
+    const input = {
+      name: String(fd.get("name") ?? ""),
+      email: String(fd.get("email") ?? ""),
+      subject: String(fd.get("subject") ?? ""),
+      message: String(fd.get("message") ?? ""),
+    };
+    start(async () => {
+      const r = await submitEnquiry(input);
+      if (r.ok) setSent(true);
+      else setError(r.error ?? "Something went wrong — please try again.");
+    });
+  };
 
   // Navbar, footer and smooth scroll come from PublicChrome (root layout);
   // wrapping them again here double-mounted Lenis and broke scrolling.
@@ -60,7 +82,7 @@ export default function ContactPage() {
 
           {/* Right Side: Form */}
           <div className="flex flex-col justify-center">
-            <form className="flex flex-col space-y-12 w-full max-w-[500px]" onSubmit={(e) => e.preventDefault()}>
+            <form className="flex flex-col space-y-12 w-full max-w-[500px]" onSubmit={onSubmit}>
               
               {[
                 { id: "name", label: "Full Name", type: "text", placeholder: "Your Name" },
@@ -76,7 +98,9 @@ export default function ContactPage() {
                   </label>
                   <input
                     id={field.id}
+                    name={field.id}
                     type={field.type}
+                    required={field.id !== "subject"}
                     placeholder={field.placeholder}
                     onFocus={() => handleFocus(field.id)}
                     onBlur={handleBlur}
@@ -100,6 +124,8 @@ export default function ContactPage() {
                 </label>
                 <textarea
                   id="message"
+                  name="message"
+                  required
                   rows={4}
                   onFocus={() => handleFocus("message")}
                   onBlur={handleBlur}
@@ -115,12 +141,22 @@ export default function ContactPage() {
               </div>
 
               <div className="pt-8">
-                <button
-                  type="submit"
-                  className="w-full lg:w-auto inline-flex items-center justify-center h-[56px] px-16 bg-[#2B221D] text-[#F6F2EA] text-[13px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-[#B08A3E] transition-colors duration-500"
-                >
-                  Send Message
-                </button>
+                {sent ? (
+                  <p className="font-sans text-[15px] text-[#2B221D]">
+                    Thank you — your message has been sent. We&apos;ll be in touch shortly.
+                  </p>
+                ) : (
+                  <>
+                    <button
+                      type="submit"
+                      disabled={pending}
+                      className="w-full lg:w-auto inline-flex items-center justify-center h-[56px] px-16 bg-[#2B221D] text-[#F6F2EA] text-[13px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-[#B08A3E] transition-colors duration-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {pending ? "Sending…" : "Send Message"}
+                    </button>
+                    {error && <p className="mt-4 font-sans text-[14px] text-[#5D0925]">{error}</p>}
+                  </>
+                )}
               </div>
 
             </form>
