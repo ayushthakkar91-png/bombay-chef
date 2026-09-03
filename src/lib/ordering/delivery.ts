@@ -29,7 +29,11 @@ export type BranchSuggestion = { slug: string; name: string; feePence: number; m
  */
 export const DELIVERY_PENCE_PER_MILE = 100;
 export function deliveryFeeForMiles(miles: number): number {
-  return Math.max(1, Math.ceil(miles)) * DELIVERY_PENCE_PER_MILE;
+  // Guard a degenerate distance (NaN/Infinity/negative) so we never emit a NaN
+  // total — fall back to the £1 minimum tier. Callers only pass a served,
+  // finite distance, so this is pure defence.
+  const m = Number.isFinite(miles) && miles > 0 ? miles : 1;
+  return Math.max(1, Math.ceil(m)) * DELIVERY_PENCE_PER_MILE;
 }
 
 type ZoneLoc = { slug: string; name: string; is_active: boolean; delivery_enabled: boolean; delivery_fee_pence: number; min_order_pence: number; prep_time_min: number; delivery_time_min: number };

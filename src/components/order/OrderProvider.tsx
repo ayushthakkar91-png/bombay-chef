@@ -26,7 +26,7 @@ type OrderContextValue = OrderState & {
 };
 
 const STORAGE_KEY = "bbc.order.v1";
-const EMPTY: OrderState = { locationSlug: null, fulfilment: "collection", postcode: null, lines: [], promoCode: null };
+const EMPTY: OrderState = { locationSlug: null, fulfilment: "delivery", postcode: null, lines: [], promoCode: null };
 
 const OrderContext = createContext<OrderContextValue | null>(null);
 

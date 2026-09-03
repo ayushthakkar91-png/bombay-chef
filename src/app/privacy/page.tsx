@@ -18,11 +18,6 @@ export default function PrivacyPage() {
         <p className="mt-4 font-sans text-[14px] text-[#5A524B]">Last updated: {UPDATED}</p>
 
         <div className="mt-10 flex flex-col gap-9 font-sans text-[15px] leading-[1.85] text-[#5A524B] [&_a]:text-[#806515] [&_a]:underline [&_h2]:mb-3 [&_h2]:font-serif [&_h2]:text-[24px] [&_h2]:font-light [&_h2]:text-[#2B221D] [&_li]:mb-1.5 [&_ul]:list-disc [&_ul]:pl-5 [&_strong]:text-[#2B221D]">
-          <p className="rounded-md border border-[#2A211C]/10 bg-white/50 p-4 text-[14px]">
-            <strong>Note:</strong> this policy is a working template. Replace the bracketed placeholders with your
-            registered details and have it reviewed by a solicitor before relying on it.
-          </p>
-
           <section>
             <p>
               This Privacy Policy explains how <strong>Bombay Bicycle Chef</strong> (&ldquo;we&rdquo;,
@@ -46,7 +41,7 @@ export default function PrivacyPage() {
             <ul>
               <li><strong>Contact &amp; order details</strong> — name, email, phone, and (for delivery) your address.</li>
               <li><strong>Order &amp; reservation history</strong> — items, dates, party size, preferences and notes you provide.</li>
-              <li><strong>Payment information</strong> — processed securely by Stripe. We never see or store your full card number.</li>
+              <li><strong>Payment information</strong> — processed securely by our payment provider. We never see or store your full card number.</li>
               <li><strong>Account &amp; loyalty data</strong> — if you create an account: your sign-in details, loyalty points and saved preferences.</li>
               <li><strong>Marketing preferences</strong> — whether you have opted in to email/SMS, and your consent record.</li>
               <li><strong>Technical data</strong> — basic device/usage information needed to run the site securely.</li>
@@ -65,14 +60,12 @@ export default function PrivacyPage() {
 
           <section>
             <h2>Who we share it with</h2>
-            <p>We only share data with service providers who process it on our behalf, including:</p>
-            <ul>
-              <li><strong>Stripe</strong> — payment processing.</li>
-              <li><strong>Brevo</strong> — transactional and marketing email.</li>
-              <li><strong>Twilio / WhatsApp</strong> — SMS and messaging notifications (if enabled).</li>
-              <li><strong>Supabase &amp; our hosting provider</strong> — secure data storage and delivery.</li>
-            </ul>
-            <p>We do not sell your personal data.</p>
+            <p>
+              We share your data only with trusted third-party service providers who process it on our
+              behalf — such as payment processing, email and messaging, and secure hosting — and only as
+              needed to provide our services. They are bound by contract to protect your data and use it
+              solely for those purposes. We do not sell your personal data.
+            </p>
           </section>
 
           <section>
@@ -106,7 +99,7 @@ export default function PrivacyPage() {
             <h2>Security</h2>
             <p>
               We protect your data with encryption in transit, strict database access controls, and PCI-compliant payment
-              handling through Stripe. No system is perfectly secure, but we work hard to keep your information safe.
+              handling through our payment provider. No system is perfectly secure, but we work hard to keep your information safe.
             </p>
           </section>
 

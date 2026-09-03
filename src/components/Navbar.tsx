@@ -23,6 +23,8 @@ export function Navbar() {
   const isDarkTheme =
     isScrolled ||
     pathname === '/contact' ||
+    pathname === '/privacy' ||
+    pathname === '/terms' ||
     pathname?.startsWith('/locations') ||
     pathname?.startsWith('/reservations') ||
     pathname?.startsWith('/order') ||

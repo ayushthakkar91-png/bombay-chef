@@ -21,9 +21,7 @@ const LOCATIONS_DATA = BRANCHES.map((b) => ({
 }));
 
 const SOCIALS = [
-  { name: "Instagram", href: "#" },
-  { name: "Facebook", href: "#" },
-  { name: "TikTok", href: "#" },
+  { name: "Instagram", href: "https://www.instagram.com/bombaybicyclechef/" },
 ];
 
 export function Footer() {
@@ -131,6 +129,8 @@ export function Footer() {
               <a
                 key={s.name}
                 href={s.href}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-[#F3EEE8]/50 text-[10px] font-sans tracking-[0.2em] uppercase hover:text-[#C8A96B] transition-colors duration-300"
               >
                 {s.name}

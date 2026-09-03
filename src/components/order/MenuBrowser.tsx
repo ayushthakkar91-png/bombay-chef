@@ -104,7 +104,7 @@ export function MenuBrowser({ menu, locationSlug, branches = [], favouriteIds = 
                         </div>
                         {item.imageUrl && (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={item.imageUrl} alt={item.name} className="h-[68px] w-[68px] shrink-0 object-cover sm:h-20 sm:w-20" />
+                          <img src={item.imageUrl} alt={item.name} className="h-20 w-20 shrink-0 self-center rounded-xl object-cover shadow-sm ring-1 ring-[#2A211C]/10 sm:h-[88px] sm:w-[88px]" />
                         )}
                       </button>
                       {/* Explicit add affordance — one tap for simple items, opens options when required. */}
@@ -124,8 +124,8 @@ export function MenuBrowser({ menu, locationSlug, branches = [], favouriteIds = 
 
           {/* Sticky cart (desktop) */}
           <aside className="hidden lg:block">
-            <div className="sticky top-[164px] bg-white border border-[#2A211C]/10 p-6">
-              <h2 className="font-serif text-[22px] text-[#2B221D] mb-3">Your basket</h2>
+            <div className="sticky top-[104px] flex max-h-[calc(100vh-124px)] flex-col bg-white border border-[#2A211C]/10 p-6">
+              <h2 className="shrink-0 font-serif text-[22px] text-[#2B221D] mb-3">Your basket</h2>
               <CartContents menu={menu} locationSlug={locationSlug} onCheckout={goCheckout} />
             </div>
           </aside>
@@ -149,8 +149,8 @@ export function MenuBrowser({ menu, locationSlug, branches = [], favouriteIds = 
       {drawerOpen && (
         <div className="lg:hidden fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/50" onClick={() => setDrawerOpen(false)} />
-          <div className="absolute bottom-0 inset-x-0 max-h-[85vh] overflow-y-auto bg-[#F6F2EA] p-6 rounded-t-2xl">
-            <div className="flex items-center justify-between mb-3">
+          <div className="absolute bottom-0 inset-x-0 flex max-h-[85vh] flex-col bg-[#F6F2EA] p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] rounded-t-2xl">
+            <div className="flex items-center justify-between mb-3 shrink-0">
               <h2 className="font-serif text-[24px] text-[#2B221D]">Your basket</h2>
               <button onClick={() => setDrawerOpen(false)} aria-label="Close"><X className="h-6 w-6 text-[#2B221D]" /></button>
             </div>
