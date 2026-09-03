@@ -6,7 +6,7 @@ import { getMyOrder } from "@/lib/repositories/account";
 import { ORDER_STATUS_LABEL } from "@/lib/ordering/constants";
 import { ReorderButton } from "@/components/account/ReorderButton";
 
-const money = (p: number) => `£${(p / 100).toFixed(2)}`;
+import { money } from "@/lib/format";
 const dt = (iso: string) => new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 
 export default async function AccountOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {

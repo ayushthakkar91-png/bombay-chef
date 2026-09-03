@@ -6,7 +6,7 @@ import { listMyOrders, listMyReservations } from "@/lib/repositories/account";
 import { ORDER_STATUS_LABEL } from "@/lib/ordering/constants";
 import { formatInstantDate, formatInstantTime } from "@/lib/reservations/time";
 
-const money = (p: number) => `£${(p / 100).toFixed(2)}`;
+import { money } from "@/lib/format";
 
 export default async function AccountHomePage() {
   const ctx = await requireCustomer();

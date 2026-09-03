@@ -5,12 +5,7 @@ import { listLiveOrdersForPos } from "@/lib/pos/orders";
 
 export const dynamic = "force-dynamic";
 
-async function locationIdFromSlug(slug: string): Promise<string | null> {
-  const supabase = getServiceClient();
-  if (!supabase) return null;
-  const { data } = await supabase.from("locations").select("id").eq("slug", slug).eq("is_active", true).maybeSingle();
-  return data ? (data.id as string) : null;
-}
+import { locationIdFromSlug } from "@/lib/locations";
 
 export async function GET(request: Request, { params }: { params: Promise<{ loc: string }> }) {
   const { loc } = await params;

@@ -31,9 +31,7 @@ export function wasteReasonLabel(id: string): string {
   return WASTE_REASONS.find((r) => r.id === id)?.label ?? id;
 }
 
-export function gbp(pence: number): string {
-  return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(pence / 100);
-}
+export { gbp } from "@/lib/format";
 
 /** Tidy numeric quantity (drops trailing zeros). */
 export function qtyFmt(n: number): string {

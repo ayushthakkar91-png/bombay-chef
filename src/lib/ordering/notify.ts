@@ -5,11 +5,7 @@ import { enqueueEmail } from "@/lib/notifications/outbox";
 import { ORDER_STATUS_LABEL, type OrderStatus } from "./constants";
 import type { ReservationEmailPayload, TemplateId } from "@/lib/email/templates";
 
-function money(pence: number): string {
-  return `£${(pence / 100).toFixed(2)}`;
-}
-
-import { siteUrl } from "@/lib/format";
+import { money, siteUrl } from "@/lib/format";
 
 /**
  * Build an order email payload and enqueue it. Loads the order + items +

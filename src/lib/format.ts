@@ -7,6 +7,11 @@
 /** Pence → "£12.34". */
 export const money = (p: number) => `£${(p / 100).toFixed(2)}`;
 
+/** Pence → localised currency string, e.g. "£12.34" (Intl, en-GB). */
+export function gbp(pence: number): string {
+  return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(pence / 100);
+}
+
 /** The site's absolute origin, trailing slash trimmed. Falls back to localhost. */
 export function siteUrl(): string {
   return (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");

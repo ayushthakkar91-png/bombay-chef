@@ -12,7 +12,7 @@ import { PageHeader, Panel, Stat } from "@/components/admin/ui";
 import { Badge } from "@/components/admin/primitives";
 import { PointsAdjuster } from "@/components/admin/customers/PointsAdjuster";
 
-const money = (p: number) => `£${(p / 100).toFixed(2)}`;
+import { money } from "@/lib/format";
 const d = (iso: string) => new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", day: "numeric", month: "short", year: "numeric" }).format(new Date(iso));
 
 export default async function AdminCustomerProfilePage({ params }: { params: Promise<{ id: string }> }) {

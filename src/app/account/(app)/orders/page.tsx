@@ -4,7 +4,7 @@ import { requireCustomer } from "@/lib/auth/customer";
 import { listMyOrders } from "@/lib/repositories/account";
 import { ORDER_STATUS_LABEL } from "@/lib/ordering/constants";
 
-const money = (p: number) => `£${(p / 100).toFixed(2)}`;
+import { money } from "@/lib/format";
 const dt = (iso: string) => new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", day: "numeric", month: "short", year: "numeric" }).format(new Date(iso));
 
 export default async function AccountOrdersPage() {

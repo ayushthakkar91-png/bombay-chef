@@ -18,12 +18,7 @@ import { EMAIL_RE } from "@/lib/patterns";
 
 import { siteUrl } from "@/lib/format";
 
-async function locationIdFromSlug(slug: string): Promise<string | null> {
-  const supabase = getServiceClient();
-  if (!supabase) return null;
-  const { data } = await supabase.from("locations").select("id").eq("slug", slug).eq("is_active", true).maybeSingle();
-  return data ? (data.id as string) : null;
-}
+import { locationIdFromSlug } from "@/lib/locations";
 
 /** Postcode → delivery availability + fee/min/ETA. */
 export async function checkDeliveryAction(locationSlug: string, postcode: string): Promise<DeliveryCheck> {
