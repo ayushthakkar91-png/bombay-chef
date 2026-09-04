@@ -66,7 +66,9 @@ export async function createCheckoutSession(opts: {
   if (embedded) {
     // Embedded Checkout stays on our site (Stripe mounts an iframe); a single
     // return_url replaces success/cancel, and the session returns a client_secret.
-    p.set("ui_mode", "embedded");
+    // Stripe renamed this ui_mode: the old `embedded` value now errors
+    // ("no longer supported. Use `embedded_page`").
+    p.set("ui_mode", "embedded_page");
     if (opts.returnUrl) p.set("return_url", opts.returnUrl);
   } else {
     if (opts.successUrl) p.set("success_url", opts.successUrl);
