@@ -1,16 +1,10 @@
+"use client";
+
 import Link from "next/link";
 
-import { ORDER_ENTRY_HREF } from "@/lib/flags";
+import { useOrderHref } from "@/components/order/OrderEntry";
 import { branchBySlug, BRANCHES } from "@/data/locations";
 import { OpeningHours } from "@/components/locations/OpeningHours";
-
-const FOOTER_NAV = [
-  { name: "Menu", href: "/menu" },
-  { name: "Locations", href: "/locations" },
-  { name: "Reservations", href: "/reservations" },
-  { name: "Order Online", href: ORDER_ENTRY_HREF },
-  { name: "Contact", href: "/contact" },
-];
 
 // Single source of truth — derived from BRANCHES (src/data/locations.ts).
 const LOCATIONS_DATA = BRANCHES.map((b) => ({
@@ -25,6 +19,14 @@ const SOCIALS = [
 ];
 
 export function Footer() {
+  const orderHref = useOrderHref();
+  const footerNav = [
+    { name: "Menu", href: "/menu" },
+    { name: "Locations", href: "/locations" },
+    { name: "Reservations", href: "/reservations" },
+    { name: "Order Online", href: orderHref },
+    { name: "Contact", href: "/contact" },
+  ];
   return (
     <footer className="bg-[#1A1411] w-full pt-32 lg:pt-40 pb-12 px-6 border-t border-[#F3EEE8]/5">
       <div className="max-w-[1200px] mx-auto">
@@ -111,7 +113,7 @@ export function Footer() {
 
         {/* Primary navigation — clear links for visitors and for search crawlers */}
         <nav aria-label="Footer" className="mb-10 flex flex-wrap items-center justify-center gap-x-7 gap-y-3">
-          {FOOTER_NAV.map((l) => (
+          {footerNav.map((l) => (
             <Link
               key={l.name}
               href={l.href}

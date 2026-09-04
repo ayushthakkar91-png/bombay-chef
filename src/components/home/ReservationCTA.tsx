@@ -4,10 +4,11 @@ import { useRef } from "react";
 import { gsap } from "@/utils/gsap";
 import { useGSAP } from "@gsap/react";
 import Link from "next/link";
-import { ORDER_ENTRY_HREF } from "@/lib/flags";
+import { useOrderHref } from "@/components/order/OrderEntry";
 
 export function ReservationCTA() {
   const bgRef = useRef<HTMLDivElement>(null);
+  const orderHref = useOrderHref();
 
   useGSAP(() => {
     // The slow infinite grain drift only runs when the visitor hasn't requested
@@ -56,7 +57,7 @@ export function ReservationCTA() {
             Find a Table
           </Link>
           <Link
-            href={ORDER_ENTRY_HREF}
+            href={orderHref}
             className="inline-flex items-center justify-center h-[56px] px-10 bg-[#5D0925] border border-[#5D0925] text-[#F5F0E6] text-[14px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-[#420616] hover:border-[#420616] transition-colors duration-500"
           >
             Order Online

@@ -6,9 +6,11 @@ import { useRef } from "react";
 import { gsap } from "@/utils/gsap";
 import { useGSAP } from "@gsap/react";
 import { useLenis } from "lenis/react";
+import { useOrderHref } from "@/components/order/OrderEntry";
 
 export function Hero() {
   const lenis = useLenis();
+  const orderHref = useOrderHref();
   const bgRef = useRef<HTMLDivElement>(null);
   const chapterRef = useRef<HTMLSpanElement>(null);
   const hindiRef = useRef<HTMLSpanElement>(null);
@@ -214,12 +216,20 @@ export function Hero() {
             ref={buttonsRef}
             className="flex flex-col items-center justify-center gap-6 sm:gap-8 w-full sm:w-auto"
           >
-            <Link
-              href="/reservations"
-              className="flex items-center justify-center h-[48px] sm:h-[52px] px-8 sm:px-12 rounded-none bg-primary border border-primary text-[#F3EEE8] text-[11px] sm:text-[12px] tracking-[0.2em] font-normal uppercase font-sans hover:bg-primary-dark hover:border-primary-dark transition-all duration-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-dark focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A130D]"
-            >
-              Reserve A Table
-            </Link>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-5 w-full sm:w-auto">
+              <Link
+                href={orderHref}
+                className="flex w-full sm:w-auto items-center justify-center h-[48px] sm:h-[52px] px-8 sm:px-12 rounded-none bg-[#C8A96B] border border-[#C8A96B] text-[#1A130D] text-[11px] sm:text-[12px] tracking-[0.2em] font-semibold uppercase font-sans hover:bg-[#d8bd85] hover:border-[#d8bd85] transition-all duration-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-dark focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A130D]"
+              >
+                Order Now
+              </Link>
+              <Link
+                href="/reservations"
+                className="flex w-full sm:w-auto items-center justify-center h-[48px] sm:h-[52px] px-8 sm:px-12 rounded-none bg-primary border border-primary text-[#F3EEE8] text-[11px] sm:text-[12px] tracking-[0.2em] font-normal uppercase font-sans hover:bg-primary-dark hover:border-primary-dark transition-all duration-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-on-dark focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A130D]"
+              >
+                Reserve A Table
+              </Link>
+            </div>
 
             <div className="flex items-center gap-6 sm:gap-10 mt-2">
               <Link

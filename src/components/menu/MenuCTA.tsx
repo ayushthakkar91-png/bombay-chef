@@ -4,10 +4,11 @@ import { useRef } from "react";
 import { gsap } from "@/utils/gsap";
 import { useGSAP } from "@gsap/react";
 import Link from "next/link";
-import { ORDER_ENTRY_HREF } from "@/lib/flags";
+import { useOrderHref } from "@/components/order/OrderEntry";
 
 export function MenuCTA() {
   const bgRef = useRef<HTMLDivElement>(null);
+  const orderHref = useOrderHref();
 
   useGSAP(() => {
     const mm = gsap.matchMedia();
@@ -51,7 +52,7 @@ export function MenuCTA() {
             Reserve Table
           </Link>
           <Link
-            href={ORDER_ENTRY_HREF}
+            href={orderHref}
             className="inline-flex items-center justify-center h-[56px] px-12 bg-[#7A0E2E] border border-[#7A0E2E] text-[#F6F2EA] text-[13px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-[#5D0925] hover:border-[#5D0925] transition-colors duration-500"
           >
             Order Online

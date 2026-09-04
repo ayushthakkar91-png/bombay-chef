@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 import { PublicChrome } from "@/components/layout/PublicChrome";
+import { OrderHrefProvider } from "@/components/order/OrderEntry";
 import { getEventPopup } from "@/lib/repositories/marketing-popup";
+import { getOrderEntryHref } from "@/lib/ordering/order-entry";
 import { OrganizationSchema, WebSiteSchema } from "@/components/seo/Schema";
 import { SITE_URL } from "@/lib/site";
 import { Analytics } from "@vercel/analytics/next";
@@ -60,7 +62,7 @@ export default async function RootLayout({
 }>) {
   // DB-backed offer popup (admin-editable via /admin/marketing/popup), with the
   // static config as a fallback. Fetched server-side, passed to the client chrome.
-  const popup = await getEventPopup();
+  const [popup, orderHref] = await Promise.all([getEventPopup(), getOrderEntryHref()]);
   return (
     <html
       lang="en"
@@ -72,7 +74,9 @@ export default async function RootLayout({
         {/* Public marketing chrome (smooth scroll, grain, navbar, footer) wraps
             every route except /admin, which renders on a bare canvas. The public
             site is unchanged. */}
-        <PublicChrome popup={popup}>{children}</PublicChrome>
+        <OrderHrefProvider href={orderHref}>
+          <PublicChrome popup={popup}>{children}</PublicChrome>
+        </OrderHrefProvider>
         <Analytics />
         <SpeedInsights />
       </body>

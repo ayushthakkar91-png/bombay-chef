@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 
-import { ORDER_ENTRY_HREF } from "@/lib/flags";
+import { useOrderHref } from "@/components/order/OrderEntry";
 
 type Testimonial = { quote: string; name: string; location: string };
 
@@ -27,6 +27,7 @@ const EASE_OUT = [0.22, 1, 0.36, 1] as const;
  */
 export function GoogleReviews({ reviewCount }: { reviewCount?: number }) {
   const reduceMotion = useReducedMotion();
+  const orderHref = useOrderHref();
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const count = TESTIMONIALS.length;
@@ -143,7 +144,7 @@ export function GoogleReviews({ reviewCount }: { reviewCount?: number }) {
             Reserve A Table
           </Link>
           <a
-            href={ORDER_ENTRY_HREF}
+            href={orderHref}
             className="inline-flex h-[52px] items-center justify-center border border-[#B08A3E] px-9 font-sans text-[12px] uppercase tracking-[0.18em] text-[#2B221D] transition-colors duration-500 hover:border-[#2B221D] hover:bg-[#2B221D] hover:text-[#F6F2EA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B08A3E] focus-visible:ring-offset-2 focus-visible:ring-offset-[#F5F0E6]"
           >
             Order Online

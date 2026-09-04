@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { BookingState, toDateISO } from "./types";
 import { motion, AnimatePresence } from "framer-motion";
 import { BOOKING_HORIZON_DAYS } from "@/lib/reservations/constants";
-import { ORDER_ENTRY_HREF } from "@/lib/flags";
+import { useOrderHref } from "@/components/order/OrderEntry";
 
 interface Props {
   state: BookingState;
@@ -15,6 +15,7 @@ interface Props {
 
 export function StepDateTime({ state, updateState, nextStep, prevStep }: Props) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const orderHref = useOrderHref();
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -226,7 +227,7 @@ export function StepDateTime({ state, updateState, nextStep, prevStep }: Props) 
                       </button>
                     )}
                     <a
-                      href={ORDER_ENTRY_HREF}
+                      href={orderHref}
                       className="inline-flex items-center justify-center h-[52px] px-8 border border-[#5D0925] text-[#5D0925] text-[12px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-[#5D0925] hover:text-[#F6F2EA] transition-colors duration-500"
                     >
                       Order Online
