@@ -39,6 +39,13 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      // Admin image uploads go through a Server Action (default cap is 1 MB).
+      // The action itself rejects anything over 5 MB.
+      bodySizeLimit: "6mb",
+    },
+  },
   images: {
     // AVIF first (≈20% smaller than WebP), WebP fallback. Next re-encodes the
     // source PNG on delivery, so the hero LCP image is never shipped as PNG.

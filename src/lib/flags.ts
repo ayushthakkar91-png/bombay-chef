@@ -6,14 +6,16 @@
  */
 export const flags = {
   /**
-   * The in-house online-ordering system (cart, checkout, Stripe). HARDCODED ON —
-   * no env var needed (Vercel NEXT_PUBLIC toggles were unreliable). Every "Order
-   * Online" CTA points at /order (Balham internal, others external). To turn it
-   * OFF, change this back to `false` in code and redeploy.
+   * The in-house online-ordering system (cart, checkout, Stripe). ON only when
+   * NEXT_PUBLIC_FEATURE_ORDERING is exactly "true" — so it's OFF by default
+   * (unset or any other value). Local dev: set it to "true" in .env.local to test.
+   * Production: leave it unset/false to keep ordering OFF (every "Order Online"
+   * CTA goes to the external partner locator and /order shows "Coming Soon");
+   * set it to "true" in Vercel and redeploy to go live.
    * NOTE: checkout still needs Stripe + Upstash env configured — without them the
    * cart works but checkout returns "Online payments aren't configured yet".
    */
-  ordering: true,
+  ordering: process.env.NEXT_PUBLIC_FEATURE_ORDERING === "true",
 
   /**
    * Backend-wired reservations (live availability, waitlist, confirmation &
@@ -22,8 +24,12 @@ export const flags = {
    */
   reservationsV2: process.env.NEXT_PUBLIC_FEATURE_RESERVATIONS_V2 === "true",
 
-  /** Customer accounts: loyalty, referrals, favourites, saved addresses (P5). */
-  loyalty: process.env.NEXT_PUBLIC_FEATURE_LOYALTY === "true",
+  /**
+   * Customer loyalty: points, tiers, rewards catalogue, membership card + QR (P5).
+   * HARDCODED ON (like `ordering`) — the Vercel NEXT_PUBLIC toggle proved
+   * unreliable, so this sidesteps it. To turn OFF, set this back to `false`.
+   */
+  loyalty: true,
 
   /** CRM + email marketing: ESP sync, segments, lifecycle automations (P6). */
   marketing: process.env.NEXT_PUBLIC_FEATURE_MARKETING === "true",

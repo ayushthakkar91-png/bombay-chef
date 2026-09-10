@@ -72,24 +72,11 @@ export function Footer() {
               aria-hidden="true"
             />
             <h3 className="text-[#F3EEE8] font-serif text-[22px] mb-3">
-              Stay in the story
+              Inspired by Bombay, made for London
             </h3>
-            <p className="text-[#F3EEE8]/50 text-[14px] font-sans font-light mb-6 leading-relaxed max-w-sm">
-              New dishes, events and the occasional love letter from our kitchen.
+            <p className="text-[#F3EEE8]/50 text-[14px] font-sans font-light leading-relaxed max-w-sm">
+              Modern Indian cooking, warm hospitality and a table always set for gathering.
             </p>
-            <form className="flex w-full max-w-[320px]">
-              <input
-                type="email"
-                placeholder="Your email address"
-                className="flex-1 h-[44px] px-4 bg-transparent border-b border-[#F3EEE8]/20 text-[#F3EEE8] text-[14px] font-sans font-light placeholder:text-[#F3EEE8]/30 focus:outline-none focus:border-[#C8A96B] transition-colors duration-300"
-              />
-              <button
-                type="submit"
-                className="h-[44px] px-4 border-b border-[#F3EEE8]/20 text-[#C8A96B] text-[11px] tracking-[0.15em] uppercase font-normal hover:text-[#F3EEE8] hover:border-[#C8A96B] transition-colors duration-300 whitespace-nowrap font-sans"
-              >
-                Join
-              </button>
-            </form>
           </div>
 
           {LOCATIONS_DATA.map((loc) => (

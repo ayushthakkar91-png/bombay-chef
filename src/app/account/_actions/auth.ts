@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 
 import { getUserClient, getServiceClient } from "@/lib/supabase/clients";
 import { subscribeContact } from "@/lib/marketing/contacts";
@@ -12,7 +13,9 @@ import { EMAIL_RE } from "@/lib/patterns";
 const REVENUE_STATUSES = new Set(["paid", "accepted", "preparing", "ready_for_collection", "out_for_delivery", "completed"]);
 
 function safeNext(next: string): string {
-  return next.startsWith("/account") ? next : "/account";
+  // Only same-site paths we intend to return to (no open redirects). The prefix
+  // must follow the single leading slash, so "//evil.com" can never match.
+  return /^\/(account|order)(\/|$|\?)/.test(next) ? next : "/account";
 }
 
 /**
@@ -103,4 +106,62 @@ export async function logout(): Promise<void> {
   const supabase = await getUserClient();
   if (supabase) await supabase.auth.signOut();
   redirect("/account/login");
+}
+
+/** Same-origin base URL for auth email links (works in local dev AND prod). */
+async function originFromRequest(): Promise<string> {
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
+  return host ? `${proto}://${host}` : "";
+}
+
+/**
+ * Send a password-reset email. Always returns the SAME success message whether
+ * or not the address has an account, so this can't be used to discover which
+ * emails are registered. The link lands on /auth/reset (a route handler that
+ * exchanges the code for a short-lived session, then shows the new-password form).
+ */
+export async function requestPasswordReset(_prev: ActionState, form: FormData): Promise<ActionState> {
+  if (!(await rateLimit("account-reset", { limit: 5, windowSec: 60, failClosed: true })).ok) {
+    return fail("Too many attempts. Please wait a minute and try again.");
+  }
+  const email = str(form, "email");
+  const generic = ok("If that email has an account, we've sent a link to reset your password. Check your inbox.");
+  if (!EMAIL_RE.test(email)) return fail("Enter a valid email.", undefined, { email });
+
+  const supabase = await getUserClient();
+  if (!supabase) return fail("Accounts aren't available yet.");
+
+  const origin = await originFromRequest();
+  // Ignore the result: never reveal whether the address exists.
+  await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${origin}/auth/reset` });
+  return generic;
+}
+
+/**
+ * Set a new password for the recovery session established by /auth/reset. The
+ * caller must already hold that session (the route handler set it); updateUser
+ * fails otherwise, so an unauthenticated request can't change anyone's password.
+ */
+export async function updatePassword(_prev: ActionState, form: FormData): Promise<ActionState> {
+  if (!(await rateLimit("account-password", { limit: 10, windowSec: 60, failClosed: true })).ok) {
+    return fail("Too many attempts. Please wait a minute and try again.");
+  }
+  const password = String(form.get("password") ?? "");
+  const confirm = String(form.get("confirm") ?? "");
+  if (password.length < 8) return fail("Password must be at least 8 characters.");
+  if (password !== confirm) return fail("Passwords don't match.");
+
+  const supabase = await getUserClient();
+  if (!supabase) return fail("Accounts aren't available yet.");
+
+  // Requires the recovery session; a signed-out request returns an error here.
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return fail("Your reset link has expired. Please request a new one.");
+
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return fail(error.message);
+
+  redirect("/account");
 }

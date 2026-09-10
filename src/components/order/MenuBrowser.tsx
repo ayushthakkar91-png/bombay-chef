@@ -9,15 +9,30 @@ import { useOrder } from "./OrderProvider";
 import { ItemModal } from "./ItemModal";
 import { CartContents } from "./CartContents";
 import { OrderBar } from "./OrderBar";
+import { CheckoutChoice } from "./CheckoutChoice";
 import { MenuCategoryNav } from "./MenuCategoryNav";
 
 import { money } from "@/lib/format";
 
-export function MenuBrowser({ menu, locationSlug, branches = [], favouriteIds = [] }: { menu: OrderingMenu; locationSlug: string; branches?: { slug: string; name: string }[]; favouriteIds?: string[] }) {
+export function MenuBrowser({
+  menu,
+  locationSlug,
+  branches = [],
+  favouriteIds = [],
+  signedIn = false,
+}: {
+  menu: OrderingMenu;
+  locationSlug: string;
+  branches?: { slug: string; name: string }[];
+  favouriteIds?: string[];
+  /** Signed-in customers skip the guest / sign-in choice and go straight to checkout. */
+  signedIn?: boolean;
+}) {
   const router = useRouter();
   const { lines, itemCount, addLine, setLocation, locationSlug: ctxSlug } = useOrder();
   const [modalItem, setModalItem] = useState<OrderMenuItem | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [choiceOpen, setChoiceOpen] = useState(false);
   const [query, setQuery] = useState("");
 
   // Search filters items by name/description across all categories; empty
@@ -47,8 +62,22 @@ export function MenuBrowser({ menu, locationSlug, branches = [], favouriteIds = 
     if (ctxSlug !== locationSlug) setLocation(locationSlug);
   }, [ctxSlug, locationSlug, setLocation]);
 
+  const checkoutHref = `/order/checkout?loc=${locationSlug}`;
+  // Warm the checkout route as soon as there's something in the basket, so the
+  // tap on "Go to checkout" feels instant.
+  const hasItems = itemCount > 0;
+  useEffect(() => {
+    if (hasItems) router.prefetch(checkoutHref);
+  }, [hasItems, checkoutHref, router]);
+
   const subtotal = lines.reduce((s, l) => s + (l.basePence + l.modifiers.reduce((a, m) => a + m.pricePence, 0)) * l.qty, 0);
-  const goCheckout = () => router.push(`/order/checkout?loc=${locationSlug}`);
+  const toCheckout = () => router.push(checkoutHref);
+  // Signed-in customers go straight through; everyone else picks guest / sign in / register.
+  const goCheckout = () => {
+    setDrawerOpen(false);
+    if (signedIn) toCheckout();
+    else setChoiceOpen(true);
+  };
 
   return (
     <main className="min-h-screen bg-[#F6F2EA] pt-[84px] pb-28 lg:pt-[88px] lg:pb-12">
@@ -160,6 +189,13 @@ export function MenuBrowser({ menu, locationSlug, branches = [], favouriteIds = 
       )}
 
       {modalItem && <ItemModal item={modalItem} onClose={() => setModalItem(null)} isFavourite={favouriteIds.includes(modalItem.id)} />}
+
+      <CheckoutChoice
+        open={choiceOpen}
+        onClose={() => setChoiceOpen(false)}
+        onGuest={() => { setChoiceOpen(false); toCheckout(); }}
+        locationSlug={locationSlug}
+      />
     </main>
   );
 }

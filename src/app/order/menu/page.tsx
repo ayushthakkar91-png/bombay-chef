@@ -52,5 +52,5 @@ export default async function OrderMenuPage({ searchParams }: { searchParams: Pr
   const favouriteIds = customer ? await getMyFavouriteIds(customer.userId) : [];
   const branches = orderable.map((l) => ({ slug: l.slug, name: l.name }));
 
-  return <MenuBrowser menu={menu} locationSlug={slug} branches={branches} favouriteIds={favouriteIds} />;
+  return <MenuBrowser menu={menu} locationSlug={slug} branches={branches} favouriteIds={favouriteIds} signedIn={Boolean(customer)} />;
 }

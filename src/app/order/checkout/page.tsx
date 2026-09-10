@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { getOrderingMenu } from "@/lib/repositories/ordering-menu";
 import { isInternalOrdering } from "@/lib/ordering/routing";
+import { getCustomer } from "@/lib/auth/customer";
+import { listMyAddresses } from "@/lib/repositories/account";
 import { CheckoutForm } from "@/components/order/CheckoutForm";
 
 export default async function CheckoutPage({
@@ -23,5 +25,20 @@ export default async function CheckoutPage({
     );
   }
 
-  return <CheckoutForm menu={menu} locationSlug={loc as string} />;
+  // Quick checkout: a signed-in customer gets their contact details + default
+  // delivery address prefilled, so they don't retype what we already hold.
+  // Guests get the plain form plus a "sign in for faster checkout" prompt.
+  const customer = await getCustomer();
+  const addresses = customer ? await listMyAddresses(customer.userId) : [];
+  const defaultAddr = addresses.find((a) => a.isDefault) ?? addresses[0] ?? null;
+
+  return (
+    <CheckoutForm
+      menu={menu}
+      locationSlug={loc as string}
+      signedIn={Boolean(customer)}
+      initialContact={customer ? { name: customer.fullName ?? "", email: customer.email ?? "", phone: customer.phone ?? "" } : undefined}
+      initialAddress={defaultAddr ? { line1: defaultAddr.line1, line2: defaultAddr.line2 ?? "", city: defaultAddr.city, postcode: defaultAddr.postcode } : undefined}
+    />
+  );
 }

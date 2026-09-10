@@ -16,7 +16,8 @@ export default async function AccountRegisterPage({
 }) {
   const ctx = await getCustomer();
   const { next } = await searchParams;
-  const dest = next?.startsWith("/account") ? next : "/account";
+  // Allow returning to the account area OR the checkout (quick-checkout sign-up).
+  const dest = next && /^\/(account|order)(\/|$|\?)/.test(next) ? next : "/account";
   if (ctx) redirect(dest);
 
   return (

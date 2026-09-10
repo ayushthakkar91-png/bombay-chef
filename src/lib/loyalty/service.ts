@@ -23,6 +23,56 @@ function voucherCode(prefix: string): string {
   return `${prefix}-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
 }
 
+export type MemberCard = { memberNo: string; memberToken: string };
+
+export type MemberLookup = { memberNo: string; name: string | null; tier: string; pointsBalance: number };
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Public membership lookup by QR token (the /m/<token> page). Returns the card's
+ * display facts so someone the member shows the card to can confirm it's valid.
+ * Token is opaque + unguessable; a bad/again unknown token returns null.
+ */
+export async function getMemberByToken(token: string): Promise<MemberLookup | null> {
+  if (!UUID_RE.test(token)) return null;
+  const supabase = getServiceClient();
+  if (!supabase) return null;
+  const { data } = await supabase
+    .from("loyalty_accounts")
+    .select("customer_id, member_no, tier, points_balance")
+    .eq("member_token", token)
+    .maybeSingle();
+  if (!data) return null;
+  const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", data.customer_id as string).maybeSingle();
+  return {
+    memberNo: data.member_no as string,
+    name: (profile?.full_name as string | null) ?? null,
+    tier: (data.tier as string) ?? "bronze",
+    pointsBalance: (data.points_balance as number) ?? 0,
+  };
+}
+
+/**
+ * Ensure the customer has a loyalty_accounts row and return their membership
+ * card identifiers (member number + QR token). Idempotent: a customer who has
+ * never earned still gets a card the first time they open Rewards. The DB fills
+ * member_no (sequence) and member_token (uuid) via column defaults on insert.
+ */
+export async function ensureMemberCard(customerId: string): Promise<MemberCard | null> {
+  const supabase = getServiceClient();
+  if (!supabase) return null;
+  // Create the row if absent; never clobber an existing one (ignoreDuplicates).
+  await supabase.from("loyalty_accounts").upsert({ customer_id: customerId }, { onConflict: "customer_id", ignoreDuplicates: true });
+  const { data } = await supabase
+    .from("loyalty_accounts")
+    .select("member_no, member_token")
+    .eq("customer_id", customerId)
+    .maybeSingle();
+  if (!data?.member_no || !data?.member_token) return null;
+  return { memberNo: data.member_no as string, memberToken: data.member_token as string };
+}
+
 async function recomputeTier(customerId: string) {
   const supabase = getServiceClient();
   if (!supabase) return;

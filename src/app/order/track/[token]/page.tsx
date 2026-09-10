@@ -6,6 +6,7 @@ import { getOrderByToken } from "@/lib/repositories/orders";
 import { getCustomer } from "@/lib/auth/customer";
 import { ORDER_STATUS_LABEL, LIVE_STATUSES, type OrderStatus, type Fulfilment } from "@/lib/ordering/constants";
 import { TrackingControls } from "@/components/order/TrackingControls";
+import { CheckoutSteps } from "@/components/order/CheckoutSteps";
 import { PostPurchaseAccount } from "@/components/account/PostPurchaseAccount";
 
 export const metadata: Metadata = {
@@ -59,6 +60,9 @@ export default async function OrderTrackPage({
     <main className="min-h-screen bg-[#F6F2EA] pt-[104px] lg:pt-[120px] pb-24 px-6">
       <TrackingControls isLive={isLive} paid={paid === "1"} />
       <div className="max-w-[720px] mx-auto">
+        {/* Purchase progress: payment still settling = step 3, otherwise done. */}
+        {!stopped && <CheckoutSteps current={order.status === "pending_payment" ? 3 : 4} />}
+
         <div className="text-center mb-10">
           <p className="text-[#B08A3E] text-[12px] tracking-[0.25em] uppercase font-sans font-semibold mb-3">{order.status === "pending_payment" ? "Awaiting Payment" : "Order Received"}</p>
           <h1 className="font-serif text-[40px] lg:text-[52px] text-[#2B221D] font-light leading-[1.1]">
@@ -76,24 +80,27 @@ export default async function OrderTrackPage({
             This order has been {order.status === "refunded" ? "refunded — any payment will be returned to your card" : "cancelled"}.
           </div>
         ) : (
-          <div className="flex items-center justify-between mb-12">
-            {flow.map((step, i) => {
-              const done = currentIndex >= 0 && i <= currentIndex;
-              const active = i === currentIndex;
-              return (
-                <div key={step.status} className="flex-1 flex flex-col items-center text-center">
-                  <div className="flex items-center w-full">
-                    <div className={`h-[2px] flex-1 ${i === 0 ? "opacity-0" : done ? "bg-[#B08A3E]" : "bg-[#2A211C]/15"}`} />
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${done ? "bg-[#B08A3E] text-[#F6F2EA]" : "bg-white border border-[#2A211C]/20 text-[#2A211C]/40"} ${active ? "ring-4 ring-[#B08A3E]/20" : ""}`}>
-                      {done ? <Check className="h-4 w-4" /> : <span className="text-[12px]">{i + 1}</span>}
+          <>
+            <p className="mb-4 text-center font-sans text-[11px] uppercase tracking-[0.2em] text-[#5A524B]">Live order status</p>
+            <div className="flex items-center justify-between mb-12">
+              {flow.map((step, i) => {
+                const done = currentIndex >= 0 && i <= currentIndex;
+                const active = i === currentIndex;
+                return (
+                  <div key={step.status} className="flex-1 flex flex-col items-center text-center">
+                    <div className="flex items-center w-full">
+                      <div className={`h-[2px] flex-1 ${i === 0 ? "opacity-0" : done ? "bg-[#B08A3E]" : "bg-[#2A211C]/15"}`} />
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${done ? "bg-[#B08A3E] text-[#F6F2EA]" : "bg-white border border-[#2A211C]/20 text-[#2A211C]/40"} ${active ? "ring-4 ring-[#B08A3E]/20" : ""}`}>
+                        {done ? <Check className="h-4 w-4" /> : <span className="text-[12px]">{i + 1}</span>}
+                      </div>
+                      <div className={`h-[2px] flex-1 ${i === flow.length - 1 ? "opacity-0" : currentIndex > i ? "bg-[#B08A3E]" : "bg-[#2A211C]/15"}`} />
                     </div>
-                    <div className={`h-[2px] flex-1 ${i === flow.length - 1 ? "opacity-0" : currentIndex > i ? "bg-[#B08A3E]" : "bg-[#2A211C]/15"}`} />
+                    <span className={`mt-2 text-[11px] font-sans uppercase tracking-[0.1em] ${active ? "text-[#B08A3E] font-semibold" : "text-[#5A524B]"}`}>{step.label}</span>
                   </div>
-                  <span className={`mt-2 text-[11px] font-sans uppercase tracking-[0.1em] ${active ? "text-[#B08A3E] font-semibold" : "text-[#5A524B]"}`}>{step.label}</span>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          </>
         )}
 
         {/* Summary */}

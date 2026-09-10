@@ -51,7 +51,7 @@ function RemoveButton({ itemId }: { itemId: string }) {
   return (
     <form action={action}>
       <input type="hidden" name="itemId" value={itemId} />
-      <button type="submit" className="inline-flex items-center gap-1.5 text-[#5D0925] text-[12px] uppercase tracking-[0.1em] font-sans hover:opacity-70">
+      <button type="submit" className="inline-flex min-h-[44px] items-center gap-1.5 text-[#5D0925] text-[12px] uppercase tracking-[0.1em] font-sans hover:opacity-70">
         <Heart className="h-3.5 w-3.5 fill-[#5D0925]" /> Remove
       </button>
     </form>

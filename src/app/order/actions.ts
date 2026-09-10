@@ -19,6 +19,22 @@ import { EMAIL_RE } from "@/lib/patterns";
 import { siteUrl } from "@/lib/format";
 
 import { locationIdFromSlug } from "@/lib/locations";
+import { headers } from "next/headers";
+
+/**
+ * Base URL for Stripe return links and order-tracking redirects. In local dev it
+ * is the origin the request actually came from (http://localhost:3000), so a test
+ * order returns to your machine instead of the live site NEXT_PUBLIC_SITE_URL
+ * points at. In production it is ALWAYS the configured site URL — a
+ * client-supplied Host header is never trusted there.
+ */
+async function checkoutBaseUrl(): Promise<string> {
+  if (process.env.NODE_ENV !== "production") {
+    const host = (await headers()).get("host");
+    if (host && /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(host)) return `http://${host}`;
+  }
+  return siteUrl();
+}
 
 /** Postcode → delivery availability + fee/min/ETA. */
 export async function checkDeliveryAction(locationSlug: string, postcode: string): Promise<DeliveryCheck> {
@@ -95,6 +111,14 @@ export async function checkGiftCard(code: string): Promise<{ ok: boolean; balanc
  * trust the client redirect. Card data never touches us (PCI SAQ A).
  */
 export async function createCheckout(input: CheckoutInput): Promise<CheckoutResult> {
+  const res = await createCheckoutInner(input);
+  // Log WHY a checkout was refused (the customer-facing message only — no PII),
+  // so a failed "Pay" is diagnosable from the dev terminal / Vercel logs.
+  if (!res.ok) console.warn(`[checkout] rejected: ${res.error}`);
+  return res;
+}
+
+async function createCheckoutInner(input: CheckoutInput): Promise<CheckoutResult> {
   if (!(await rateLimit("checkout", { limit: 10, windowSec: 60, failClosed: true })).ok) {
     return { ok: false, error: "Too many checkout attempts. Please wait a moment and try again." };
   }
@@ -263,7 +287,7 @@ export async function createCheckout(input: CheckoutInput): Promise<CheckoutResu
     // confirmPaidOrder re-runs debitGiftCard, but it is idempotent per order, so
     // the balance is not taken twice.
     await confirmPaidOrder(orderId, { method: "gift_card", amountPence: debit.debitedPence, paymentIntent: null });
-    return { ok: true, url: `${siteUrl()}/order/track/${order.track_token as string}?paid=1` };
+    return { ok: true, url: `${await checkoutBaseUrl()}/order/track/${order.track_token as string}?paid=1` };
   }
 
   return resumeCheckout(orderId, order.code as string, order.track_token as string, chargePence, email);
@@ -276,7 +300,7 @@ type ExistingOrder = { id: string; code: string; track_token: string; status: st
  * idempotency key (network retry / double-submit). Never creates a new order.
  */
 async function resumeExistingOrder(o: ExistingOrder): Promise<CheckoutResult> {
-  const track = `${siteUrl()}/order/track/${o.track_token}?paid=1`;
+  const track = `${await checkoutBaseUrl()}/order/track/${o.track_token}?paid=1`;
   if (o.status === "cancelled" || o.status === "refunded") {
     return { ok: false, error: "That order was cancelled. Please start a new order." };
   }
@@ -302,7 +326,7 @@ async function resumeCheckout(
   // when the publishable key is configured; otherwise we fall back to hosted
   // Checkout (redirect to Stripe) so checkout keeps working with no client key.
   const embedded = Boolean(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
-  const track = `${siteUrl()}/order/track/${trackToken}?paid=1`;
+  const track = `${await checkoutBaseUrl()}/order/track/${trackToken}?paid=1`;
   try {
     const session = await createCheckoutSession({
       amountPence: chargePence,
@@ -310,7 +334,7 @@ async function resumeCheckout(
       description: `Order ${code}`,
       ...(embedded
         ? { uiMode: "embedded" as const, returnUrl: track }
-        : { successUrl: track, cancelUrl: `${siteUrl()}/order/checkout?canceled=1` }),
+        : { successUrl: track, cancelUrl: `${await checkoutBaseUrl()}/order/checkout?canceled=1` }),
       customerEmail: email,
       metadata: { order_id: orderId, code },
       // Stripe idempotency: a retried session-create for this order can't double-charge.
@@ -323,7 +347,10 @@ async function resumeCheckout(
     }
     if (!session.url) return { ok: false, error: "We couldn't start the payment — please try again." };
     return { ok: true, url: session.url };
-  } catch {
+  } catch (err) {
+    // Stripe's own error text (e.g. invalid key, bad param) — never contains the
+    // secret key or card data — so a payment-provider failure is diagnosable.
+    console.error(`[checkout] Stripe session create failed for ${code}: ${err instanceof Error ? err.message : String(err)}`);
     // Free any reserved promo so an unpaid, abandoned order doesn't consume a
     // single-use code (release_promo is a no-op when nothing was reserved).
     const supabase = getServiceClient();

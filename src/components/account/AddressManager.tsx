@@ -31,8 +31,8 @@ export function AddressManager({ addresses }: { addresses: AccountAddress[] }) {
                 {a.isDefault && <span className="inline-flex items-center gap-1 text-[#B08A3E] text-[11px] uppercase tracking-[0.1em] font-sans"><Star className="h-3 w-3 fill-[#B08A3E]" /> Default</span>}
               </div>
               <p className="text-[#5A524B] text-[14px] font-sans leading-relaxed">{[a.line1, a.line2, a.city, a.postcode].filter(Boolean).join(", ")}</p>
-              <div className="flex items-center gap-3 mt-4 text-[12px] font-sans uppercase tracking-[0.1em]">
-                <button onClick={() => setEditing(a)} className="inline-flex items-center gap-1 text-[#2B221D] hover:text-[#B08A3E]"><Pencil className="h-3.5 w-3.5" /> Edit</button>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-[12px] font-sans uppercase tracking-[0.1em]">
+                <button onClick={() => setEditing(a)} className="inline-flex min-h-[44px] items-center gap-1 text-[#2B221D] hover:text-[#B08A3E]"><Pencil className="h-3.5 w-3.5" /> Edit</button>
                 {!a.isDefault && <SetDefault id={a.id} />}
                 <DeleteAddress id={a.id} />
               </div>
@@ -64,7 +64,7 @@ function AddressDialog({ address, onClose }: { address?: AccountAddress; onClose
         <input name="label" placeholder="Label (e.g. Home)" defaultValue={state.values?.label ?? address?.label ?? ""} className={accountField} />
         <input name="line1" placeholder="Address line 1" defaultValue={state.values?.line1 ?? address?.line1 ?? ""} className={accountField} />
         <input name="line2" placeholder="Address line 2 (optional)" defaultValue={state.values?.line2 ?? address?.line2 ?? ""} className={accountField} />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <input name="city" placeholder="City" defaultValue={state.values?.city ?? address?.city ?? ""} className={accountField} />
           <input name="postcode" placeholder="Postcode" defaultValue={state.values?.postcode ?? address?.postcode ?? ""} className={`${accountField} uppercase`} />
         </div>
@@ -86,7 +86,7 @@ function SetDefault({ id }: { id: string }) {
   return (
     <form action={action}>
       <input type="hidden" name="id" value={id} />
-      <button type="submit" className="text-[#5A524B] hover:text-[#B08A3E]">Set default</button>
+      <button type="submit" className="inline-flex min-h-[44px] items-center text-[#5A524B] hover:text-[#B08A3E]">Set default</button>
     </form>
   );
 }
@@ -97,7 +97,7 @@ function DeleteAddress({ id }: { id: string }) {
   return (
     <form action={action} onSubmit={(e) => { if (!window.confirm("Remove this address?")) e.preventDefault(); }}>
       <input type="hidden" name="id" value={id} />
-      <button type="submit" className="text-[#5D0925] hover:opacity-70">Remove</button>
+      <button type="submit" className="inline-flex min-h-[44px] items-center text-[#5D0925] hover:opacity-70">Remove</button>
     </form>
   );
 }

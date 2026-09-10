@@ -10,6 +10,7 @@ import { useOrderHref } from "@/components/order/OrderEntry";
 const LEFT_LINKS = [
   { name: "Menu", href: "/menu" },
   { name: "Locations", href: "/locations" },
+  { name: "Account", href: "/account" },
   { name: "Contact", href: "/contact" },
 ];
 

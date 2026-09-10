@@ -42,7 +42,7 @@ export function RegisterForm({ next }: { next: string }) {
 
       <AccountSubmit className="w-full mt-1">Create account</AccountSubmit>
       <p className="text-center text-[#5A524B] text-[14px] font-sans">
-        Already have an account? <Link href="/account/login" className="text-[#B08A3E] hover:underline">Sign in</Link>
+        Already have an account? <Link href={`/account/login?next=${encodeURIComponent(next)}`} className="text-[#B08A3E] hover:underline">Sign in</Link>
       </p>
     </form>
   );

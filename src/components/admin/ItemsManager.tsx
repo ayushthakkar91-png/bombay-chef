@@ -251,7 +251,7 @@ function ItemForm({
         <Textarea id="description" name="description" defaultValue={v?.description ?? item?.description ?? ""} placeholder="A short, evocative line for the menu." />
       </Field>
 
-      <ImageUrlField defaultValue={item?.imageUrl ?? v?.imageUrl ?? ""} error={state.errors?.imageUrl} />
+      <ImageUrlField folder="menu" defaultValue={item?.imageUrl ?? v?.imageUrl ?? ""} error={state.errors?.imageUrl} />
 
       <fieldset className="flex flex-col gap-2">
         <legend className="text-sm font-medium text-text">Dietary</legend>

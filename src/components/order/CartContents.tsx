@@ -15,10 +15,22 @@ export function CartContents({
   menu,
   locationSlug,
   onCheckout,
+  showDelivery = false,
+  pendingDeliveryLabel = "Enter postcode",
+  onTotalChange,
 }: {
   menu: OrderingMenu;
   locationSlug: string;
   onCheckout?: () => void;
+  /**
+   * Show the delivery fee row. OFF in the menu basket — delivery is only priced
+   * at the final checkout step — and ON in the checkout summary.
+   */
+  showDelivery?: boolean;
+  /** Delivery row text at checkout while no postcode is known (no fee is guessed). */
+  pendingDeliveryLabel?: string;
+  /** Receives the payable total once it's fully known (null while delivery is pending). */
+  onTotalChange?: (totalPence: number | null) => void;
 }) {
   const { lines, fulfilment, promoCode, postcode, setQty, removeLine, setPromoCode } = useOrder();
   const [promoInput, setPromoInput] = useState(promoCode ?? "");
@@ -49,6 +61,18 @@ export function CartContents({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sig]);
 
+  const isDelivery = fulfilment === "delivery";
+  // No postcode yet → the distance (and so the tiered fee) is unknown.
+  const deliveryPending = isDelivery && !postcode?.trim();
+  // Leave delivery out of the total in the menu basket, and at checkout until
+  // the postcode is known — never show a guessed fee.
+  const excludeDelivery = isDelivery && (!showDelivery || deliveryPending);
+
+  const payablePence = result?.ok && !deliveryPending ? result.totalPence : null;
+  useEffect(() => {
+    onTotalChange?.(payablePence);
+  }, [payablePence, onTotalChange]);
+
   // Instant client estimate while the server total loads.
   const clientSubtotal = lines.reduce((s, l) => s + (l.basePence + l.modifiers.reduce((a, m) => a + m.pricePence, 0)) * l.qty, 0);
 
@@ -58,6 +82,7 @@ export function CartContents({
 
   const ok = result?.ok ? result : null;
   const error = result && !result.ok ? result.error : null;
+  const shownTotal = ok ? (excludeDelivery ? ok.totalPence - ok.deliveryFeePence : ok.totalPence) : clientSubtotal;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -105,10 +130,19 @@ export function CartContents({
       {/* Totals */}
       <dl className="mt-4 border-t border-[#2A211C]/10 pt-4 flex flex-col gap-1.5 font-sans text-[14px]">
         <Row label="Subtotal" value={money(ok?.subtotalPence ?? clientSubtotal)} muted={loading} />
-        {fulfilment === "delivery" && <Row label="Delivery" value={ok ? money(ok.deliveryFeePence) : "…"} muted={loading} />}
+        {showDelivery && isDelivery && (
+          <Row
+            label="Delivery"
+            value={deliveryPending ? pendingDeliveryLabel : ok ? money(ok.deliveryFeePence) : "…"}
+            muted={loading && !deliveryPending}
+          />
+        )}
         {ok && ok.discountPence > 0 && <Row label="Discount" value={`−${money(ok.discountPence)}`} accent />}
-        <Row label="Total" value={ok ? money(ok.totalPence) : money(clientSubtotal)} bold muted={loading} />
+        <Row label="Total" value={money(shownTotal)} bold muted={loading} />
       </dl>
+      {isDelivery && !showDelivery && (
+        <p className="mt-2 text-[12px] text-[#5A524B] font-sans">Delivery fee added at checkout.</p>
+      )}
 
       {error && <p className="mt-3 text-[13px] text-[#5D0925] font-sans">{error}</p>}
 

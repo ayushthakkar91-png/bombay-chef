@@ -1,8 +1,10 @@
 import { requireCustomer } from "@/lib/auth/customer";
 import { flags } from "@/lib/flags";
 import { getMyLoyalty, listMyVouchers, listMyLedger, listCatalogue } from "@/lib/repositories/loyalty";
+import { ensureMemberCard } from "@/lib/loyalty/service";
 import { TIER_LABEL, nextTier } from "@/lib/loyalty/constants";
 import { RewardsCatalogue } from "@/components/account/RewardsCatalogue";
+import { MembershipCard } from "@/components/account/MembershipCard";
 
 const dt = (iso: string) => new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", day: "numeric", month: "short" }).format(new Date(iso));
 
@@ -25,8 +27,9 @@ export default async function RewardsPage() {
     return <div className="bg-white border border-[#2A211C]/10 p-10 text-center font-sans text-[#5A524B]">Rewards are coming soon.</div>;
   }
 
-  const [loyalty, vouchers, ledger, catalogue] = await Promise.all([
+  const [loyalty, card, vouchers, ledger, catalogue] = await Promise.all([
     getMyLoyalty(ctx.userId),
+    ensureMemberCard(ctx.userId),
     listMyVouchers(ctx.userId),
     listMyLedger(ctx.userId),
     listCatalogue(),
@@ -36,14 +39,24 @@ export default async function RewardsPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Points hero */}
-      <div className="bg-[#2A211C] text-[#F6F2EA] p-8 text-center">
-        <p className="text-[#B08A3E] text-[12px] tracking-[0.25em] uppercase font-sans font-semibold mb-2">{TIER_LABEL[loyalty.tier]} member</p>
-        <p className="font-serif text-[56px] leading-none">{loyalty.pointsBalance}</p>
-        <p className="text-[#F6F2EA]/70 font-sans text-[14px] mt-2">points · worth £{(loyalty.pointsBalance / 100).toFixed(2)}</p>
-        {next && <p className="text-[#F6F2EA]/60 font-sans text-[13px] mt-4">{next.needed} more points to {TIER_LABEL[next.tier]}</p>}
-        <p className="text-[#F6F2EA]/50 font-sans text-[12px] mt-4">Earn 1 point for every £1 spent on food.</p>
-      </div>
+      {/* Membership card — with QR + Apple Wallet (Phase 2). Falls back to a
+          simple points hero if the card row couldn't be provisioned. */}
+      {card ? (
+        <div>
+          <MembershipCard name={ctx.fullName} memberNo={card.memberNo} memberToken={card.memberToken} tier={loyalty.tier} pointsBalance={loyalty.pointsBalance} />
+          <p className="mt-3 text-center font-sans text-[13px] text-[#5A524B]">
+            {next ? `${next.needed} more points to ${TIER_LABEL[next.tier]} · ` : ""}Earn 1 point for every £1 spent on food.
+          </p>
+        </div>
+      ) : (
+        <div className="bg-[#2A211C] text-[#F6F2EA] p-8 text-center">
+          <p className="text-[#B08A3E] text-[12px] tracking-[0.25em] uppercase font-sans font-semibold mb-2">{TIER_LABEL[loyalty.tier]} member</p>
+          <p className="font-serif text-[56px] leading-none">{loyalty.pointsBalance}</p>
+          <p className="text-[#F6F2EA]/70 font-sans text-[14px] mt-2">points · worth £{(loyalty.pointsBalance / 100).toFixed(2)}</p>
+          {next && <p className="text-[#F6F2EA]/60 font-sans text-[13px] mt-4">{next.needed} more points to {TIER_LABEL[next.tier]}</p>}
+          <p className="text-[#F6F2EA]/50 font-sans text-[12px] mt-4">Earn 1 point for every £1 spent on food.</p>
+        </div>
+      )}
 
       {/* Catalogue */}
       <section>

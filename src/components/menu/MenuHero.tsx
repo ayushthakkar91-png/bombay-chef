@@ -19,17 +19,9 @@ export function MenuHero() {
           The Menu.
         </h1>
         
-        <p className="text-[#F3EEE8]/80 text-[16px] sm:text-[18px] italic tracking-[0.05em] font-light mb-[6vh] sm:mb-[10vh] block max-w-md mx-auto">
+        <p className="text-[#F3EEE8]/80 text-[16px] sm:text-[18px] italic tracking-[0.05em] font-light block max-w-md mx-auto">
           A collection of dishes inspired by Bombay, crafted daily in London.
         </p>
-
-        <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-10 text-[#C8A96B] text-[10px] sm:text-[11px] font-sans tracking-[0.3em] uppercase">
-          <span className="hover:text-[#F3EEE8] transition-colors duration-300 cursor-pointer">Dine In</span>
-          <span className="hidden sm:block opacity-30 text-[#F3EEE8]">&bull;</span>
-          <span className="hover:text-[#F3EEE8] transition-colors duration-300 cursor-pointer">Takeaway</span>
-          <span className="hidden sm:block opacity-30 text-[#F3EEE8]">&bull;</span>
-          <span className="hover:text-[#F3EEE8] transition-colors duration-300 cursor-pointer">Private Dining</span>
-        </div>
       </div>
     </section>
   );

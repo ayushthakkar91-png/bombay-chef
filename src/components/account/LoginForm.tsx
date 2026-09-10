@@ -17,12 +17,15 @@ export function LoginForm({ next }: { next: string }) {
         <input id="email" name="email" type="email" autoComplete="email" autoFocus defaultValue={state.values?.email} placeholder="Enter your email" className={accountField} />
       </div>
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="password" className="text-[#5A524B] text-[12px] tracking-[0.15em] uppercase font-sans font-semibold">Password</label>
+        <div className="flex items-center justify-between">
+          <label htmlFor="password" className="text-[#5A524B] text-[12px] tracking-[0.15em] uppercase font-sans font-semibold">Password</label>
+          <Link href="/account/forgot" className="text-[#B08A3E] text-[12px] font-sans hover:underline">Forgot?</Link>
+        </div>
         <input id="password" name="password" type="password" autoComplete="current-password" placeholder="Enter your password" className={accountField} />
       </div>
       <AccountSubmit className="w-full mt-1">Sign in</AccountSubmit>
       <p className="text-center text-[#5A524B] text-[14px] font-sans">
-        New here? <Link href="/account/register" className="text-[#B08A3E] hover:underline">Create an account</Link>
+        New here? <Link href={`/account/register?next=${encodeURIComponent(next)}`} className="text-[#B08A3E] hover:underline">Create an account</Link>
       </p>
     </form>
   );

@@ -58,7 +58,7 @@ function Row({ r, manageable }: { r: AccountReservation; manageable?: boolean })
       <div className="text-right">
         <p className="text-[#B08A3E] text-[12px] font-sans uppercase tracking-[0.1em]">{STATUS_LABEL[r.status]}</p>
         {manageable && r.manageToken && (
-          <Link href={`/reservations/manage/${r.manageToken}`} className="text-[#2B221D] text-[12px] font-sans underline hover:text-[#B08A3E]">Manage</Link>
+          <Link href={`/reservations/manage/${r.manageToken}`} className="inline-flex min-h-[44px] items-center justify-end py-1 text-[#2B221D] text-[12px] font-sans underline hover:text-[#B08A3E]">Manage</Link>
         )}
       </div>
     </div>

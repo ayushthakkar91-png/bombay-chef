@@ -121,7 +121,7 @@ export function OrderBar({ menu, branches, locationSlug }: { menu: OrderingMenu;
           <div className="mt-2.5">
             {check?.served ? (
               <div className="flex flex-wrap items-center gap-2 font-sans text-[12.5px] text-[#3a6b2e]">
-                <Check className="h-4 w-4 shrink-0" /> Delivering to {check.postcode} · {money(check.feePence ?? menu.deliveryFeePence)} fee · min {money(menu.minOrderPence)} · ~{check.etaMin} mins.
+                <Check className="h-4 w-4 shrink-0" /> We deliver to {check.postcode} · min {money(menu.minOrderPence)} · ~{check.etaMin} mins.
                 <button onClick={() => { setCheck(null); setSuggestion(null); }} className="text-[#5A524B] underline underline-offset-2 hover:text-[#2B221D]">change</button>
               </div>
             ) : (

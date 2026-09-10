@@ -16,7 +16,9 @@ export default async function AccountLoginPage({
 }) {
   const ctx = await getCustomer();
   const { next } = await searchParams;
-  const dest = next?.startsWith("/account") ? next : "/account";
+  // Allow returning to the account area OR the checkout (quick-checkout sign-in).
+  // Prefix must follow the single leading slash so "//evil.com" can't match.
+  const dest = next && /^\/(account|order)(\/|$|\?)/.test(next) ? next : "/account";
   if (ctx) redirect(dest);
 
   return (

@@ -68,8 +68,17 @@ export function PopupManager({
         <Textarea id="message" name="message" defaultValue={v("message", config.message)} placeholder="Watch the match with us over food, drinks and Bombay atmosphere." />
       </Field>
 
+      <Field label="Bullet points" htmlFor="details" hint="One per line, up to 6. Leave empty for no bullets.">
+        <Textarea
+          id="details"
+          name="details"
+          defaultValue={v("details", config.details.join("\n"))}
+          placeholder={"30% off everything\nDine in or order online\nLimited-time autumn offer"}
+        />
+      </Field>
+
       {/* Optional image */}
-      <ImageUrlField defaultValue={state.values?.imageUrl ?? config.image ?? ""} error={state.errors?.imageUrl} />
+      <ImageUrlField folder="popup" defaultValue={state.values?.imageUrl ?? config.image ?? ""} error={state.errors?.imageUrl} />
 
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Primary button text" htmlFor="ctaText" required error={state.errors?.ctaText}>

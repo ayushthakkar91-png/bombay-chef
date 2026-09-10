@@ -4,6 +4,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 
 import { getUserClient } from "@/lib/supabase/clients";
+import { getStaffContext } from "./dal";
 
 /**
  * Customer-account DAL — the counterpart to the staff DAL. Any authenticated
@@ -58,8 +59,17 @@ export const getCustomer = cache(async (): Promise<CustomerContext | null> => {
   };
 });
 
+/**
+ * Gate for the customer account area. Staff and customers are mutually exclusive
+ * identities: a signed-in staff member is bounced to the admin panel rather than
+ * being treated as a customer, so one login can never operate across both areas.
+ * (The reverse — a customer reaching /admin — is already blocked: the staff DAL
+ * returns null without a staff_roles row.)
+ */
 export async function requireCustomer(): Promise<CustomerContext> {
   const ctx = await getCustomer();
   if (!ctx) redirect("/account/login");
+  const staff = await getStaffContext();
+  if (staff) redirect("/admin");
   return ctx;
 }
