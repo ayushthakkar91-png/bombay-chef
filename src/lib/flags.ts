@@ -26,10 +26,10 @@ export const flags = {
 
   /**
    * Customer loyalty: points, tiers, rewards catalogue, membership card + QR (P5).
-   * HARDCODED ON (like `ordering`) — the Vercel NEXT_PUBLIC toggle proved
-   * unreliable, so this sidesteps it. To turn OFF, set this back to `false`.
+   * ON only when NEXT_PUBLIC_FEATURE_LOYALTY is exactly "true" — OFF by default.
+   * Set it in .env.local (local) or Vercel (production), then redeploy.
    */
-  loyalty: true,
+  loyalty: process.env.NEXT_PUBLIC_FEATURE_LOYALTY === "true",
 
   /** CRM + email marketing: ESP sync, segments, lifecycle automations (P6). */
   marketing: process.env.NEXT_PUBLIC_FEATURE_MARKETING === "true",
