@@ -169,6 +169,41 @@ export async function getDayAvailability(
   return { times, reason };
 }
 
+/** YYYY-MM-DD + n days, done in UTC so it never drifts across DST changes. */
+function addDaysISO(dateISO: string, days: number): string {
+  const [y, m, d] = dateISO.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
+}
+
+export type NextAvailability = {
+  /** First date on/after the requested one with bookable times (null if none in the window). */
+  date: string | null;
+  times: string[];
+  /** Why the REQUESTED day itself had no times ("ok" when it had some). */
+  requestedReason: DayAvailability["reason"];
+};
+
+/**
+ * Find the first date (starting at `fromDateISO`) that has bookable times, so the
+ * booking flow can jump straight to it instead of showing a dead end. Scans up to
+ * `maxDays` days; most requests stop on the first or second day.
+ */
+export async function getNextAvailableDay(
+  locationId: string,
+  fromDateISO: string,
+  experienceId: string | null,
+  maxDays = 21,
+): Promise<NextAvailability> {
+  let requestedReason: DayAvailability["reason"] = "closed";
+  for (let i = 0; i < maxDays; i++) {
+    const dateISO = addDaysISO(fromDateISO, i);
+    const day = await getDayAvailability(locationId, dateISO, experienceId);
+    if (i === 0) requestedReason = day.reason;
+    if (day.times.length > 0) return { date: dateISO, times: day.times, requestedReason };
+  }
+  return { date: null, times: [], requestedReason };
+}
+
 /** Available times only, as display strings like "7:30 PM". */
 export async function getAvailableTimes(
   locationId: string,

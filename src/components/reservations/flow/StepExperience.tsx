@@ -10,11 +10,12 @@ interface Props {
   prevStep: () => void;
 }
 
-// Slot-based experiences (live availability). Private dining & celebrations are
-// arranged personally — they route to a direct enquiry instead of a time slot.
+// Slot-based experiences (live availability). Only Dinner is offered: Balham's
+// booking hours are evening-only, so a lunch "Weekend Gathering" could never be
+// booked. Private dining & celebrations are arranged personally — they route to
+// a direct enquiry instead of a time slot.
 const EXPERIENCES = [
   { id: "dinner", title: "Dinner", desc: "The main event. Dim lights, deep spices, and shared stories." },
-  { id: "brunch", title: "Weekend Gathering", desc: "Leisurely mornings melting into afternoons." },
 ];
 
 export function StepExperience({ state, updateState, nextStep, prevStep }: Props) {

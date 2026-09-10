@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { BookingState, toDateISO } from "./types";
 import { motion, AnimatePresence } from "framer-motion";
 import { BOOKING_HORIZON_DAYS } from "@/lib/reservations/constants";
-import { useOrderHref } from "@/components/order/OrderEntry";
 
 interface Props {
   state: BookingState;
@@ -13,25 +12,37 @@ interface Props {
   prevStep: () => void;
 }
 
+type DayReason = "ok" | "closed" | "past" | "full";
+type Avail = { sig: string; found: boolean; times: string[] };
+
+function isoToLocalDate(iso: string): Date {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+const longDate = (d: Date) => d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+
 export function StepDateTime({ state, updateState, nextStep, prevStep }: Props) {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const orderHref = useOrderHref();
+  const [currentMonth, setCurrentMonth] = useState(() => state.date ?? new Date());
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Default to TODAY so available times appear immediately — no "select a date" gate.
+  // Start on today; if today has no tables left we jump to the next date that does.
   const effectiveDate = state.date ?? today;
   const isTodaySelected = effectiveDate.toDateString() === today.toDateString();
 
+  // When the requested day has no tables, remember it (and why) so we can show a
+  // short note — and offer the waitlist only if that day was fully booked.
+  const [jumpedFrom, setJumpedFrom] = useState<{ date: Date; reason: DayReason } | null>(null);
+
   // Availability is DERIVED from a (location|date|experience) signature; the effect
   // only setState()s inside its async callback.
-  type NoTimesReason = "closed" | "past" | "full";
   const sig = state.location ? `${state.location}|${toDateISO(effectiveDate)}|${state.experience ?? ""}` : "";
-  const [avail, setAvail] = useState<{ sig: string; times: string[]; reason: NoTimesReason | "ok" }>({ sig: "", times: [], reason: "ok" });
+  const [avail, setAvail] = useState<Avail>({ sig: "", found: true, times: [] });
   const loadingTimes = sig !== "" && avail.sig !== sig;
   const times = avail.sig === sig ? avail.times : [];
-  const reason: NoTimesReason = avail.sig === sig && avail.reason !== "ok" ? avail.reason : "full";
+  const nothingSoon = !loadingTimes && avail.sig === sig && !avail.found;
 
   // Calendar Logic
   const year = currentMonth.getFullYear();
@@ -52,6 +63,7 @@ export function StepDateTime({ state, updateState, nextStep, prevStep }: Props) 
 
   const handleDateSelect = (day: number) => {
     if (dayIsDisabled(day)) return;
+    setJumpedFrom(null);
     updateState({ date: new Date(year, month, day), time: null, mode: "reservation" });
   };
 
@@ -62,28 +74,39 @@ export function StepDateTime({ state, updateState, nextStep, prevStep }: Props) 
     }, 400);
   };
 
-  const handleJoinWaitlist = () => {
-    updateState({ mode: "waitlist", time: null });
+  const handleJoinWaitlist = (date: Date) => {
+    updateState({ date, mode: "waitlist", time: null });
     nextStep();
   };
 
-  // Fetch real availability whenever the signature changes (location|date|experience
-  // is all encoded in `sig`, so this is the single, stable dependency).
+  // Ask for the first day ON/AFTER the selected date that has tables. If that's a
+  // later day, move the selection there (the new date's signature re-runs this and
+  // lands on the same day, so there's no loop).
   useEffect(() => {
     if (!sig) return;
     const [location, dateISO, experience] = sig.split("|");
     const controller = new AbortController();
-    const params = new URLSearchParams({ location, date: dateISO });
+    const params = new URLSearchParams({ location, date: dateISO, next: "1" });
     if (experience) params.set("experience", experience);
     fetch(`/api/reservations/availability?${params.toString()}`, { signal: controller.signal })
       .then((r) => r.json())
-      .then((d: { times?: string[]; reason?: "ok" | "closed" | "past" | "full" }) =>
-        setAvail({ sig, times: d.times ?? [], reason: d.reason ?? "full" }),
-      )
+      .then((d: { date?: string | null; times?: string[]; requestedReason?: DayReason }) => {
+        const foundISO = d.date ?? null;
+        if (foundISO && foundISO !== dateISO) {
+          const target = isoToLocalDate(foundISO);
+          setJumpedFrom({ date: isoToLocalDate(dateISO), reason: d.requestedReason ?? "closed" });
+          setCurrentMonth(new Date(target.getFullYear(), target.getMonth(), 1));
+          updateState({ date: target, time: null, mode: "reservation" });
+          return;
+        }
+        setAvail({ sig, found: Boolean(foundISO), times: d.times ?? [] });
+      })
       .catch((e: Error) => {
-        if (e.name !== "AbortError") setAvail({ sig, times: [], reason: "full" });
+        if (e.name !== "AbortError") setAvail({ sig, found: false, times: [] });
       });
     return () => controller.abort();
+    // updateState's identity isn't stable across renders; `sig` encodes every real input.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sig]);
 
   const isSelectedDate = (day: number) =>
@@ -97,6 +120,12 @@ export function StepDateTime({ state, updateState, nextStep, prevStep }: Props) 
       t.getFullYear() === year
     );
   };
+
+  const jumpedLabel = jumpedFrom
+    ? jumpedFrom.date.toDateString() === today.toDateString()
+      ? "No tables left today"
+      : `No tables on ${longDate(jumpedFrom.date)}`
+    : null;
 
   return (
     <div className="w-full flex flex-col pt-8 max-w-[800px] mx-auto">
@@ -114,13 +143,13 @@ export function StepDateTime({ state, updateState, nextStep, prevStep }: Props) 
 
         {/* Calendar Header */}
         <div className="flex items-center justify-between mb-8">
-          <button onClick={handlePrevMonth} className="text-[#2A211C] hover:text-[#B08A3E] transition-colors p-2">
+          <button onClick={handlePrevMonth} className="text-[#2A211C] hover:text-[#B08A3E] transition-colors p-2" aria-label="Previous month">
             &larr;
           </button>
           <h3 className="text-[24px] font-serif text-[#2B221D] tracking-wide">
             {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
           </h3>
-          <button onClick={handleNextMonth} className="text-[#2A211C] hover:text-[#B08A3E] transition-colors p-2">
+          <button onClick={handleNextMonth} className="text-[#2A211C] hover:text-[#B08A3E] transition-colors p-2" aria-label="Next month">
             &rarr;
           </button>
         </div>
@@ -175,8 +204,23 @@ export function StepDateTime({ state, updateState, nextStep, prevStep }: Props) 
               transition={{ duration: 0.25 }}
               className="border-t border-[#2A211C]/10 pt-8"
             >
+              {/* Soft note when we moved the customer to the next available date. */}
+              {jumpedFrom && !loadingTimes && times.length > 0 && (
+                <div className="mb-5 text-center font-sans text-[14px] text-[#5A524B]">
+                  <p>{jumpedLabel} — here&apos;s the next available date.</p>
+                  {jumpedFrom.reason === "full" && (
+                    <button
+                      onClick={() => handleJoinWaitlist(jumpedFrom.date)}
+                      className="mt-1.5 font-medium text-[#5D0925] underline underline-offset-2 hover:text-[#420616]"
+                    >
+                      Join the waitlist for {jumpedFrom.date.toDateString() === today.toDateString() ? "today" : longDate(jumpedFrom.date)}
+                    </button>
+                  )}
+                </div>
+              )}
+
               <h4 className="text-center text-[#2B221D] text-[20px] font-serif mb-1.5">
-                {isTodaySelected ? "Today" : effectiveDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+                {isTodaySelected ? "Today" : longDate(effectiveDate)}
               </h4>
               {!loadingTimes && times.length > 0 && (
                 <p className="text-center text-[#B08A3E] text-[11px] tracking-[0.15em] uppercase font-sans font-semibold mb-6">{times.length} slots available · tap to continue</p>
@@ -201,40 +245,11 @@ export function StepDateTime({ state, updateState, nextStep, prevStep }: Props) 
                     </button>
                   ))}
                 </div>
-              ) : (
-                <div className="text-center py-4">
-                  <p className="text-[#2B221D] text-[18px] font-serif mb-1.5">
-                    {reason === "past"
-                      ? "Today's bookings have closed"
-                      : reason === "closed"
-                        ? "No online bookings on this day"
-                        : "Fully booked for this date"}
-                  </p>
-                  <p className="text-[#5A524B] text-[15px] font-sans mb-7">
-                    {reason === "past"
-                      ? "Pick another day, or enjoy us at home tonight."
-                      : reason === "closed"
-                        ? "Please choose another date — or call us and we'll do our best."
-                        : "We'd still love to welcome you — join the waitlist, or enjoy us at home tonight."}
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    {reason === "full" && (
-                      <button
-                        onClick={handleJoinWaitlist}
-                        className="inline-flex items-center justify-center h-[52px] px-8 bg-[#B08A3E] text-[#2A211C] text-[12px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-[#2A211C] hover:text-[#F6F2EA] transition-colors duration-500"
-                      >
-                        Join the Waitlist
-                      </button>
-                    )}
-                    <a
-                      href={orderHref}
-                      className="inline-flex items-center justify-center h-[52px] px-8 border border-[#5D0925] text-[#5D0925] text-[12px] tracking-[0.15em] font-medium uppercase font-sans hover:bg-[#5D0925] hover:text-[#F6F2EA] transition-colors duration-500"
-                    >
-                      Order Online
-                    </a>
-                  </div>
-                </div>
-              )}
+              ) : nothingSoon ? (
+                <p className="py-4 text-center font-sans text-[15px] text-[#5A524B]">
+                  No tables are available online over the next few weeks. Please check back soon.
+                </p>
+              ) : null}
             </motion.div>
           )}
         </AnimatePresence>
