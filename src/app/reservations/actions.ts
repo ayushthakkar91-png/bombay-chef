@@ -139,7 +139,11 @@ export async function submitReservation(input: BookingInput): Promise<SubmitResu
   await enqueueEmail({
     template: "admin_new_reservation",
     to: ADMIN_NOTIFY_EMAIL,
-    payload: { ...payload, adminSummary: `${input.guests} guests · ${payload.dateLabel} ${payload.timeLabel}` },
+    payload: {
+      ...payload,
+      guestPhone: input.phone?.trim() || undefined,
+      adminSummary: `${input.guests} guests · ${payload.dateLabel} ${payload.timeLabel}`,
+    },
     reservationId: id,
   });
 
