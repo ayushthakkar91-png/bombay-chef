@@ -83,7 +83,15 @@ export function ItemModal({ item, onClose, isFavourite }: { item: OrderMenuItem;
       <div className="relative shrink-0">
         {item.imageUrl && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.imageUrl} alt={item.name} className="h-52 w-full object-cover sm:h-44" />
+          <img
+            src={item.imageUrl}
+            alt={item.name}
+            width={800}
+            height={416}
+            loading="lazy"
+            decoding="async"
+            className="h-52 w-full object-cover sm:h-44"
+          />
         )}
         <button onClick={onHeart} aria-label={fav ? "Remove favourite" : "Save favourite"} aria-pressed={fav} className="absolute top-3 left-3 bg-[#F6F2EA] rounded-full p-1.5 text-[#5D0925] hover:bg-white">
           <Heart className={`h-5 w-5 ${fav ? "fill-[#5D0925]" : ""}`} />

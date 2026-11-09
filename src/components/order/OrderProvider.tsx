@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { CartLine, CartModifier } from "@/lib/ordering/types";
 import type { Fulfilment } from "@/lib/ordering/constants";
 
@@ -25,7 +25,12 @@ type OrderContextValue = OrderState & {
   clear: () => void;
 };
 
-const STORAGE_KEY = "bbc.order.v1";
+// Bumped to v2 on 2026-11-09, when the menu was rebuilt from the Balham Touch
+// site and every menu_items row got a new UUID. Baskets saved under v1 point at
+// item ids that no longer exist, and checkout dead-ends on "An item in your
+// basket is no longer available" with no way for the customer to recover.
+// Changing the key quietly retires those baskets.
+const STORAGE_KEY = "bbc.order.v2";
 const EMPTY: OrderState = { locationSlug: null, fulfilment: "delivery", postcode: null, lines: [], promoCode: null };
 
 const OrderContext = createContext<OrderContextValue | null>(null);
@@ -36,33 +41,55 @@ function lineKey(itemId: string, modifiers: CartModifier[], notes?: string): str
   return `${itemId}|${mods}|${notes ?? ""}`;
 }
 
+function readStored(): OrderState {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? { ...EMPTY, ...(JSON.parse(raw) as Partial<OrderState>) } : EMPTY;
+  } catch {
+    return EMPTY;
+  }
+}
+
+function writeStored(state: OrderState) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    /* storage unavailable — the cart still works for this page view */
+  }
+}
+
 export function OrderProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<OrderState>(EMPTY);
   const [ready, setReady] = useState(false);
+  const hydrated = useRef(false);
 
-  // Hydrate from localStorage once on mount. This is a one-time client-only
-  // hydration (localStorage is unavailable during SSR, so a lazy useState
-  // initializer can't be used) — not a cascading-render risk.
+  // Hydrate once from localStorage (unavailable during SSR, so a lazy useState
+  // initializer can't be used), and follow changes made in other tabs so two open
+  // tabs never show different baskets.
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (raw) setState({ ...EMPTY, ...JSON.parse(raw) });
-    } catch {
-      /* ignore */
-    }
+    hydrated.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setState(readStored());
     setReady(true);
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY) setState(e.newValue ? readStored() : EMPTY);
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  // Persist on change (after hydration).
-  useEffect(() => {
-    if (!ready) return;
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      /* ignore */
-    }
-  }, [state, ready]);
+  // Every change is saved in the same step it's made (not in a later effect), so
+  // it can't be lost to an immediate navigation or reload — e.g. Reorder → menu,
+  // or the full-page load into checkout. The write is idempotent, so it's safe if
+  // React re-runs the updater. Changes before hydration aren't saved, so they can
+  // never overwrite the stored basket before it has been read.
+  const commit = useCallback((update: (s: OrderState) => OrderState) => {
+    setState((prev) => {
+      const next = update(prev);
+      if (hydrated.current) writeStored(next);
+      return next;
+    });
+  }, []);
 
   const value = useMemo<OrderContextValue>(() => {
     const itemCount = state.lines.reduce((n, l) => n + l.qty, 0);
@@ -71,12 +98,12 @@ export function OrderProvider({ children }: { children: ReactNode }) {
       ready,
       itemCount,
       setLocation: (slug) =>
-        setState((s) => (s.locationSlug === slug ? s : { ...s, locationSlug: slug, lines: [] })),
-      setFulfilment: (fulfilment) => setState((s) => ({ ...s, fulfilment })),
-      setPostcode: (postcode) => setState((s) => ({ ...s, postcode })),
-      setPromoCode: (promoCode) => setState((s) => ({ ...s, promoCode })),
+        commit((s) => (s.locationSlug === slug ? s : { ...s, locationSlug: slug, lines: [] })),
+      setFulfilment: (fulfilment) => commit((s) => ({ ...s, fulfilment })),
+      setPostcode: (postcode) => commit((s) => ({ ...s, postcode })),
+      setPromoCode: (promoCode) => commit((s) => ({ ...s, promoCode })),
       addLine: (line) =>
-        setState((s) => {
+        commit((s) => {
           const key = lineKey(line.itemId, line.modifiers, line.notes);
           const qty = line.qty ?? 1;
           const existing = s.lines.find((l) => l.key === key);
@@ -86,19 +113,19 @@ export function OrderProvider({ children }: { children: ReactNode }) {
           return { ...s, lines };
         }),
       setQty: (key, qty) =>
-        setState((s) => ({
+        commit((s) => ({
           ...s,
           lines: qty <= 0 ? s.lines.filter((l) => l.key !== key) : s.lines.map((l) => (l.key === key ? { ...l, qty } : l)),
         })),
-      removeLine: (key) => setState((s) => ({ ...s, lines: s.lines.filter((l) => l.key !== key) })),
+      removeLine: (key) => commit((s) => ({ ...s, lines: s.lines.filter((l) => l.key !== key) })),
       clear: () => {
         // Drop the checkout idempotency key too, so the next order gets a fresh
         // one (a re-order of identical items must not resume the completed order).
         try { localStorage.removeItem("bbc.order.idem"); } catch { /* ignore */ }
-        setState((s) => ({ ...s, lines: [], promoCode: null }));
+        commit((s) => ({ ...s, lines: [], promoCode: null }));
       },
     };
-  }, [state, ready]);
+  }, [state, ready, commit]);
 
   return <OrderContext.Provider value={value}>{children}</OrderContext.Provider>;
 }
