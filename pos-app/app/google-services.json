@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "949693935446",
+    "project_id": "american-pizza-a5595",
+    "storage_bucket": "american-pizza-a5595.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:949693935446:android:0afd5e6ef813dcaec130f7",
+        "android_client_info": {
+          "package_name": "com.americanpizza.pos"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCg2ZKTteNy0qBUOxVR0l8jQDpJSTDRaHY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
