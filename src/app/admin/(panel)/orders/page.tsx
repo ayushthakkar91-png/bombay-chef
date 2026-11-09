@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { after } from "next/server";
 import { ArrowRight, ChefHat, Clock } from "lucide-react";
 
 import { requireStaff } from "@/lib/auth/dal";
@@ -6,6 +7,7 @@ import { scopedLocationIds, filterScoped } from "@/lib/auth/scope";
 import { listLocations } from "@/lib/repositories/admin-locations";
 import { listLiveOrders } from "@/lib/repositories/orders";
 import { getOrderingStatusById } from "@/lib/repositories/ordering-status";
+import { dispatchAllNotifications, reconcileRecentPending } from "@/lib/ordering/reconcile";
 import { PageHeader, Stat } from "@/components/admin/ui";
 import { LocationSwitcher } from "@/components/admin/reservations/LocationSwitcher";
 import { OrderingToggle } from "@/components/admin/orders/OrderingToggle";
@@ -22,6 +24,12 @@ export default async function OrdersOverviewPage({
     return (<><PageHeader title="Orders" /><p className="text-sm text-body">No locations are assigned to your account yet.</p></>);
   }
   const locId = scoped.find((l) => (l.slug === sp.loc || l.id === sp.loc))?.id ?? scoped[0].id;
+
+  // Recovery before listing: confirm any order Stripe says was paid but whose
+  // webhook never landed, so it shows up here; resend queued alerts afterwards.
+  await reconcileRecentPending({ locationId: locId, limit: 10 });
+  after(async () => { await dispatchAllNotifications(); });
+
   const [live, orderingStatus] = await Promise.all([listLiveOrders(locId), getOrderingStatusById(locId)]);
 
   const awaiting = live.filter((o) => o.status === "paid").length;

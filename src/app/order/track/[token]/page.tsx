@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { after } from "next/server";
 import { Check } from "lucide-react";
 
 import { getOrderByToken } from "@/lib/repositories/orders";
 import { getCustomer } from "@/lib/auth/customer";
+import { dispatchAllNotifications, reconcilePendingByTrackToken } from "@/lib/ordering/reconcile";
 import { ORDER_STATUS_LABEL, LIVE_STATUSES, type OrderStatus, type Fulfilment } from "@/lib/ordering/constants";
 import { TrackingControls } from "@/components/order/TrackingControls";
 import { CheckoutSteps } from "@/components/order/CheckoutSteps";
@@ -37,6 +39,13 @@ export default async function OrderTrackPage({
 }) {
   const { token } = await params;
   const { paid } = await searchParams;
+
+  // Recovery: if this order is still awaiting payment, ask Stripe directly — the
+  // customer may have paid while our webhook was delayed or failed. Confirms the
+  // order (and alerts the kitchen) the moment Stripe says it's paid.
+  const recovered = await reconcilePendingByTrackToken(token);
+  if (recovered === "confirmed") after(async () => { await dispatchAllNotifications(); });
+
   const order = await getOrderByToken(token);
 
   if (!order) {
@@ -51,6 +60,7 @@ export default async function OrderTrackPage({
 
   const customer = await getCustomer();
   const isLive = LIVE_STATUSES.includes(order.status);
+  const awaitingPayment = order.status === "pending_payment";
   const stopped = order.status === "cancelled" || order.status === "refunded";
   const flow = steps(order.fulfilment);
   const currentIndex = flow.findIndex((s) => s.status === order.status);
@@ -58,13 +68,13 @@ export default async function OrderTrackPage({
 
   return (
     <main className="min-h-screen bg-[#F6F2EA] pt-[104px] lg:pt-[120px] pb-24 px-6">
-      <TrackingControls isLive={isLive} paid={paid === "1"} />
+      <TrackingControls isLive={isLive} awaitingPayment={awaitingPayment} paid={paid === "1"} />
       <div className="max-w-[720px] mx-auto">
         {/* Purchase progress: payment still settling = step 3, otherwise done. */}
-        {!stopped && <CheckoutSteps current={order.status === "pending_payment" ? 3 : 4} />}
+        {!stopped && <CheckoutSteps current={awaitingPayment ? 3 : 4} />}
 
         <div className="text-center mb-10">
-          <p className="text-[#B08A3E] text-[12px] tracking-[0.25em] uppercase font-sans font-semibold mb-3">{order.status === "pending_payment" ? "Awaiting Payment" : "Order Received"}</p>
+          <p className="text-[#B08A3E] text-[12px] tracking-[0.25em] uppercase font-sans font-semibold mb-3">{awaitingPayment ? "Awaiting Payment" : "Order Received"}</p>
           <h1 className="font-serif text-[40px] lg:text-[52px] text-[#2B221D] font-light leading-[1.1]">
             {stopped ? ORDER_STATUS_LABEL[order.status] : "Thank You"}
           </h1>
@@ -72,6 +82,9 @@ export default async function OrderTrackPage({
             Order <span className="text-[#2B221D] font-semibold tracking-wide">{order.code}</span>
             {order.contactEmail ? <> · a confirmation was sent to {order.contactEmail}</> : null}
           </p>
+          {awaitingPayment && (
+            <p className="text-[#5A524B] font-sans text-[14px] mt-2">Confirming your payment — this page updates automatically.</p>
+          )}
         </div>
 
         {/* Status */}

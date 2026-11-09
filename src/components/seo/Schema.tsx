@@ -3,7 +3,9 @@ import { SITE_URL as SITE, LOGO_URL } from "@/lib/site";
 import { weeklyToSchema } from "@/lib/hours";
 
 function Json({ data }: { data: object }) {
-  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />;
+  // Escape "<" so no value can ever close the <script> tag early (e.g. a
+  // "</script>" in future DB-driven content) — the JSON stays valid.
+  return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\\u003c") }} />;
 }
 
 function address(b: Branch) {

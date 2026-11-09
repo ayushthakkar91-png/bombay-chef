@@ -10,7 +10,8 @@ export type Experience = {
   weekendOnly?: boolean;
 };
 
-/** Mirrors the labels in StepExperience.tsx; `period` drives which slots show. */
+/** Experience ids accepted by the booking API; `period` drives which slots show.
+ *  The public flow currently books "dinner" only (pre-selected, no picker step). */
 export const EXPERIENCES: Experience[] = [
   { id: "dinner", label: "Dinner", period: "dinner" },
   { id: "brunch", label: "Weekend Gathering", period: "lunch", weekendOnly: true },

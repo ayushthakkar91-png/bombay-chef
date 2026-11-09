@@ -10,11 +10,10 @@ interface Props {
 
 const STEPS = [
   { num: 1, label: "Location" },
-  { num: 2, label: "Experience" },
-  { num: 3, label: "Date & Time" },
-  { num: 4, label: "Guests" },
-  { num: 5, label: "Details" },
-  { num: 6, label: "Confirm" }
+  { num: 2, label: "Date & Time" },
+  { num: 3, label: "Guests" },
+  { num: 4, label: "Details" },
+  { num: 5, label: "Confirm" }
 ];
 
 export function BookingProgress({ currentStep, onStepClick }: Props) {

@@ -43,14 +43,24 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen((prev) => !prev);
-    if (!isMobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-  };
+  // Lock page scroll only while the mobile menu is open, and ALWAYS release it when
+  // the menu closes, the route changes or the navbar unmounts — so the page can
+  // never be left unscrollable (e.g. pressing Back with the menu still open).
+  useEffect(() => {
+    document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileMenuOpen]);
+
+  // Close the mobile menu whenever the route changes.
+  const [menuPath, setMenuPath] = useState(pathname);
+  if (menuPath !== pathname) {
+    setMenuPath(pathname);
+    if (isMobileMenuOpen) setIsMobileMenuOpen(false);
+  }
+
+  const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
 
   return (
     <>

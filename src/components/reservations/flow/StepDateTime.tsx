@@ -261,7 +261,7 @@ export function StepDateTime({ state, updateState, nextStep, prevStep }: Props) 
           onClick={prevStep}
           className="text-[#2B221D] text-[12px] uppercase tracking-[0.15em] font-medium hover:text-[#B08A3E] transition-colors"
         >
-          &larr; Back to Experience
+          &larr; Back to Location
         </button>
       </div>
 

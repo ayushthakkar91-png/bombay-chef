@@ -1,7 +1,10 @@
+import { after } from "next/server";
+
 import { requireStaff } from "@/lib/auth/dal";
 import { scopedLocationIds, filterScoped } from "@/lib/auth/scope";
 import { listLocations } from "@/lib/repositories/admin-locations";
 import { listLiveOrders, listNotificationFailures } from "@/lib/repositories/orders";
+import { dispatchAllNotifications, reconcileRecentPending } from "@/lib/ordering/reconcile";
 import { PageHeader } from "@/components/admin/ui";
 import { LocationSwitcher } from "@/components/admin/reservations/LocationSwitcher";
 import { LiveOrders } from "@/components/admin/orders/LiveOrders";
@@ -19,6 +22,12 @@ export default async function LiveOrdersPage({
     return (<><PageHeader title="Live orders" /><p className="text-sm text-body">No locations are assigned to your account yet.</p></>);
   }
   const locId = scoped.find((l) => (l.slug === sp.loc || l.id === sp.loc))?.id ?? scoped[0].id;
+
+  // Recovery before listing: confirm any order Stripe says was paid but whose
+  // webhook never landed, so the kitchen sees it; resend queued alerts afterwards.
+  await reconcileRecentPending({ locationId: locId, limit: 10 });
+  after(async () => { await dispatchAllNotifications(); });
+
   const [orders, failures] = await Promise.all([listLiveOrders(locId), listNotificationFailures(locId)]);
 
   return (

@@ -341,6 +341,9 @@ async function resumeCheckout(
       // Keyed by mode too, so enabling embedded later doesn't replay a hosted session.
       idempotencyKey: `session_${orderId}_${embedded ? "emb" : "hos"}`,
     });
+    // Remember the session so a delayed or failed webhook can be recovered by
+    // asking Stripe directly (see src/lib/ordering/reconcile.ts).
+    await recordOrderEvent(orderId, "CHECKOUT_SESSION_CREATED", { sessionId: session.id, embedded });
     if (embedded) {
       if (!session.clientSecret) return { ok: false, error: "We couldn't start the payment — please try again." };
       return { ok: true, clientSecret: session.clientSecret };

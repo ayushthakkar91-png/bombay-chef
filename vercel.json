@@ -5,6 +5,8 @@
     { "path": "/api/cron/messaging", "schedule": "0 1 * * *" },
     { "path": "/api/cron/giftcards", "schedule": "0 2 * * *" },
     { "path": "/api/cron/marketing", "schedule": "0 3 * * *" },
-    { "path": "/api/cron/loyalty", "schedule": "0 9 * * *" }
+    { "path": "/api/cron/loyalty", "schedule": "0 9 * * *" },
+    { "path": "/api/cron/notifications", "schedule": "30 22 * * *" },
+    { "path": "/api/cron/reconcile", "schedule": "0 23 * * *" }
   ]
 }

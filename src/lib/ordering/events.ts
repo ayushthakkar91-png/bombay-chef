@@ -12,7 +12,9 @@ import { getServiceClient } from "@/lib/supabase/clients";
 
 export type OrderEventType =
   | "ORDER_CREATED"
+  | "CHECKOUT_SESSION_CREATED"
   | "PAYMENT_CONFIRMED"
+  | "PAYMENT_RECONCILED"
   | "PAYMENT_FAILED"
   | "PAYMENT_AMOUNT_MISMATCH"
   | "PAYMENT_REFUNDED"

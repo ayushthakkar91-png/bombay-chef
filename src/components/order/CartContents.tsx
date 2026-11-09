@@ -1,19 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Minus, Plus, Trash2 } from "lucide-react";
 
 import type { OrderingMenu } from "@/lib/repositories/ordering-menu";
-import type { PriceResult } from "@/lib/ordering/pricing";
-import type { CartLineInput } from "@/lib/ordering/types";
-import { priceCartAction } from "@/app/order/actions";
 import { useOrder } from "./OrderProvider";
+import { displayedTotalPence, useCartPricing } from "./CartPricing";
 
 import { money } from "@/lib/format";
 
+/**
+ * Basket lines, promo field and totals. Prices come from the shared
+ * CartPricingProvider (one server price for every basket view), so this component
+ * must be rendered inside it.
+ */
 export function CartContents({
-  menu,
-  locationSlug,
   onCheckout,
   showDelivery = false,
   pendingDeliveryLabel = "Enter postcode",
@@ -33,48 +34,19 @@ export function CartContents({
   onTotalChange?: (totalPence: number | null) => void;
 }) {
   const { lines, fulfilment, promoCode, postcode, setQty, removeLine, setPromoCode } = useOrder();
+  const pricing = useCartPricing();
+  const { result, loading, clientSubtotalPence } = pricing;
   const [promoInput, setPromoInput] = useState(promoCode ?? "");
 
-  const inputLines: CartLineInput[] = useMemo(
-    () => lines.map((l) => ({ itemId: l.itemId, modifierIds: l.modifiers.map((m) => m.id), qty: l.qty, notes: l.notes })),
-    [lines],
-  );
-
-  // Server-authoritative totals, keyed by a cart signature.
-  // Include postcode so the tiered delivery fee re-prices when it changes.
-  const sig = JSON.stringify({ locationSlug, fulfilment, inputLines, promoCode, postcode: fulfilment === "delivery" ? postcode : null });
-  const [priced, setPriced] = useState<{ sig: string; result: PriceResult | null }>({ sig: "", result: null });
-  const loading = lines.length > 0 && priced.sig !== sig;
-  // Keep the LAST server-priced result visible (dimmed) while a new price loads,
-  // rather than dropping to a client guess. The client can't know the delivery
-  // fee (free-over-threshold, distance tiers), so guessing it made the total
-  // flash a phantom +£3 on every add until the server responded.
-  const result = priced.result;
-
-  useEffect(() => {
-    if (lines.length === 0) return; // empty cart renders an early return below
-    let cancelled = false;
-    priceCartAction({ locationSlug, fulfilment, lines: inputLines, promoCode, postcode: fulfilment === "delivery" ? postcode : null })
-      .then((r) => { if (!cancelled) setPriced({ sig, result: r }); })
-      .catch(() => { if (!cancelled) setPriced({ sig, result: null }); });
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sig]);
-
   const isDelivery = fulfilment === "delivery";
+  const hasPostcode = Boolean(postcode?.trim());
   // No postcode yet → the distance (and so the tiered fee) is unknown.
-  const deliveryPending = isDelivery && !postcode?.trim();
-  // Leave delivery out of the total in the menu basket, and at checkout until
-  // the postcode is known — never show a guessed fee.
-  const excludeDelivery = isDelivery && (!showDelivery || deliveryPending);
+  const deliveryPending = isDelivery && !hasPostcode;
 
   const payablePence = result?.ok && !deliveryPending ? result.totalPence : null;
   useEffect(() => {
     onTotalChange?.(payablePence);
   }, [payablePence, onTotalChange]);
-
-  // Instant client estimate while the server total loads.
-  const clientSubtotal = lines.reduce((s, l) => s + (l.basePence + l.modifiers.reduce((a, m) => a + m.pricePence, 0)) * l.qty, 0);
 
   if (lines.length === 0) {
     return <p className="text-[#5A524B] font-sans text-[14px] py-8 text-center">Your basket is empty.</p>;
@@ -82,7 +54,7 @@ export function CartContents({
 
   const ok = result?.ok ? result : null;
   const error = result && !result.ok ? result.error : null;
-  const shownTotal = ok ? (excludeDelivery ? ok.totalPence - ok.deliveryFeePence : ok.totalPence) : clientSubtotal;
+  const shownTotal = displayedTotalPence(pricing, { isDelivery, showDelivery, hasPostcode });
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -129,7 +101,7 @@ export function CartContents({
 
       {/* Totals */}
       <dl className="mt-4 border-t border-[#2A211C]/10 pt-4 flex flex-col gap-1.5 font-sans text-[14px]">
-        <Row label="Subtotal" value={money(ok?.subtotalPence ?? clientSubtotal)} muted={loading} />
+        <Row label="Subtotal" value={money(ok?.subtotalPence ?? clientSubtotalPence)} muted={loading} />
         {showDelivery && isDelivery && (
           <Row
             label="Delivery"

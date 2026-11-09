@@ -9,6 +9,7 @@ import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe
 import type { OrderingMenu } from "@/lib/repositories/ordering-menu";
 import type { DeliveryCheck } from "@/lib/ordering/delivery";
 import { useOrder } from "./OrderProvider";
+import { CartPricingProvider } from "./CartPricing";
 import { CartContents } from "./CartContents";
 import { CheckoutSteps } from "./CheckoutSteps";
 import { createCheckout, checkGiftCard, checkDeliveryAction, type CheckoutInput } from "@/app/order/actions";
@@ -38,6 +39,17 @@ export function CheckoutForm({
   initialAddress?: { line1: string; line2: string; city: string; postcode: string };
 }) {
   const { lines, fulfilment, promoCode, postcode, setPostcode, setFulfilment } = useOrder();
+
+  // PCI safety net: the payment page's strict per-request CSP (src/proxy.ts) only
+  // applies when this page is the document that was actually loaded. If we got
+  // here by client-side navigation (e.g. the redirect after signing in), reload
+  // once so the stricter policy is in force before any payment UI mounts.
+  useEffect(() => {
+    const nav = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+    const loadedPath = nav ? new URL(nav.name).pathname : window.location.pathname;
+    if (loadedPath !== window.location.pathname) window.location.replace(window.location.href);
+  }, []);
+
   const [pending, startTransition] = useTransition();
   const [giftPending, startGift] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -194,145 +206,147 @@ export function CheckoutForm({
   const addLink = "self-start font-sans text-[14px] text-[#5D0925] underline-offset-2 hover:underline";
 
   return (
-    <main className="min-h-screen bg-[#F6F2EA] pt-[92px] lg:pt-[104px] pb-24 px-5 lg:px-8">
-      <div className="max-w-[1100px] mx-auto">
-        <CheckoutSteps current={2} menuHref={menuHref} />
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="font-serif text-[36px] lg:text-[44px] text-[#2B221D] font-light">Checkout</h1>
-          <Link href={menuHref} className="text-[#2B221D] text-[12px] uppercase tracking-[0.15em] font-sans hover:text-[#B08A3E]">Back to menu</Link>
-        </div>
-
-        {signedIn ? (
-          <p className="mb-6 flex items-center gap-2 border border-[#3a6b2e]/25 bg-[#3a6b2e]/5 px-4 py-3 font-sans text-[13.5px] text-[#3a6b2e]">
-            <Check className="h-4 w-4 shrink-0" aria-hidden /> Signed in — your details are filled in.
-          </p>
-        ) : (
-          <p className="mb-6 font-sans text-[13.5px] text-[#5A524B]">
-            Checking out as a guest ·{" "}
-            <Link href={`/account/login?next=${encodeURIComponent(`/order/checkout?loc=${locationSlug}`)}`} className="font-medium text-[#5D0925] underline underline-offset-2 hover:text-[#420616]">Sign in instead</Link>
-          </p>
-        )}
-
-        <div className="lg:grid lg:grid-cols-[1fr_380px] lg:gap-10">
-          {/* Form */}
-          <div className="flex flex-col gap-7">
-            {fulfilment === "delivery" ? (
-              <section>
-                <h2 className="font-serif text-[22px] text-[#2B221D] mb-4">Delivery address</h2>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {/* Postcode first: it decides whether we deliver and what it costs. */}
-                  <div className="sm:col-span-2">
-                    <input
-                      className={`${field} uppercase`}
-                      placeholder="Postcode"
-                      value={addr.postcode}
-                      onChange={(e) => onPostcodeChange(e.target.value)}
-                      autoComplete="postal-code"
-                      aria-label="Postcode"
-                      aria-describedby="postcode-status"
-                    />
-                    <div id="postcode-status" aria-live="polite" className="mt-2 min-h-[20px] font-sans text-[13.5px]">
-                      {pcChecking && <span className="text-[#5A524B]">Checking delivery…</span>}
-                      {!pcChecking && pcCheck?.served && (
-                        <span className="flex items-center gap-1.5 text-[#3a6b2e]">
-                          <Check className="h-4 w-4 shrink-0" aria-hidden />
-                          We deliver here · {money(pcCheck.feePence ?? 0)} delivery{pcCheck.etaMin ? ` · ~${pcCheck.etaMin} mins` : ""}
-                        </span>
-                      )}
-                      {!pcChecking && pcCheck && !pcCheck.served && (
-                        <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[#5D0925]">
-                          {pcCheck.error?.trim() || "Sorry, we don't deliver to that postcode."}
-                          {menu.collectionEnabled && (
-                            <button type="button" onClick={() => setFulfilment("collection")} className="font-medium underline underline-offset-2">
-                              Switch to collection
-                            </button>
-                          )}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <input className={`${field} sm:col-span-2`} placeholder="Address line 1" value={addr.line1} onChange={(e) => setAddr({ ...addr, line1: e.target.value })} autoComplete="address-line1" aria-label="Address line 1" />
-                  <input className={field} placeholder="Address line 2 (optional)" value={addr.line2} onChange={(e) => setAddr({ ...addr, line2: e.target.value })} autoComplete="address-line2" aria-label="Address line 2" />
-                  <input className={field} placeholder="City" value={addr.city} onChange={(e) => setAddr({ ...addr, city: e.target.value })} autoComplete="address-level2" aria-label="City" />
-                </div>
-              </section>
-            ) : (
-              <section>
-                <h2 className="font-serif text-[22px] text-[#2B221D] mb-2">Collection</h2>
-                <p className="text-[#5A524B] font-sans text-[14px]">Collect from {menu.locationName}. We&apos;ll have it ready in about {menu.prepTimeMin} minutes after the kitchen accepts your order.</p>
-              </section>
-            )}
-
-            <section>
-              <h2 className="font-serif text-[22px] text-[#2B221D] mb-4">Your details</h2>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <input className={field} placeholder="Full name" value={contact.name} onChange={(e) => setContact({ ...contact, name: e.target.value })} autoComplete="name" aria-label="Full name" />
-                <input className={field} placeholder="Phone" type="tel" inputMode="tel" value={contact.phone} onChange={(e) => setContact({ ...contact, phone: e.target.value })} autoComplete="tel" aria-label="Phone" />
-                <input className={`${field} sm:col-span-2`} placeholder="Email (for your receipt)" type="email" inputMode="email" value={contact.email} onChange={(e) => setContact({ ...contact, email: e.target.value })} autoComplete="email" aria-label="Email" />
-              </div>
-            </section>
-
-            {/* Optional extras stay folded away so the main path stays short. */}
-            <div className="flex flex-col gap-4">
-              {showNotes || notes ? (
-                <section>
-                  <h2 className="font-serif text-[20px] text-[#2B221D] mb-3">Order notes</h2>
-                  <textarea className={`${field} resize-none`} rows={2} placeholder="Anything we should know?" value={notes} onChange={(e) => setNotes(e.target.value)} autoFocus={showNotes && !notes} />
-                </section>
-              ) : (
-                <button type="button" onClick={() => setShowNotes(true)} className={addLink}>+ Add order notes</button>
-              )}
-
-              {showGift || giftBalance != null ? (
-                <section>
-                  <h2 className="font-serif text-[20px] text-[#2B221D] mb-3">Gift card</h2>
-                  <div className="flex gap-2">
-                    <input
-                      value={giftCode}
-                      onChange={(e) => { setGiftCode(e.target.value.toUpperCase()); setGiftBalance(null); setGiftMsg(null); }}
-                      placeholder="Gift card code"
-                      aria-label="Gift card code"
-                      className={`${field} uppercase`}
-                    />
-                    {giftBalance != null ? (
-                      <button type="button" onClick={() => { setGiftBalance(null); setGiftCode(""); }} className="px-5 text-[12px] tracking-[0.1em] uppercase font-sans text-[#5D0925] border border-[#5D0925]/30 hover:bg-[#5D0925]/5">Remove</button>
-                    ) : (
-                      <button type="button" onClick={applyGift} disabled={giftPending || !giftCode.trim()} className="px-5 text-[12px] tracking-[0.1em] uppercase font-sans bg-[#2B221D] text-[#F6F2EA] hover:bg-[#B08A3E] transition-colors disabled:opacity-50">{giftPending ? "…" : "Apply"}</button>
-                    )}
-                  </div>
-                  {giftBalance != null && <p className="mt-2 text-[14px] text-[#3a6b2e] font-sans">Balance £{(giftBalance / 100).toFixed(2)} — applied to your total at payment.</p>}
-                  {giftMsg && <p className="mt-2 text-[14px] text-[#5D0925] font-sans">{giftMsg}</p>}
-                </section>
-              ) : (
-                <button type="button" onClick={() => setShowGift(true)} className={addLink}>+ Use a gift card</button>
-              )}
-            </div>
-
-            {/* Marketing consent — separate + optional, never bundled with payment. */}
-            <label className="flex items-start gap-3 text-[14px] font-sans text-[#5A524B]">
-              <input type="checkbox" checked={marketingOptIn} onChange={(e) => setMarketingOptIn(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[#B08A3E]" />
-              <span>Email me occasional news and offers from Bombay Bicycle Chef. (Optional — your order goes ahead either way, and you can unsubscribe any time.)</span>
-            </label>
+    <CartPricingProvider locationSlug={locationSlug}>
+      <main className="min-h-screen bg-[#F6F2EA] pt-[92px] lg:pt-[104px] pb-24 px-5 lg:px-8">
+        <div className="max-w-[1100px] mx-auto">
+          <CheckoutSteps current={2} menuHref={menuHref} />
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="font-serif text-[36px] lg:text-[44px] text-[#2B221D] font-light">Checkout</h1>
+            <Link href={menuHref} className="text-[#2B221D] text-[12px] uppercase tracking-[0.15em] font-sans hover:text-[#B08A3E]">Back to menu</Link>
           </div>
 
-          {/* Summary */}
-          <aside className="mt-10 lg:mt-0">
-            <div className="bg-white border border-[#2A211C]/10 p-6 lg:sticky lg:top-[104px]">
-              <h2 className="font-serif text-[22px] text-[#2B221D] mb-3">Order summary</h2>
-              <CartContents menu={menu} locationSlug={locationSlug} showDelivery onTotalChange={setPayTotal} />
-              {error && <p role="alert" className="mt-4 text-[14px] text-[#5D0925] font-sans">{error}</p>}
-              <button
-                onClick={pay}
-                disabled={pending}
-                className="mt-5 w-full inline-flex items-center justify-center h-[56px] bg-[#5D0925] text-[#F6F2EA] text-[14px] tracking-[0.12em] uppercase font-sans hover:bg-[#420616] transition-colors duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {pending ? "Starting payment…" : chargePence != null ? `Pay ${money(chargePence)}` : "Pay securely"}
-              </button>
-              <p className="mt-3 text-[12px] text-[#5A524B] font-sans text-center">Card, Apple Pay &amp; Google Pay · processed securely by Stripe.</p>
+          {signedIn ? (
+            <p className="mb-6 flex items-center gap-2 border border-[#3a6b2e]/25 bg-[#3a6b2e]/5 px-4 py-3 font-sans text-[13.5px] text-[#3a6b2e]">
+              <Check className="h-4 w-4 shrink-0" aria-hidden /> Signed in — your details are filled in.
+            </p>
+          ) : (
+            <p className="mb-6 font-sans text-[13.5px] text-[#5A524B]">
+              Checking out as a guest ·{" "}
+              <Link href={`/account/login?next=${encodeURIComponent(`/order/checkout?loc=${locationSlug}`)}`} className="font-medium text-[#5D0925] underline underline-offset-2 hover:text-[#420616]">Sign in instead</Link>
+            </p>
+          )}
+
+          <div className="lg:grid lg:grid-cols-[1fr_380px] lg:gap-10">
+            {/* Form */}
+            <div className="flex flex-col gap-7">
+              {fulfilment === "delivery" ? (
+                <section>
+                  <h2 className="font-serif text-[22px] text-[#2B221D] mb-4">Delivery address</h2>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {/* Postcode first: it decides whether we deliver and what it costs. */}
+                    <div className="sm:col-span-2">
+                      <input
+                        className={`${field} uppercase`}
+                        placeholder="Postcode"
+                        value={addr.postcode}
+                        onChange={(e) => onPostcodeChange(e.target.value)}
+                        autoComplete="postal-code"
+                        aria-label="Postcode"
+                        aria-describedby="postcode-status"
+                      />
+                      <div id="postcode-status" aria-live="polite" className="mt-2 min-h-[20px] font-sans text-[13.5px]">
+                        {pcChecking && <span className="text-[#5A524B]">Checking delivery…</span>}
+                        {!pcChecking && pcCheck?.served && (
+                          <span className="flex items-center gap-1.5 text-[#3a6b2e]">
+                            <Check className="h-4 w-4 shrink-0" aria-hidden />
+                            We deliver here · {money(pcCheck.feePence ?? 0)} delivery{pcCheck.etaMin ? ` · ~${pcCheck.etaMin} mins` : ""}
+                          </span>
+                        )}
+                        {!pcChecking && pcCheck && !pcCheck.served && (
+                          <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[#5D0925]">
+                            {pcCheck.error?.trim() || "Sorry, we don't deliver to that postcode."}
+                            {menu.collectionEnabled && (
+                              <button type="button" onClick={() => setFulfilment("collection")} className="font-medium underline underline-offset-2">
+                                Switch to collection
+                              </button>
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <input className={`${field} sm:col-span-2`} placeholder="Address line 1" value={addr.line1} onChange={(e) => setAddr({ ...addr, line1: e.target.value })} autoComplete="address-line1" aria-label="Address line 1" />
+                    <input className={field} placeholder="Address line 2 (optional)" value={addr.line2} onChange={(e) => setAddr({ ...addr, line2: e.target.value })} autoComplete="address-line2" aria-label="Address line 2" />
+                    <input className={field} placeholder="City" value={addr.city} onChange={(e) => setAddr({ ...addr, city: e.target.value })} autoComplete="address-level2" aria-label="City" />
+                  </div>
+                </section>
+              ) : (
+                <section>
+                  <h2 className="font-serif text-[22px] text-[#2B221D] mb-2">Collection</h2>
+                  <p className="text-[#5A524B] font-sans text-[14px]">Collect from {menu.locationName}. We&apos;ll have it ready in about {menu.prepTimeMin} minutes after the kitchen accepts your order.</p>
+                </section>
+              )}
+
+              <section>
+                <h2 className="font-serif text-[22px] text-[#2B221D] mb-4">Your details</h2>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <input className={field} placeholder="Full name" value={contact.name} onChange={(e) => setContact({ ...contact, name: e.target.value })} autoComplete="name" aria-label="Full name" />
+                  <input className={field} placeholder="Phone" type="tel" inputMode="tel" value={contact.phone} onChange={(e) => setContact({ ...contact, phone: e.target.value })} autoComplete="tel" aria-label="Phone" />
+                  <input className={`${field} sm:col-span-2`} placeholder="Email (for your receipt)" type="email" inputMode="email" value={contact.email} onChange={(e) => setContact({ ...contact, email: e.target.value })} autoComplete="email" aria-label="Email" />
+                </div>
+              </section>
+
+              {/* Optional extras stay folded away so the main path stays short. */}
+              <div className="flex flex-col gap-4">
+                {showNotes || notes ? (
+                  <section>
+                    <h2 className="font-serif text-[20px] text-[#2B221D] mb-3">Order notes</h2>
+                    <textarea className={`${field} resize-none`} rows={2} placeholder="Anything we should know?" value={notes} onChange={(e) => setNotes(e.target.value)} autoFocus={showNotes && !notes} />
+                  </section>
+                ) : (
+                  <button type="button" onClick={() => setShowNotes(true)} className={addLink}>+ Add order notes</button>
+                )}
+
+                {showGift || giftBalance != null ? (
+                  <section>
+                    <h2 className="font-serif text-[20px] text-[#2B221D] mb-3">Gift card</h2>
+                    <div className="flex gap-2">
+                      <input
+                        value={giftCode}
+                        onChange={(e) => { setGiftCode(e.target.value.toUpperCase()); setGiftBalance(null); setGiftMsg(null); }}
+                        placeholder="Gift card code"
+                        aria-label="Gift card code"
+                        className={`${field} uppercase`}
+                      />
+                      {giftBalance != null ? (
+                        <button type="button" onClick={() => { setGiftBalance(null); setGiftCode(""); }} className="px-5 text-[12px] tracking-[0.1em] uppercase font-sans text-[#5D0925] border border-[#5D0925]/30 hover:bg-[#5D0925]/5">Remove</button>
+                      ) : (
+                        <button type="button" onClick={applyGift} disabled={giftPending || !giftCode.trim()} className="px-5 text-[12px] tracking-[0.1em] uppercase font-sans bg-[#2B221D] text-[#F6F2EA] hover:bg-[#B08A3E] transition-colors disabled:opacity-50">{giftPending ? "…" : "Apply"}</button>
+                      )}
+                    </div>
+                    {giftBalance != null && <p className="mt-2 text-[14px] text-[#3a6b2e] font-sans">Balance £{(giftBalance / 100).toFixed(2)} — applied to your total at payment.</p>}
+                    {giftMsg && <p className="mt-2 text-[14px] text-[#5D0925] font-sans">{giftMsg}</p>}
+                  </section>
+                ) : (
+                  <button type="button" onClick={() => setShowGift(true)} className={addLink}>+ Use a gift card</button>
+                )}
+              </div>
+
+              {/* Marketing consent — separate + optional, never bundled with payment. */}
+              <label className="flex items-start gap-3 text-[14px] font-sans text-[#5A524B]">
+                <input type="checkbox" checked={marketingOptIn} onChange={(e) => setMarketingOptIn(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[#B08A3E]" />
+                <span>Email me occasional news and offers from Bombay Bicycle Chef. (Optional — your order goes ahead either way, and you can unsubscribe any time.)</span>
+              </label>
             </div>
-          </aside>
+
+            {/* Summary */}
+            <aside className="mt-10 lg:mt-0">
+              <div className="bg-white border border-[#2A211C]/10 p-6 lg:sticky lg:top-[104px]">
+                <h2 className="font-serif text-[22px] text-[#2B221D] mb-3">Order summary</h2>
+                <CartContents menu={menu} locationSlug={locationSlug} showDelivery onTotalChange={setPayTotal} />
+                {error && <p role="alert" className="mt-4 text-[14px] text-[#5D0925] font-sans">{error}</p>}
+                <button
+                  onClick={pay}
+                  disabled={pending}
+                  className="mt-5 w-full inline-flex items-center justify-center h-[56px] bg-[#5D0925] text-[#F6F2EA] text-[14px] tracking-[0.12em] uppercase font-sans hover:bg-[#420616] transition-colors duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {pending ? "Starting payment…" : chargePence != null ? `Pay ${money(chargePence)}` : "Pay securely"}
+                </button>
+                <p className="mt-3 text-[12px] text-[#5A524B] font-sans text-center">Card, Apple Pay &amp; Google Pay · processed securely by Stripe.</p>
+              </div>
+            </aside>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </CartPricingProvider>
   );
 }

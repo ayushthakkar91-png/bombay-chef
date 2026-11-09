@@ -9,12 +9,13 @@ import { StepLocation } from "./StepLocation";
 
 // Only step 1 (StepLocation) is needed for first paint; the rest are code-split
 // and fetched when the guest advances, cutting initial JS on this heavy flow
-// (large mobile Real-Experience-Score win — the page loaded all 6 steps upfront).
-const StepExperience = dynamic(() => import("./StepExperience").then((m) => ({ default: m.StepExperience })));
+// (large mobile Real-Experience-Score win — the page loaded every step upfront).
 const StepDateTime = dynamic(() => import("./StepDateTime").then((m) => ({ default: m.StepDateTime })));
 const StepGuests = dynamic(() => import("./StepGuests").then((m) => ({ default: m.StepGuests })));
 const StepDetails = dynamic(() => import("./StepDetails").then((m) => ({ default: m.StepDetails })));
 const StepConfirm = dynamic(() => import("./StepConfirm").then((m) => ({ default: m.StepConfirm })));
+
+const LAST_STEP: BookingStep = 5;
 
 export function ReservationFlow({ isLoggedIn = false }: { isLoggedIn?: boolean }) {
   const reduceMotion = useReducedMotion();
@@ -23,7 +24,9 @@ export function ReservationFlow({ isLoggedIn = false }: { isLoggedIn?: boolean }
     step: 1,
     mode: "reservation",
     location: null,
-    experience: null,
+    // Dinner is the only bookable experience (Balham's booking hours are
+    // evening-only), so it's pre-selected and there's no Experience step.
+    experience: "dinner",
     date: null,
     time: null,
     guests: null,
@@ -31,7 +34,7 @@ export function ReservationFlow({ isLoggedIn = false }: { isLoggedIn?: boolean }
   });
 
   const nextStep = () => {
-    setState((prev) => ({ ...prev, step: Math.min(prev.step + 1, 6) as BookingStep }));
+    setState((prev) => ({ ...prev, step: Math.min(prev.step + 1, LAST_STEP) as BookingStep }));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -61,7 +64,7 @@ export function ReservationFlow({ isLoggedIn = false }: { isLoggedIn?: boolean }
 
   return (
     <div className="min-h-screen bg-[#F6F2EA] flex flex-col relative pt-[84px] lg:pt-[88px]">
-      
+
       {/* Fixed Progress Indicator */}
       <BookingProgress currentStep={state.step} onStepClick={jumpToStep} />
 
@@ -79,18 +82,15 @@ export function ReservationFlow({ isLoggedIn = false }: { isLoggedIn?: boolean }
               <StepLocation state={state} updateState={updateState} nextStep={nextStep} />
             )}
             {state.step === 2 && (
-              <StepExperience state={state} updateState={updateState} nextStep={nextStep} prevStep={prevStep} />
-            )}
-            {state.step === 3 && (
               <StepDateTime state={state} updateState={updateState} nextStep={nextStep} prevStep={prevStep} />
             )}
-            {state.step === 4 && (
+            {state.step === 3 && (
               <StepGuests state={state} updateState={updateState} nextStep={nextStep} prevStep={prevStep} />
             )}
-            {state.step === 5 && (
+            {state.step === 4 && (
               <StepDetails state={state} updateState={updateState} nextStep={nextStep} prevStep={prevStep} />
             )}
-            {state.step === 6 && (
+            {state.step === 5 && (
               <StepConfirm state={state} prevStep={prevStep} isLoggedIn={isLoggedIn} />
             )}
           </motion.div>

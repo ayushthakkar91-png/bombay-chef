@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
@@ -12,9 +12,11 @@ const STORAGE_KEY = "bbc.eventpopup.dismissedAt";
 /**
  * Public marketing pop-up. Content comes from the DB (`marketing_popup`,
  * editable in admin → Marketing → Popup) via `getEventPopup()`, passed in as
- * `config`; structural fields (routes, dates, dismissHours, details) come from
- * the static fallback merged inside that loader. Appears on the allowed routes
- * shortly after load, within the date window, unless dismissed recently.
+ * `config`; structural fields (routes, dates, dismissHours) come from the static
+ * fallback merged inside that loader. Appears on the allowed routes shortly after
+ * load, within the date window, unless dismissed recently. Closes with the ✕, a
+ * click outside the card, or Escape, and scrolls inside itself on short screens so
+ * the close button is always reachable.
  */
 export function EventPopup({ config }: { config: EventPopupConfig }) {
   const pathname = usePathname();
@@ -43,19 +45,28 @@ export function EventPopup({ config }: { config: EventPopupConfig }) {
     return () => clearTimeout(t);
   }, [pathname, config]);
 
-  if (!open) return null;
-  const cfg = config;
-
-  const dismiss = () => {
+  const dismiss = useCallback(() => {
     try { localStorage.setItem(STORAGE_KEY, String(Date.now())); } catch { /* ignore */ }
     setOpen(false);
-  };
+  }, []);
+
+  // Escape closes the popup.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") dismiss(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, dismiss]);
+
+  if (!open) return null;
+  const cfg = config;
 
   return (
     <div className="fixed inset-0 z-[120] flex items-end justify-center p-4 sm:items-center" role="dialog" aria-modal="true" aria-label={cfg.title}>
       <button aria-label="Close offer" onClick={dismiss} className="absolute inset-0 bg-black/55 backdrop-blur-[2px]" />
 
-      <div className="relative w-full max-w-[420px] overflow-hidden rounded-2xl border border-[#B08A3E]/40 bg-[#1A130D] shadow-2xl">
+      {/* Capped to the screen height; the content scrolls inside on short screens. */}
+      <div className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-[420px] flex-col overflow-hidden rounded-2xl border border-[#B08A3E]/40 bg-[#1A130D] shadow-2xl">
         {/* Full-bleed background image (admin-set, else the hero photo) with a
             dark gradient over it so the copy stays legible on any photo. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -66,7 +77,7 @@ export function EventPopup({ config }: { config: EventPopupConfig }) {
           <X className="h-5 w-5" />
         </button>
 
-        <div className="relative z-10 px-7 pb-7 pt-12 text-center">
+        <div className="relative z-10 min-h-0 overflow-y-auto overscroll-contain px-7 pb-7 pt-12 text-center">
           {cfg.label && <p className="mb-2 font-sans text-[11px] font-semibold uppercase tracking-[0.25em] text-[#D8BD85]">{cfg.label}</p>}
           <h2 className="font-serif text-[32px] font-light leading-[1.1] text-[#F6F2EA] [text-shadow:0_2px_16px_rgba(0,0,0,0.5)]">{cfg.title}</h2>
 

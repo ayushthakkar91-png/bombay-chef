@@ -1,0 +1,88 @@
+========================================================================
+ BOMBAY BICYCLE CHEF — SUPABASE CHECKLIST
+ (what to do in Supabase + free-tier notes)   updated: 2026-09-03
+========================================================================
+
+------------------------------------------------------------------------
+1) RUN THIS SQL NOW  (Supabase -> SQL Editor -> paste -> Run)
+   Fixes the "column locations.accepting_orders does not exist" 400 errors
+   and enables the contact form. Safe + idempotent (re-running is fine).
+------------------------------------------------------------------------
+
+-- pause-orders switch (admin on/off toggle)
+alter table locations add column if not exists accepting_orders boolean not null default true;
+alter table locations add column if not exists ordering_pause_message text;
+
+-- contact-form enquiries (stored + shown in admin)
+create table if not exists contact_enquiries (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  email text not null,
+  subject text,
+  message text not null,
+  handled boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create index if not exists contact_enquiries_created_idx on contact_enquiries(created_at desc);
+alter table contact_enquiries enable row level security;
+
+
+------------------------------------------------------------------------
+2) MIGRATIONS — status / what to run
+------------------------------------------------------------------------
+[ ] 0026_ordering_pause.sql      -> RUN NOW (the SQL above, part 1)
+[ ] 0027_contact_enquiries.sql   -> RUN NOW (the SQL above, part 2)
+[ ] 0025_pos.sql                 -> ONLY if using the Sunmi POS app later.
+                                    Idempotent; re-run to finish it (an
+                                    earlier run left orders.printed_at out).
+                                    NOT needed for online ordering itself.
+[x] 0021 - 0024                  -> already applied earlier. Confirm present.
+
+Menu is seeded (26 items). RLS / indexes / policies all ship inside the
+migrations — nothing else to configure in Supabase.
+
+
+------------------------------------------------------------------------
+3) FREE TIER — fine for now (single restaurant, until volume grows)
+------------------------------------------------------------------------
+  Database 500 MB   -> orders/menu/reservations = KB to a few MB. Fine.
+  Egress   5 GB/mo  -> menu IMAGES are on Vercel, not Supabase; Supabase
+                       only serves tiny JSON. Fine.
+  API requests      -> fine at your volume.
+  Auth 50k users    -> a few staff + customers. Fine.
+
+  TWO CAVEATS (not blockers):
+  * 7-day inactivity -> free project AUTO-PAUSES. A live site with any
+    traffic never pauses. (Your /api/cron/notifications sweep also keeps
+    it active if wired to a scheduler.)
+  * NO automatic backups on free. Fine while testing.
+    -> Upgrade to PRO (~$25/mo) once REAL orders + money flow, for daily
+       backups / point-in-time recovery. Do it when orders pick up.
+
+  BOTTOM LINE: free tier is OK "until good orders". Move to Pro when
+  volume grows OR the moment you want backups — whichever comes first.
+
+
+------------------------------------------------------------------------
+4) NOT SUPABASE — but the #1 thing still blocking real orders
+------------------------------------------------------------------------
+  STRIPE_SECRET_KEY in Vercel is the OLD (revoked) key -> every payment
+  fails -> orders stall at pending_payment -> no Telegram.
+
+  FIX in Vercel (Settings -> Environment Variables), then Redeploy:
+    STRIPE_SECRET_KEY               = current key from Stripe -> API keys
+    STRIPE_WEBHOOK_SECRET           = whsec_... (Stripe -> Webhooks -> your
+                                      endpoint -> signing secret)
+    UPSTASH_REDIS_REST_URL          = Upstash -> your DB -> REST API
+    UPSTASH_REDIS_REST_TOKEN        = Upstash -> your DB -> REST API
+    TELEGRAM_BOT_TOKEN              = @BotFather
+    TELEGRAM_CHAT_ID                = 8218794211
+  ALL STRIPE VARS MUST BE THE SAME MODE (all test, or all live).
+  Webhook endpoint URL:
+    https://www.bombay-bicycle-chef.com/api/webhooks/stripe
+    events: checkout.session.completed, payment_intent.payment_failed,
+            charge.refunded
+
+  Test safely: use TEST keys + a Test-mode webhook + card 4242 4242 4242 4242,
+  confirm order goes "paid" + Telegram pings, THEN swap Stripe vars to live.
+========================================================================

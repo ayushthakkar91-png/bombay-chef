@@ -93,6 +93,68 @@ export async function createCheckoutSession(opts: {
   };
 }
 
+async function stripeGet(path: string): Promise<Record<string, unknown>> {
+  const res = await fetch(`${API}${path}`, { headers: { Authorization: `Bearer ${SECRET}` } });
+  const data = (await res.json()) as Record<string, unknown>;
+  if (!res.ok) {
+    const err = data.error as { message?: string } | undefined;
+    throw new Error(err?.message ?? `Stripe error ${res.status}`);
+  }
+  return data;
+}
+
+export type CheckoutSessionStatus = {
+  id: string;
+  /** "open" | "complete" | "expired" */
+  status: string | null;
+  /** "paid" | "unpaid" | "no_payment_required" */
+  paymentStatus: string | null;
+  amountTotal: number;
+  currency: string;
+  paymentIntent: string | null;
+  metadataOrderId: string | null;
+};
+
+/**
+ * Read a Checkout Session's payment state straight from Stripe. Used to recover
+ * orders whose webhook was delayed or never delivered — Stripe is authoritative.
+ */
+export async function retrieveCheckoutSession(id: string): Promise<CheckoutSessionStatus> {
+  if (!/^cs_(test|live)_[A-Za-z0-9]+$/.test(id)) throw new Error("Invalid checkout session id");
+  const s = await stripeGet(`/checkout/sessions/${encodeURIComponent(id)}`);
+  const metadata = (s.metadata as Record<string, string> | null) ?? {};
+  const pi = s.payment_intent;
+  return {
+    id: s.id as string,
+    status: (s.status as string | null) ?? null,
+    paymentStatus: (s.payment_status as string | null) ?? null,
+    amountTotal: (s.amount_total as number | null) ?? 0,
+    currency: ((s.currency as string | null) ?? "").toLowerCase(),
+    paymentIntent: typeof pi === "string" ? pi : ((pi as { id?: string } | null)?.id ?? null),
+    metadataOrderId: metadata.order_id ?? null,
+  };
+}
+
+export type PaymentIntentSummary = { id: string; status: string; amount: number; currency: string };
+
+/**
+ * Find PaymentIntents tagged with an order id (every checkout sets
+ * metadata.order_id on the PaymentIntent). Fallback for recovering an order whose
+ * Checkout Session id wasn't recorded. Uses Stripe Search, which can lag about a
+ * minute behind a brand-new payment.
+ */
+export async function searchPaymentIntentsByOrderId(orderId: string): Promise<PaymentIntentSummary[]> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderId)) throw new Error("Invalid order id");
+  const query = encodeURIComponent(`metadata['order_id']:'${orderId}'`);
+  const res = await stripeGet(`/payment_intents/search?query=${query}&limit=10`);
+  return ((res.data as Record<string, unknown>[] | undefined) ?? []).map((p) => ({
+    id: p.id as string,
+    status: (p.status as string) ?? "",
+    amount: ((p.amount_received as number | null) ?? (p.amount as number | null)) ?? 0,
+    currency: ((p.currency as string | null) ?? "").toLowerCase(),
+  }));
+}
+
 export async function createRefund(opts: {
   paymentIntentId: string;
   amountPence?: number;
