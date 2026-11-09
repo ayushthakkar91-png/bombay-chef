@@ -5,11 +5,14 @@ import { isInternalOrdering } from "@/lib/ordering/routing";
 import { PageHeader } from "@/components/admin/ui";
 import { LocationsManager } from "@/components/admin/LocationsManager";
 import { OrderingToggle } from "@/components/admin/orders/OrderingToggle";
+import { DeliveryTiers } from "@/components/admin/DeliveryTiers";
+import { listDeliveryTiers } from "@/lib/ordering/delivery-tiers";
 
 export default async function LocationsPage() {
   const ctx = await requireRole("location_manager");
   const locations = await listLocations();
   const canManage = can(ctx, "restaurant_manager");
+  const deliveryTiers = await listDeliveryTiers();
 
   // Ordering on/off switch for the branch that takes online orders (Balham).
   const orderingLoc = locations.find((l) => isInternalOrdering(l.slug));
@@ -27,6 +30,10 @@ export default async function LocationsPage() {
           <OrderingToggle locationId={orderingLoc.id} initialAccepting={orderingStatus.accepting} initialMessage={orderingStatus.message} />
         </div>
       )}
+      <div className="mb-6">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-body/80">Delivery charges — all branches</p>
+        <DeliveryTiers tiers={deliveryTiers} canManage={canManage} />
+      </div>
       <LocationsManager locations={locations} canManage={canManage} />
     </>
   );

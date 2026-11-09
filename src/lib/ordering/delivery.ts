@@ -3,6 +3,7 @@ import "server-only";
 import { getServiceClient } from "@/lib/supabase/clients";
 import { outcodeOf, formatPostcode } from "./postcode";
 import { geocodePostcode, distanceMiles } from "./geocode";
+import { listDeliveryTiers, feeForMiles, maxDeliveryMiles } from "./delivery-tiers";
 
 export type DeliveryCheck = {
   served: boolean;
@@ -113,13 +114,22 @@ export async function checkDelivery(locationSlug: string, rawPostcode: string): 
     const dest = await geocodePostcode(rawPostcode);
     if (dest) {
       const miles = distanceMiles({ lat, lng }, dest);
-      if (miles <= radius) {
+      const tiers = await listDeliveryTiers();
+      // Distance bands (1 mile free, 2 miles £1.99, 3 miles £3.99 by default)
+      // decide both the fee and how far we will go. Falling outside every band
+      // means "too far", not "free". With no bands configured we keep the old
+      // per-mile rule so a missing migration cannot stop deliveries.
+      const tierFee = feeForMiles(miles, tiers);
+      const bandLimit = maxDeliveryMiles(tiers);
+      const limit = bandLimit != null ? Math.min(radius, bandLimit) : radius;
+      const withinBands = tiers.length === 0 || tierFee != null;
+
+      if (miles <= radius && withinBands) {
         return {
           served: true,
           postcode: formatPostcode(rawPostcode),
           outcode,
-          // Distance-tiered: £1 per started mile (see deliveryFeeForMiles).
-          feePence: deliveryFeeForMiles(miles),
+          feePence: tierFee ?? deliveryFeeForMiles(miles),
           minOrderPence,
           etaMin,
           distanceMiles: Math.round(miles * 10) / 10,
@@ -131,7 +141,7 @@ export async function checkDelivery(locationSlug: string, rawPostcode: string): 
         outcode,
         postcode: formatPostcode(rawPostcode),
         distanceMiles: Math.round(miles * 10) / 10,
-        error: `Sorry — that's ${(Math.round(miles * 10) / 10).toFixed(1)} miles away, just outside our ${radius}-mile delivery area.`,
+        error: `Sorry — that's ${(Math.round(miles * 10) / 10).toFixed(1)} miles away, just outside our ${limit}-mile delivery area.`,
       };
     }
     // Geocode unavailable (API down). Fall through to the outcode check so a
