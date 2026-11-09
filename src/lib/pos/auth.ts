@@ -2,7 +2,7 @@ import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
 import { getServiceClient } from "@/lib/supabase/clients";
-import { roleAtLeast, type Role, type StaffGrant } from "@/lib/auth/roles";
+import { ROLE_RANK, roleAtLeast, topRank, type Role, type StaffGrant } from "@/lib/auth/roles";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -17,7 +17,12 @@ export async function posLogin(email: string, password: string): Promise<Tokens 
   if (error || !data.session || !data.user) return { error: "Invalid credentials." };
 
   const grants = await staffGrantsFor(data.user.id);
-  if (!roleAtLeast(grants, "staff")) return { error: "Not a staff account." };
+  // Any staff grant, at any location, is enough to SIGN IN — a terminal in one
+  // branch still logs in with a branch-scoped account. roleAtLeast() with no
+  // location accepts org-wide grants only, which locked out every location-scoped
+  // staff member. The per-location check is still enforced on every request by
+  // verifyPosRequest(), which is where it belongs.
+  if (topRank(grants) < ROLE_RANK.staff) return { error: "Not a staff account." };
 
   return {
     token: data.session.access_token,
