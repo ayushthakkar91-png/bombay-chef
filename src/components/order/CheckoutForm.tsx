@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { flags } from "@/lib/flags";
 import Link from "next/link";
 import { Check } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
@@ -296,7 +297,7 @@ export function CheckoutForm({
                   <button type="button" onClick={() => setShowNotes(true)} className={addLink}>+ Add order notes</button>
                 )}
 
-                {showGift || giftBalance != null ? (
+                {flags.giftCards && (showGift || giftBalance != null) ? (
                   <section>
                     <h2 className="font-serif text-[20px] text-[#2B221D] mb-3">Gift card</h2>
                     <div className="flex gap-2">
@@ -317,7 +318,7 @@ export function CheckoutForm({
                     {giftMsg && <p className="mt-2 text-[14px] text-[#5D0925] font-sans">{giftMsg}</p>}
                   </section>
                 ) : (
-                  <button type="button" onClick={() => setShowGift(true)} className={addLink}>+ Use a gift card</button>
+                  flags.giftCards ? <button type="button" onClick={() => setShowGift(true)} className={addLink}>+ Use a gift card</button> : null
                 )}
               </div>
 

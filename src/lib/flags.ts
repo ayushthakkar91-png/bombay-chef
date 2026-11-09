@@ -31,6 +31,14 @@ export const flags = {
    */
   loyalty: process.env.NEXT_PUBLIC_FEATURE_LOYALTY === "true",
 
+  /**
+   * Gift cards: buying at /gift, the account wallet, and redeeming one at
+   * checkout. OFF by default. Redeeming an ALREADY-ISSUED card at /gift/<token>
+   * deliberately keeps working while this is off, so a card someone already
+   * holds is never silently voided.
+   */
+  giftCards: process.env.NEXT_PUBLIC_FEATURE_GIFTCARDS === "true",
+
   /** CRM + email marketing: ESP sync, segments, lifecycle automations (P6). */
   marketing: process.env.NEXT_PUBLIC_FEATURE_MARKETING === "true",
 
