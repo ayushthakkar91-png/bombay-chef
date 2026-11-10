@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { flags } from "@/lib/flags";
 
 import { IDLE } from "@/lib/admin/validation";
 import { setOrderStatus, refundOrder } from "@/app/admin/_actions/orders";
@@ -32,7 +33,7 @@ const REFUNDABLE: OrderStatus[] = ["paid", "accepted", "preparing", "ready_for_c
 export function OrderActions({ order }: { order: OrderLike }) {
   const [refundOpen, setRefundOpen] = useState(false);
   const primary = primaryAction(order.status, order.fulfilment);
-  const canRefund = REFUNDABLE.includes(order.status);
+  const canRefund = flags.adminRefunds && REFUNDABLE.includes(order.status);
 
   return (
     <div className="flex flex-wrap items-center gap-2">

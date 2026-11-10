@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { flags } from "@/lib/flags";
 import Link from "next/link";
 
 import { BuyGiftCard } from "@/components/giftcards/BuyGiftCard";
@@ -9,6 +11,9 @@ export const metadata: Metadata = {
 };
 
 export default async function GiftPage({ searchParams }: { searchParams: Promise<{ purchased?: string }> }) {
+  // Gift cards are switched off (NEXT_PUBLIC_FEATURE_GIFTCARDS). Hide the page
+  // entirely rather than leaving a reachable URL for a product that is not for sale.
+  if (!flags.giftCards) notFound();
   const { purchased } = await searchParams;
 
   return (

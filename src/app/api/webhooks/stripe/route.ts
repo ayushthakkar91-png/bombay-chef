@@ -79,7 +79,17 @@ export async function POST(request: Request) {
     }
   } else if (eventType === "charge.refunded") {
     if (metadata.order_id) {
-      await recordOrderEvent(metadata.order_id, "PAYMENT_REFUNDED", { amountRefunded: (object.amount_refunded as number) ?? null });
+      const refunded = (object.amount_refunded as number) ?? 0;
+      const charged = (object.amount as number) ?? 0;
+      await recordOrderEvent(metadata.order_id, "PAYMENT_REFUNDED", { amountRefunded: refunded });
+
+      // Refunds are issued from the Stripe dashboard, not the admin panel, so this
+      // webhook is the only thing that can close the order here. Without it a fully
+      // refunded order keeps showing as paid to the kitchen and in the sales report.
+      // A partial refund leaves the status alone — the order still stands.
+      if (charged > 0 && refunded >= charged) {
+        await supabase.from("orders").update({ status: "refunded" }).eq("id", metadata.order_id);
+      }
     }
   }
 
