@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { rateLimit } from "@/lib/ratelimit";
 
 import { getUserClient, getServiceClient } from "@/lib/supabase/clients";
 import { requireRole } from "@/lib/auth/dal";
@@ -57,6 +58,9 @@ export async function saveCampaign(_p: ActionState, form: FormData): Promise<Act
 }
 
 export async function sendCampaignAction(_p: ActionState, form: FormData): Promise<ActionState> {
+  if (!(await rateLimit("admin-sms-send", { limit: 3, windowSec: 300, failClosed: true })).ok) {
+    return fail("SMS campaigns are going out too quickly — wait a few minutes before sending another.");
+  }
   await requireRole("restaurant_manager");
   const id = str(form, "id");
   if (!id) return fail("Missing campaign.");
@@ -93,6 +97,9 @@ export async function setConsent(_p: ActionState, form: FormData): Promise<Actio
 /* ---- Manual run (demo / catch-up) ------------------------------------- */
 
 export async function runMessagingNow(): Promise<ActionState> {
+  if (!(await rateLimit("admin-messaging-run", { limit: 10, windowSec: 60, failClosed: true })).ok) {
+    return fail("Too many sends in a row — try again shortly.");
+  }
   await requireRole("restaurant_manager");
   const now = Date.now();
   const [o, r, rw] = await Promise.all([syncOrders(now), syncReservations(now), syncRewards(now)]);

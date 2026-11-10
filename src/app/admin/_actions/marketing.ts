@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { rateLimit } from "@/lib/ratelimit";
 
 import { getUserClient } from "@/lib/supabase/clients";
 import { requireRole } from "@/lib/auth/dal";
@@ -36,6 +37,9 @@ export async function createCampaign(_p: ActionState, form: FormData): Promise<A
 }
 
 export async function sendCampaignAction(_p: ActionState, form: FormData): Promise<ActionState> {
+  if (!(await rateLimit("admin-campaign-send", { limit: 3, windowSec: 300, failClosed: true })).ok) {
+    return fail("Campaigns are going out too quickly — wait a few minutes before sending another.");
+  }
   await requireRole("restaurant_manager");
   const id = str(form, "id");
   if (!id) return fail("Missing campaign.");

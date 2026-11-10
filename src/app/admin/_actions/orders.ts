@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { rateLimit } from "@/lib/ratelimit";
 
 import { getUserClient, getServiceClient } from "@/lib/supabase/clients";
 import { requireRole } from "@/lib/auth/dal";
@@ -67,6 +68,9 @@ export async function setOrderStatus(_p: ActionState, form: FormData): Promise<A
 
 /** Requeue a dead-lettered (failed) notification for an order so it retries now. */
 export async function retryOrderNotification(_p: ActionState, form: FormData): Promise<ActionState> {
+  if (!(await rateLimit("admin-notify-retry", { limit: 20, windowSec: 60, failClosed: true })).ok) {
+    return fail("Too many retries — wait a moment.");
+  }
   const orderId = str(form, "orderId");
   const locationId = str(form, "locationId");
   if (!orderId || !locationId) return fail("Missing order.");
@@ -92,6 +96,9 @@ export async function retryOrderNotification(_p: ActionState, form: FormData): P
 
 /** Refund (full or partial) via Stripe, then mark the order refunded on full. */
 export async function refundOrder(_p: ActionState, form: FormData): Promise<ActionState> {
+  if (!(await rateLimit("admin-refund", { limit: 10, windowSec: 300, failClosed: true })).ok) {
+    return fail("Too many refunds in a row — wait a few minutes.");
+  }
   const id = str(form, "id");
   const locationId = str(form, "locationId");
   const amtRaw = str(form, "amountGbp"); // pounds from the admin form; blank = full
