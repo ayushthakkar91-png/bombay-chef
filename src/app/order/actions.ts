@@ -1,6 +1,7 @@
 "use server";
 
 import { getServiceClient } from "@/lib/supabase/clients";
+import { createHash } from "node:crypto";
 import { priceCart, type PriceResult } from "@/lib/ordering/pricing";
 import { checkDelivery, suggestNearestBranch, type DeliveryCheck, type BranchSuggestion } from "@/lib/ordering/delivery";
 import { isStripeConfigured, createCheckoutSession } from "@/lib/stripe/client";
@@ -314,6 +315,28 @@ async function resumeExistingOrder(o: ExistingOrder): Promise<CheckoutResult> {
   return resumeCheckout(o.id, o.code, o.track_token, charge, undefined);
 }
 
+/**
+ * Idempotency key for creating a Checkout Session.
+ *
+ * Two opposing jobs: stop a double-submit charging twice, and still allow a
+ * genuinely different attempt. Stripe refuses a reused key when ANY parameter
+ * differs, so a key of just the order id broke the ordinary flow of starting
+ * payment, going back, changing something and trying again.
+ */
+function sessionIdempotencyKey(
+  orderId: string,
+  embedded: boolean,
+  chargePence: number,
+  email: string | undefined,
+  returnUrl: string,
+): string {
+  const fingerprint = createHash("sha256")
+    .update([orderId, embedded ? "emb" : "hos", chargePence, email ?? "", returnUrl].join("|"))
+    .digest("hex")
+    .slice(0, 24);
+  return `session_${orderId}_${fingerprint}`;
+}
+
 /** Create (or idempotently re-create) the Stripe session for an order. */
 async function resumeCheckout(
   orderId: string,
@@ -328,19 +351,34 @@ async function resumeCheckout(
   const embedded = Boolean(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
   const track = `${await checkoutBaseUrl()}/order/track/${trackToken}?paid=1`;
   try {
-    const session = await createCheckoutSession({
+    const cancel = `${await checkoutBaseUrl()}/order/checkout?canceled=1`;
+    const create = (key: string) => createCheckoutSession({
       amountPence: chargePence,
       orderCode: code,
       description: `Order ${code}`,
       ...(embedded
         ? { uiMode: "embedded" as const, returnUrl: track }
-        : { successUrl: track, cancelUrl: `${await checkoutBaseUrl()}/order/checkout?canceled=1` }),
+        : { successUrl: track, cancelUrl: cancel }),
       customerEmail: email,
       metadata: { order_id: orderId, code },
       // Stripe idempotency: a retried session-create for this order can't double-charge.
       // Keyed by mode too, so enabling embedded later doesn't replay a hosted session.
-      idempotencyKey: `session_${orderId}_${embedded ? "emb" : "hos"}`,
+      idempotencyKey: key,
     });
+
+    const key = sessionIdempotencyKey(orderId, embedded, chargePence, email, track);
+    let session;
+    try {
+      session = await create(key);
+    } catch (err) {
+      // If Stripe still reports a key clash on something we did not fingerprint,
+      // make a fresh session rather than tell a customer holding their card that
+      // payment is unavailable.
+      const message = err instanceof Error ? err.message : String(err);
+      if (!/idempotent/i.test(message)) throw err;
+      console.warn(`[checkout] idempotency clash for ${code}, retrying with a fresh key: ${message}`);
+      session = await create(`${key}_${Date.now()}`);
+    }
     if (embedded) {
       if (!session.clientSecret) return { ok: false, error: "We couldn't start the payment — please try again." };
       return { ok: true, clientSecret: session.clientSecret };
