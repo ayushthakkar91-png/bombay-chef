@@ -59,6 +59,9 @@ export function CheckoutForm({
   const [clientSecret, setClientSecret] = useState<string | null>(null);
 
   const [contact, setContact] = useState({ name: initialContact?.name ?? "", email: initialContact?.email ?? "", phone: initialContact?.phone ?? "" });
+  // How much the signed-in account actually supplied, so the banner can tell
+  // the truth rather than promise three filled fields and deliver one.
+  const filledCount = [initialContact?.name, initialContact?.email, initialContact?.phone].filter((v) => Boolean(v && v.trim())).length;
   // A saved address wins; otherwise seed the postcode already checked in the menu.
   const [addr, setAddr] = useState({
     line1: initialAddress?.line1 ?? "",
@@ -218,7 +221,7 @@ export function CheckoutForm({
 
           {signedIn ? (
             <p className="mb-6 flex items-center gap-2 border border-[#3a6b2e]/25 bg-[#3a6b2e]/5 px-4 py-3 font-sans text-[13.5px] text-[#3a6b2e]">
-              <Check className="h-4 w-4 shrink-0" aria-hidden /> Signed in — your details are filled in.
+              <Check className="h-4 w-4 shrink-0" aria-hidden />{" "}{initialContact?.email ? `Signed in as ${initialContact.email}` : "Signed in"}{filledCount > 0 ? ` · ${filledCount === 3 ? "your details are filled in" : "we've filled in what we know"}` : ""}.
             </p>
           ) : (
             <p className="mb-6 font-sans text-[13.5px] text-[#5A524B]">
