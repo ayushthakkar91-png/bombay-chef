@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="gcm_defaultSenderId" translatable="false">949693935446</string>
-    <string name="google_api_key" translatable="false">AIzaSyCg2ZKTteNy0qBUOxVR0l8jQDpJSTDRaHY</string>
-    <string name="google_app_id" translatable="false">1:949693935446:android:0afd5e6ef813dcaec130f7</string>
-    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyCg2ZKTteNy0qBUOxVR0l8jQDpJSTDRaHY</string>
-    <string name="google_storage_bucket" translatable="false">american-pizza-a5595.firebasestorage.app</string>
-    <string name="project_id" translatable="false">american-pizza-a5595</string>
-</resources>
