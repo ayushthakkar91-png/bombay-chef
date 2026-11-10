@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 
 import { getOrderByToken } from "@/lib/repositories/orders";
-import { getCustomer } from "@/lib/auth/customer";
+import { getShoppingCustomer } from "@/lib/auth/customer";
 import { ORDER_STATUS_LABEL, LIVE_STATUSES, type OrderStatus, type Fulfilment } from "@/lib/ordering/constants";
 import { TrackingControls } from "@/components/order/TrackingControls";
 import { CheckoutSteps } from "@/components/order/CheckoutSteps";
@@ -49,7 +49,7 @@ export default async function OrderTrackPage({
     );
   }
 
-  const customer = await getCustomer();
+  const customer = await getShoppingCustomer();
   const isLive = LIVE_STATUSES.includes(order.status);
   const stopped = order.status === "cancelled" || order.status === "refunded";
   const flow = steps(order.fulfilment);
