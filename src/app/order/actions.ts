@@ -389,6 +389,12 @@ async function resumeCheckout(
     // Stripe's own error text (e.g. invalid key, bad param) — never contains the
     // secret key or card data — so a payment-provider failure is diagnosable.
     console.error(`[checkout] Stripe session create failed for ${code}: ${err instanceof Error ? err.message : String(err)}`);
+    // Put it where the office will see it. A console line on a serverless
+    // host is invisible to them; Admin -> Activity -> Site issues is not.
+    await recordOrderEvent(orderId, "CHECKOUT_FAILED", {
+      message: err instanceof Error ? err.message : String(err),
+      amountPence: chargePence,
+    });
     // Free any reserved promo so an unpaid, abandoned order doesn't consume a
     // single-use code (release_promo is a no-op when nothing was reserved).
     const supabase = getServiceClient();
