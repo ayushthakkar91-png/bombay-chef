@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "949693935446",
-    "project_id": "american-pizza-a5595",
-    "storage_bucket": "american-pizza-a5595.firebasestorage.app"
+    "project_number": "1031821708672",
+    "project_id": "bombay-bicycle-chef",
+    "storage_bucket": "bombay-bicycle-chef.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:949693935446:android:0afd5e6ef813dcaec130f7",
+        "mobilesdk_app_id": "1:1031821708672:android:90f390ac153570f0968565",
         "android_client_info": {
-          "package_name": "com.americanpizza.pos"
+          "package_name": "com.bombaybicyclechef.pos"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCg2ZKTteNy0qBUOxVR0l8jQDpJSTDRaHY"
+          "current_key": "AIzaSyCUKDUoKTOTModkgnv-FJ-o5Sn-vsS_MXk"
         }
       ],
       "services": {

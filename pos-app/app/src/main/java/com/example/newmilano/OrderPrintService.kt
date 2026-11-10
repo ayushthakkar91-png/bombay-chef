@@ -451,14 +451,21 @@ class OrderPrintService : Service() {
      */
     private fun printNow(order: JSONObject, onComplete: ((Boolean, String?) -> Unit)?) {
         val gapMs = SettingsStore.printGapSec.value * 1000L
-        if (gapMs <= 0L) { printTicket(order, onComplete); return }
+        val copies = SettingsStore.printCopies.value.coerceIn(1, 5)
 
-        val now = SystemClock.elapsedRealtime()
-        val slot = maxOf(now, nextPrintAtMs)
-        nextPrintAtMs = slot + gapMs
-        val wait = slot - now
-        if (wait <= 0L) printTicket(order, onComplete)
-        else scope.launch { delay(wait); printTicket(order, onComplete) }
+        // Each copy is its own print job rather than one buffered strip, so the
+        // pause falls between copies as well as between orders. Only the first
+        // carries the callback: once paper has come out the order is printed, and
+        // a later copy failing must not un-mark it or trigger a reprint loop.
+        var slot = maxOf(SystemClock.elapsedRealtime(), nextPrintAtMs)
+        for (copy in 0 until copies) {
+            val cb = if (copy == 0) onComplete else null
+            val wait = slot - SystemClock.elapsedRealtime()
+            if (wait <= 0L) printTicket(order, cb)
+            else scope.launch { delay(wait); printTicket(order, cb) }
+            slot += if (gapMs > 0L) gapMs else 0L
+        }
+        nextPrintAtMs = slot
     }
 
     private fun printTicket(order: JSONObject, onComplete: ((Boolean, String?) -> Unit)?) {
@@ -479,14 +486,11 @@ class OrderPrintService : Service() {
             onComplete?.invoke(false, printerAdvisory(prnt) ?: "Printer not ready")
             return
         }
-        val copies = SettingsStore.printCopies.value.coerceIn(1, 5)
         val small = SettingsStore.smallVersion.value
         try {
             prnt.enterPrinterBuffer(true)
-            repeat(copies) {
-                buildReceipt(prnt, order, small)
-                prnt.lineWrap(if (small) 3 else 4, null)
-            }
+            buildReceipt(prnt, order, small)
+            prnt.lineWrap(if (small) 3 else 4, null)
             // Commit to the printer. The callback is advisory only — NOT used to
             // decide success — because it can falsely report failure post-print.
             prnt.exitPrinterBufferWithCallback(true, object : InnerResultCallback() {

@@ -20,7 +20,7 @@ android {
         // Note: this differs from `namespace` above — namespace is the internal
         // code package (where R/BuildConfig generate) and is left unchanged to
         // avoid moving every Kotlin source file for no visible benefit.
-        applicationId = "com.americanpizza.pos"
+        applicationId = "com.bombaybicyclechef.pos"
 
         minSdk = 24
         // --- LOWER TARGET SDK FOR COMPATIBILITY ---
