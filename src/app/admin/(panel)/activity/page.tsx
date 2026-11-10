@@ -29,6 +29,7 @@ const EVENT_LABEL: Record<string, string> = {
   ORDER_CREATED: "🛒 Basket → order started",
   PAYMENT_CONFIRMED: "✅ Payment confirmed",
   PAYMENT_FAILED: "❌ Payment failed",
+  CHECKOUT_FAILED: "❌ Couldn't start payment",
   PAYMENT_AMOUNT_MISMATCH: "⚠️ Amount mismatch (flagged)",
   PAYMENT_REFUNDED: "↩️ Refunded",
   ORDER_STATUS_CHANGED: "🔄 Status changed",
@@ -57,7 +58,11 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
   const today = baskets.filter((b) => isTodayLondon(b.createdAt));
   const abandoned = baskets.filter((b) => b.abandoned);
   const paidish = baskets.filter((b) => !b.abandoned && b.status !== "cancelled" && b.status !== "refunded");
-  const paymentIssues = events.filter((e) => e.type === "PAYMENT_FAILED" || e.type === "PAYMENT_AMOUNT_MISMATCH");
+  // Everything that stopped a customer completing an order. CHECKOUT_FAILED is
+  // the one they actually saw on screen — it used to live only in server logs.
+  const paymentIssues = events.filter((e) =>
+    e.type === "PAYMENT_FAILED" || e.type === "PAYMENT_AMOUNT_MISMATCH" || e.type === "CHECKOUT_FAILED",
+  );
   const conversion = baskets.length ? Math.round((paidish.length / baskets.length) * 100) : 0;
 
   return (
@@ -81,7 +86,12 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
             {paymentIssues.slice(0, 10).map((e, i) => (
               <div key={`p${i}`} className="flex items-center justify-between gap-4 px-5 py-3 text-sm">
                 <span className="text-text">Order {e.code} — {EVENT_LABEL[e.type] ?? e.type}</span>
-                <span className="text-body/70">{time(e.createdAt)}</span>
+                <span className="flex min-w-0 items-center gap-3">
+                  {typeof e.data?.message === "string" && (
+                    <span className="max-w-[28ch] truncate text-body/70 sm:max-w-[48ch]" title={e.data.message}>{e.data.message}</span>
+                  )}
+                  <span className="shrink-0 text-body/70">{time(e.createdAt)}</span>
+                </span>
               </div>
             ))}
             {failures.map((f, i) => (
