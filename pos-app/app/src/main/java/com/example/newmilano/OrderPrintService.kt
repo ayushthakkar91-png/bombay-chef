@@ -10,6 +10,7 @@ import android.content.Intent
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.os.Build
+import android.os.SystemClock
 import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
@@ -172,7 +173,56 @@ class OrderPrintService : Service() {
      * themselves are no longer valid (force manual login); NETWORK means a
      * transient failure (keep retrying, don't log the user out).
      */
+    /**
+     * Swap the stored refresh token for a fresh session. This is the normal path:
+     * a terminal that refreshes stays signed in indefinitely and never has to hold
+     * a password. Only an explicit 401 means the token is genuinely dead; anything
+     * else (rate limit, flaky kitchen wifi) is transient and must NOT log staff out
+     * mid-service, because a logged-out terminal silently stops printing orders.
+     */
+    private fun refreshSession(): ReauthResult {
+        val prefs = getSharedPreferences("milano_pos", Context.MODE_PRIVATE)
+        val refresh = prefs.getString("refresh_token", "") ?: ""
+        if (refresh.isEmpty()) return ReauthResult.REJECTED
+        return try {
+            val body = JSONObject().apply { put("refreshToken", refresh) }
+            val req = Request.Builder()
+                .url("$SERVER_URL/auth/refresh")
+                .post(body.toString().toRequestBody("application/json".toMediaType()))
+                .build()
+            client.newCall(req).execute().use { r ->
+                when {
+                    r.isSuccessful -> {
+                        val j = JSONObject(r.body?.string() ?: "{}")
+                        val tok = j.optString("token", "")
+                        if (tok.isEmpty()) ReauthResult.NETWORK else {
+                            val e = prefs.edit().putString("jwt_token", tok)
+                            // Supabase rotates the refresh token on every use; keeping
+                            // the old one would break the next refresh.
+                            val next = j.optString("refreshToken", "")
+                            if (next.isNotEmpty()) e.putString("refresh_token", next)
+                            e.apply()
+                            ReauthResult.OK
+                        }
+                    }
+                    r.code == 401 || r.code == 400 -> ReauthResult.REJECTED
+                    else -> ReauthResult.NETWORK
+                }
+            }
+        } catch (e: Exception) {
+            ReauthResult.NETWORK
+        }
+    }
+
     private fun reauth(): ReauthResult {
+        // Refresh first. The stored password is only a fallback for terminals that
+        // signed in before refresh tokens were kept, and for a refresh token that
+        // has genuinely expired.
+        when (refreshSession()) {
+            ReauthResult.OK -> return ReauthResult.OK
+            ReauthResult.NETWORK -> return ReauthResult.NETWORK
+            ReauthResult.REJECTED -> { /* fall through to the password path */ }
+        }
         val creds = SecureCreds.load(this) ?: return ReauthResult.REJECTED
         return try {
             val body = JSONObject().apply { put("email", creds.first); put("password", creds.second) }
@@ -389,7 +439,29 @@ class OrderPrintService : Service() {
         }
     }
 
+    // Spacing between tickets, so a burst of orders does not come off the printer
+    // as one continuous strip staff have to work out where to tear. Measured on
+    // elapsedRealtime, not the wall clock, because a terminal with the wrong date
+    // would otherwise schedule prints into next week.
+    @Volatile private var nextPrintAtMs = 0L
+
+    /**
+     * Queue a ticket. The first prints immediately; each one after it waits for
+     * the configured pause (Settings -> Pause between tickets).
+     */
     private fun printNow(order: JSONObject, onComplete: ((Boolean, String?) -> Unit)?) {
+        val gapMs = SettingsStore.printGapSec.value * 1000L
+        if (gapMs <= 0L) { printTicket(order, onComplete); return }
+
+        val now = SystemClock.elapsedRealtime()
+        val slot = maxOf(now, nextPrintAtMs)
+        nextPrintAtMs = slot + gapMs
+        val wait = slot - now
+        if (wait <= 0L) printTicket(order, onComplete)
+        else scope.launch { delay(wait); printTicket(order, onComplete) }
+    }
+
+    private fun printTicket(order: JSONObject, onComplete: ((Boolean, String?) -> Unit)?) {
         val prnt = sunmiPrinterService
         if (prnt == null) {
             try { InnerPrinterManager.getInstance().bindService(this, printerCallback) } catch (e: Exception) {}

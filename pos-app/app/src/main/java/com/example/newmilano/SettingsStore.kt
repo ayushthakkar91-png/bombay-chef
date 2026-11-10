@@ -25,6 +25,10 @@ object SettingsStore {
     val printCategories = mutableStateOf(false) // group items by category
     val smallVersion = mutableStateOf(false)    // compact receipt (saves paper)
     val printVersion = mutableStateOf(true)     // app version footer
+    // Seconds to wait after one ticket before the next one prints. When several
+    // orders land at once the printer spits them out back to back and they are
+    // easy to tear off as one strip; a pause separates them. 0 = no pause.
+    val printGapSec = mutableStateOf(4)         // 0..15
 
     // ---- Alerts ----
     val soundEnabled = mutableStateOf(true)
@@ -43,10 +47,16 @@ object SettingsStore {
         printCategories.value = p.getBoolean("printCategories", false)
         smallVersion.value = p.getBoolean("smallVersion", false)
         printVersion.value = p.getBoolean("printVersion", true)
+        printGapSec.value = p.getInt("printGapSec", 4).coerceIn(0, 15)
         soundEnabled.value = p.getBoolean("soundEnabled", true)
         showTodayOnly.value = p.getBoolean("showTodayOnly", true)
         hideConfirmed.value = p.getBoolean("hideConfirmed", false)
         loaded = true
+    }
+
+    fun setGapSec(n: Int) {
+        printGapSec.value = n.coerceIn(0, 15)
+        prefs?.edit()?.putInt("printGapSec", printGapSec.value)?.apply()
     }
 
     fun setCopies(n: Int) {

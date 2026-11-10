@@ -275,7 +275,28 @@ class MainActivity : ComponentActivity() {
                 Column(modifier = Modifier.padding(start = 14.dp, top = 12.dp, end = 12.dp, bottom = 12.dp)) {
                     // Row 1: time (big) + type badge
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(formatTime(created).ifEmpty { "--:--" }, fontWeight = FontWeight.Black, fontSize = 22.sp, modifier = Modifier.weight(1f))
+                        Text(formatTime(created).ifEmpty { "--:--" }, fontWeight = FontWeight.Black, fontSize = 22.sp)
+                        // How long this order has been waiting — the thing that decides
+                        // what to cook next. Hidden when the figure is implausible, so a
+                        // terminal with a wrong date shows nothing rather than a lie.
+                        val waited = parseIsoMillis(created)?.let { (System.currentTimeMillis() - it) / 60000L }
+                        if (waited != null && waited in 0..600) {
+                            val waitBg = when {
+                                waited >= 25L -> Color(0xFFFBE9E7)
+                                waited >= 10L -> Color(0xFFFDF1DD)
+                                else -> Color(0xFFF1F3F5)
+                            }
+                            val waitFg = when {
+                                waited >= 25L -> Color(0xFF8A2208)
+                                waited >= 10L -> Color(0xFF7A5312)
+                                else -> Color(0xFF5A6270)
+                            }
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Surface(color = waitBg, shape = RoundedCornerShape(6.dp)) {
+                                Text("${waited}m", color = waitFg, fontWeight = FontWeight.Bold, fontSize = 13.sp, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp))
+                            }
+                        }
+                        Spacer(modifier = Modifier.weight(1f))
                         Surface(color = typeColor, shape = RoundedCornerShape(6.dp)) {
                             Text(orderTypeLabel(order.orderType), color = Color.White, fontWeight = FontWeight.Bold, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp))
                         }
@@ -454,6 +475,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun SettingsScreen(onBack: () -> Unit) {
         val copies by SettingsStore.printCopies
+        val gapSec by SettingsStore.printGapSec
         Column(modifier = Modifier.fillMaxSize()) {
             Box(modifier = Modifier.fillMaxWidth().background(Color(0xFF1F2937)).padding(top = 40.dp, bottom = 14.dp, start = 4.dp, end = 16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -470,6 +492,15 @@ class MainActivity : ComponentActivity() {
                             Text("How many copies to print each time", fontSize = 12.sp, color = Color.Gray)
                         }
                         Stepper(copies) { SettingsStore.setCopies(it) }
+                    }
+                }
+                item {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Pause between tickets", fontWeight = FontWeight.Bold)
+                            Text(if (gapSec == 0) "Off - tickets print back to back" else "Wait " + gapSec + "s before the next ticket prints", fontSize = 12.sp, color = Color.Gray)
+                        }
+                        Stepper(gapSec) { SettingsStore.setGapSec(it) }
                     }
                 }
                 item { SettingSwitch("Print logo / shop name", SettingsStore.printLogo, "printLogo") }
@@ -524,11 +555,17 @@ class MainActivity : ComponentActivity() {
                 client.newCall(request).execute().use { response ->
                     val body = response.body?.string() ?: ""
                     if (response.isSuccessful) {
-                        val token = JSONObject(body).getString("token")
+                        val parsed = JSONObject(body)
+                        val token = parsed.getString("token")
+                        // Kept so the terminal can refresh its own session and stay
+                        // signed in without anyone retyping a password mid-service.
+                        val refreshTok = parsed.optString("refreshToken", "")
 
                         // REMEMBER ME
                         val prefs = getSharedPreferences("milano_pos", MODE_PRIVATE)
-                        prefs.edit().putString("jwt_token", token).apply()
+                        val ed = prefs.edit().putString("jwt_token", token)
+                        if (refreshTok.isNotEmpty()) ed.putString("refresh_token", refreshTok)
+                        ed.apply()
 
                         // Store creds securely so the always-on print service can
                         // silently re-authenticate when this token expires, instead
