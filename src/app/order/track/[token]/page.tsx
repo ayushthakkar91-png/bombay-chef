@@ -4,7 +4,7 @@ import { after } from "next/server";
 import { Check } from "lucide-react";
 
 import { getOrderByToken } from "@/lib/repositories/orders";
-import { getCustomer } from "@/lib/auth/customer";
+import { getShoppingCustomer } from "@/lib/auth/customer";
 import { dispatchAllNotifications, reconcilePendingByTrackToken } from "@/lib/ordering/reconcile";
 import { ORDER_STATUS_LABEL, LIVE_STATUSES, type OrderStatus, type Fulfilment } from "@/lib/ordering/constants";
 import { TrackingControls } from "@/components/order/TrackingControls";
@@ -58,7 +58,7 @@ export default async function OrderTrackPage({
     );
   }
 
-  const customer = await getCustomer();
+  const customer = await getShoppingCustomer();
   const isLive = LIVE_STATUSES.includes(order.status);
   const awaitingPayment = order.status === "pending_payment";
   const stopped = order.status === "cancelled" || order.status === "refunded";

@@ -60,6 +60,22 @@ export const getCustomer = cache(async (): Promise<CustomerContext | null> => {
 });
 
 /**
+ * The signed-in customer for public shopping surfaces, or null when the session
+ * belongs to staff.
+ *
+ * Admin and the customer site share one Supabase session, so a manager with the
+ * panel open was treated as a shopper: their staff email poured into checkout
+ * and their orders attached to a staff profile, earning it loyalty. Staff and
+ * customers are mutually exclusive identities (see requireCustomer below), so on
+ * the shop a staff session simply shops as a guest. It can still order; it just
+ * is not anybody's customer account.
+ */
+export const getShoppingCustomer = cache(async (): Promise<CustomerContext | null> => {
+  const [ctx, staff] = await Promise.all([getCustomer(), getStaffContext()]);
+  return staff ? null : ctx;
+});
+
+/**
  * Gate for the customer account area. Staff and customers are mutually exclusive
  * identities: a signed-in staff member is bounced to the admin panel rather than
  * being treated as a customer, so one login can never operate across both areas.

@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { getOrderingMenu, getOrderLocations } from "@/lib/repositories/ordering-menu";
 import { getOrderingStatusBySlug } from "@/lib/repositories/ordering-status";
-import { getCustomer } from "@/lib/auth/customer";
+import { getShoppingCustomer } from "@/lib/auth/customer";
 import { getMyFavouriteIds } from "@/lib/repositories/account";
 import { isInternalOrdering } from "@/lib/ordering/routing";
 import { MenuBrowser } from "@/components/order/MenuBrowser";
@@ -35,7 +35,7 @@ export default async function OrderMenuPage({ searchParams }: { searchParams: Pr
     );
   }
 
-  const [menu, customer] = await Promise.all([getOrderingMenu(slug), getCustomer()]);
+  const [menu, customer] = await Promise.all([getOrderingMenu(slug), getShoppingCustomer()]);
 
   // Branch is online but its menu isn't ready — render inline (never redirect, to
   // avoid an /order ⇄ /order/menu loop).

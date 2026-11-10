@@ -6,7 +6,7 @@ import { checkDelivery, suggestNearestBranch, type DeliveryCheck, type BranchSug
 import { isStripeConfigured, createCheckoutSession } from "@/lib/stripe/client";
 import { planRedemption, debitGiftCard } from "@/lib/giftcards/service";
 import { confirmPaidOrder } from "@/lib/ordering/confirm";
-import { getCustomer } from "@/lib/auth/customer";
+import { getShoppingCustomer } from "@/lib/auth/customer";
 import { isInternalOrdering } from "@/lib/ordering/routing";
 import { getOrderingStatusBySlug } from "@/lib/repositories/ordering-status";
 import { recordOrderEvent } from "@/lib/ordering/events";
@@ -61,7 +61,7 @@ export async function priceCartAction(input: {
   if (!status.accepting) return { ok: false, error: status.message?.trim() || "We're not accepting online orders right now." };
   const locationId = await locationIdFromSlug(input.locationSlug);
   if (!locationId) return { ok: false, error: "That location isn't available." };
-  const customer = await getCustomer();
+  const customer = await getShoppingCustomer();
   // Resolve the tiered delivery fee from the postcode when we have one, so the
   // summary matches what checkout will charge.
   let deliveryFeeOverride: number | null = null;
@@ -175,7 +175,7 @@ async function createCheckoutInner(input: CheckoutInput): Promise<CheckoutResult
 
   // Resolve the signed-in customer (null for guests). Used to owner-scope personal
   // vouchers (F4), enforce per-customer promo limits (F5), and attribute loyalty.
-  const customer = await getCustomer();
+  const customer = await getShoppingCustomer();
   const customerId = customer?.userId ?? null;
 
   // Authoritative pricing (delivery fee = the distance-tiered fee resolved above).
