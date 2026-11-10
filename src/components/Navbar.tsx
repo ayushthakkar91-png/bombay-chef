@@ -35,12 +35,20 @@ export function Navbar() {
     pathname?.startsWith('/account');
 
   useEffect(() => {
+    // Passive: otherwise the browser must wait to see whether this handler calls
+    // preventDefault before it may scroll, which stutters every frame on mobile.
+    // rAF-coalesced so a burst of scroll events causes one setState per frame.
+    let frame = 0;
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        setIsScrolled(window.scrollY > 50);
+      });
     };
     handleScroll();
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => { if (frame) cancelAnimationFrame(frame); window.removeEventListener("scroll", handleScroll); };
   }, []);
 
   const toggleMobileMenu = () => {

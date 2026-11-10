@@ -133,7 +133,15 @@ export function MenuBrowser({
                         </div>
                         {item.imageUrl && (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={item.imageUrl} alt={item.name} className="h-20 w-20 shrink-0 self-center rounded-xl object-cover shadow-sm ring-1 ring-[#2A211C]/10 sm:h-[88px] sm:w-[88px]" />
+                          <img
+                            src={item.imageUrl.replace(/\.webp$/, "-sm.webp")}
+                            alt={item.name}
+                            width={88}
+                            height={88}
+                            loading="lazy"
+                            decoding="async"
+                            className="h-20 w-20 shrink-0 self-center rounded-xl object-cover shadow-sm ring-1 ring-[#2A211C]/10 sm:h-[88px] sm:w-[88px]"
+                          />
                         )}
                       </button>
                       {/* Explicit add affordance — one tap for simple items, opens options when required. */}

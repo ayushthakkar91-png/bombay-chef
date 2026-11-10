@@ -25,7 +25,8 @@ type OrderContextValue = OrderState & {
   clear: () => void;
 };
 
-const STORAGE_KEY = "bbc.order.v1";
+// Bumped to v2 when the menu was rebuilt and every dish got a new id.
+const STORAGE_KEY = "bbc.order.v2";
 const EMPTY: OrderState = { locationSlug: null, fulfilment: "delivery", postcode: null, lines: [], promoCode: null };
 
 const OrderContext = createContext<OrderContextValue | null>(null);
