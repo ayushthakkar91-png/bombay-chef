@@ -130,13 +130,16 @@ class OrderPrintService : Service() {
                         val id = o.optString("_id")
                         // A reprint must also clear the "NOT PRINTED" badge: record it
                         // locally and mark it printed on the server once submitted.
-                        printNow(o) { success, reason ->
+                        // Claim it first: the 5s poll can land between submitting this and
+                        // recording it, see an unprinted order and print a second copy.
+                        if (id.isNotEmpty() && !printingInFlight.add(id)) return START_NOT_STICKY
+                        printNow(o, copiesOverride = 1) { success, reason ->
                             if (success && id.isNotEmpty()) {
-                                recordPrinted(id); mark(id)
+                                recordPrinted(id); mark(id); printingInFlight.remove(id)
                             } else if (!success) {
                                 // Staff pressed REPRINT and nothing came out — say why
                                 // instead of silently doing nothing.
-                                updateNotification(reason ?: "Print failed — check the printer")
+                                printingInFlight.remove(id); updateNotification(reason ?: "Print failed — check the printer")
                             }
                         }
                     } catch (e: Exception) {}
@@ -309,7 +312,7 @@ class OrderPrintService : Service() {
                         if (!isPrnt && !hasPrinted(id) && (isAdminReprint || newerThanBaseline)) {
                             // in-flight guard (this poll cycle) + persistent print-once guard
                             if (printingInFlight.add(id)) {
-                                printNow(o) { success, reason ->
+                                printNow(o, copiesOverride = 1) { success, reason ->
                                     if (success) {
                                         // Record locally FIRST — a service restart or a failed
                                         // server mark can then never re-print this order.
@@ -476,9 +479,11 @@ class OrderPrintService : Service() {
      * Queue a ticket. The first prints immediately; each one after it waits for
      * the configured pause (Settings -> Pause between tickets).
      */
-    private fun printNow(order: JSONObject, onComplete: ((Boolean, String?) -> Unit)?) {
+    private fun printNow(order: JSONObject, copiesOverride: Int? = null, onComplete: ((Boolean, String?) -> Unit)?) {
         val gapMs = SettingsStore.printGapSec.value * 1000L
-        val copies = SettingsStore.printCopies.value.coerceIn(1, 5)
+        // A manual reprint means one ticket. "Receipts per order" is about how
+        // many a NEW order needs, not how many someone wants when they tap reprint.
+        val copies = copiesOverride ?: SettingsStore.printCopies.value.coerceIn(1, 5)
 
         // Each copy is its own print job rather than one buffered strip, so the
         // pause falls between copies as well as between orders. Only the first
