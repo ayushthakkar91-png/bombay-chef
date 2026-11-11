@@ -38,7 +38,7 @@ export async function enqueueOrderEmail(
   const { data } = await supabase
     .from("orders")
     .select(
-      "code, fulfilment, status, total_pence, prep_time_min, contact_name, contact_email, track_token, order_items(name, qty), locations(name)",
+      "code, fulfilment, status, total_pence, prep_time_min, contact_name, contact_email, track_token, delivery_address, order_items(name, qty), locations(name)",
     )
     .eq("id", orderId)
     .maybeSingle();
@@ -56,6 +56,7 @@ export async function enqueueOrderEmail(
     locationName,
     code: data.code as string,
     fulfilment: data.fulfilment as string,
+    deliveryAddressLabel: addressLine(data.delivery_address as Record<string, string> | null),
     etaLabel: prep ? `about ${prep} minutes` : undefined,
     totalLabel: money(data.total_pence as number),
     itemsSummary: items.map((i) => `${i.qty}× ${i.name}`).join(", "),
@@ -65,4 +66,11 @@ export async function enqueueOrderEmail(
   };
 
   await enqueueEmail({ template, to: recipient, toName: payload.guestName, payload, orderId });
+}
+
+/** One-line delivery address for an email, or undefined when there isn't one. */
+function addressLine(a: Record<string, string> | null): string | undefined {
+  if (!a) return undefined;
+  const parts = [a.line1, a.line2, a.city, a.postcode].filter((v) => v && v.trim());
+  return parts.length ? parts.join(", ") : undefined;
 }
