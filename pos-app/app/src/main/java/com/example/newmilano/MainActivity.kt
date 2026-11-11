@@ -352,8 +352,34 @@ class MainActivity : ComponentActivity() {
                         Text("£${money(order.total)}", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = Color.Black)
                     }
                     Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = onClick, modifier = Modifier.fillMaxWidth().height(44.dp), shape = RoundedCornerShape(10.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1F2937))) {
-                        Text("VIEW ORDER", fontWeight = FontWeight.Bold)
+                    // The job in front of staff, on the card itself. Opening an order just to
+                    // accept it costs two taps in a kitchen where hands are full.
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = onClick,
+                            modifier = Modifier.weight(1f).height(44.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1F2937))
+                        ) { Text("VIEW", fontWeight = FontWeight.Bold) }
+
+                        when (order.status) {
+                            "pending" -> Button(
+                                onClick = { updateStatus(order.id, "preparing") },
+                                modifier = Modifier.weight(1.4f).height(44.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5722))
+                            ) { Text("ACCEPT", fontWeight = FontWeight.Bold) }
+
+                            "preparing" -> Button(
+                                onClick = { updateStatus(order.id, "ready") },
+                                modifier = Modifier.weight(1.4f).height(44.dp),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                            ) { Text("READY", fontWeight = FontWeight.Bold) }
+
+                            // Already ready: nothing left to press here.
+                            else -> {}
+                        }
                     }
                 }
             }
