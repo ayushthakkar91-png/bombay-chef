@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
+import { useLenis } from "lenis/react";
 
 import type { OrderingMenu } from "@/lib/repositories/ordering-menu";
 import type { DeliveryCheck } from "@/lib/ordering/delivery";
@@ -45,6 +46,17 @@ export function CheckoutForm({
   // Set once createCheckout returns an embedded Stripe session — swaps the form
   // for the in-page card entry.
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+
+  // Moving to the payment step swaps the page for a much shorter one, and the
+  // browser keeps the old scroll offset — so tapping Pay dropped people at the
+  // footer instead of the card form. Lenis owns the scroll here, so ask it;
+  // fall back to the window when smooth scrolling is off.
+  const lenis = useLenis();
+  useEffect(() => {
+    if (!clientSecret) return;
+    if (lenis) lenis.scrollTo(0, { immediate: true });
+    else window.scrollTo({ top: 0, behavior: "auto" });
+  }, [clientSecret, lenis]);
 
   const [contact, setContact] = useState({ name: initialContact?.name ?? "", email: initialContact?.email ?? "", phone: initialContact?.phone ?? "" });
   // How much the signed-in account actually supplied, so the banner can tell
