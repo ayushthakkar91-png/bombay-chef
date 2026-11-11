@@ -42,10 +42,16 @@ export async function setOrderStatus(_p: ActionState, form: FormData): Promise<A
   const supabase = await getUserClient();
   if (!supabase) return fail("Database not connected.");
 
-  // A PAID order can't simply be cancelled — that owes the customer a refund.
+  // Cancelling a PAID order does not return the money — that happens in Stripe.
   if (next === "cancelled") {
     const { data: pay } = await supabase.from("payments").select("status").eq("order_id", id).maybeSingle();
-    if (pay?.status === "succeeded") return fail("This order is paid — use Refund to cancel and return the money.");
+    // Refunds are issued in the Stripe dashboard, so admin cannot both cancel and
+    // return the money. Cancelling a paid order is still allowed — a kitchen must
+    // be able to clear an order it cannot fulfil — but only with an explicit
+    // acknowledgement that the customer has not been refunded by doing so.
+    if (pay?.status === "succeeded" && str(form, "acknowledgeNoRefund") !== "yes") {
+      return fail("This order is paid. Cancelling does not refund the customer — refund it in Stripe.");
+    }
   }
 
   const { error } = await supabase.from("orders").update({ status: next }).eq("id", id);
