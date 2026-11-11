@@ -33,9 +33,15 @@ describe("invisible bot checks", () => {
     expect(automatedReason({ honeypot: "", renderedAt: "" })).toBeNull();
   });
 
-  it("rejects a tampered or unreadable timestamp", () => {
+  it("rejects an unreadable timestamp", () => {
     expect(automatedReason({ honeypot: "", renderedAt: "not-a-number" })).toBe("unreadable timestamp");
-    expect(automatedReason({ honeypot: "", renderedAt: now() + 60_000 })).toBe("timestamp in the future");
+  });
+
+  it("lets a fast clock through rather than calling a customer a bot", () => {
+    // The timestamp came from the visitor clock and was compared against the
+    // server one. A device running a few seconds fast is common; being refused
+    // for it is not acceptable.
+    expect(automatedReason({ honeypot: "", renderedAt: now() + 60_000 })).toBeNull();
   });
 
   it("rejects a form left open for half a day", () => {
@@ -44,5 +50,34 @@ describe("invisible bot checks", () => {
 
   it("honours a custom minimum for slower forms", () => {
     expect(automatedReason({ honeypot: "", renderedAt: now() - 4_000 }, 10)).toMatch(/submitted after/);
+  });
+
+  describe("duration, which is what the forms now send", () => {
+    it("accepts a normal fill", () => {
+      expect(automatedReason({ honeypot: "", elapsedMs: 20_000 })).toBeNull();
+    });
+
+    it("catches an instant submission", () => {
+      expect(automatedReason({ honeypot: "", elapsedMs: 150 })).toMatch(/submitted after/);
+    });
+
+    it("is immune to clock skew, unlike a timestamp", () => {
+      // Same submission, a device whose clock is a minute fast. The duration is
+      // measured in the browser, so the server never compares two clocks.
+      expect(automatedReason({ honeypot: "", elapsedMs: 20_000, renderedAt: now() + 60_000 })).toBeNull();
+    });
+
+    it("still defers to the honeypot", () => {
+      expect(automatedReason({ honeypot: "spam", elapsedMs: 20_000 })).toBe("honeypot filled");
+    });
+
+    it("rejects a nonsense duration", () => {
+      expect(automatedReason({ honeypot: "", elapsedMs: -5 })).toBe("unreadable duration");
+      expect(automatedReason({ honeypot: "", elapsedMs: "abc" })).toBe("unreadable duration");
+    });
+
+    it("rejects a form left open half a day", () => {
+      expect(automatedReason({ honeypot: "", elapsedMs: 13 * 3600 * 1000 })).toBe("stale form");
+    });
   });
 });

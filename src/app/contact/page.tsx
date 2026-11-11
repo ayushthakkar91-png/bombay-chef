@@ -28,7 +28,7 @@ export default function ContactPage() {
       subject: String(fd.get("subject") ?? ""),
       message: String(fd.get("message") ?? ""),
       honeypot: String(fd.get(HONEYPOT_FIELD) ?? ""),
-      renderedAt,
+      elapsedMs: Date.now() - renderedAt,
     };
     start(async () => {
       const r = await submitEnquiry(input);

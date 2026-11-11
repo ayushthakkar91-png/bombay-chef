@@ -35,10 +35,10 @@ export default async function OrderTrackPage({
   searchParams,
 }: {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ paid?: string }>;
+  searchParams: Promise<{ paid?: string; cash?: string }>;
 }) {
   const { token } = await params;
-  const { paid } = await searchParams;
+  const { paid, cash } = await searchParams;
 
   // Recovery: if this order is still awaiting payment, ask Stripe directly — the
   // customer may have paid while our webhook was delayed or failed. Confirms the
@@ -68,7 +68,8 @@ export default async function OrderTrackPage({
 
   return (
     <main className="min-h-screen bg-[#F6F2EA] pt-[104px] lg:pt-[120px] pb-24 px-6">
-      <TrackingControls isLive={isLive} awaitingPayment={awaitingPayment} paid={paid === "1"} />
+      <TrackingControls isLive={isLive} awaitingPayment={awaitingPayment} /* A cash order is placed, just not charged — the basket still has to go. */
+        paid={paid === "1" || cash === "1"} />
       <div className="max-w-[720px] mx-auto">
         {/* Purchase progress: payment still settling = step 3, otherwise done. */}
         {!stopped && <CheckoutSteps current={awaitingPayment ? 3 : 4} />}

@@ -20,11 +20,12 @@ export async function submitEnquiry(input: {
   /** Hidden anti-bot fields; absent on an older cached page. */
   honeypot?: string | null;
   renderedAt?: string | number | null;
+  elapsedMs?: number | string | null;
 }): Promise<{ ok: boolean; error?: string }> {
   // Invisible bot checks first, before any work. Reporting success to a bot
   // keeps it from retrying with variations, and tells it nothing about which
   // check caught it.
-  const bot = automatedReason({ honeypot: input.honeypot, renderedAt: input.renderedAt });
+  const bot = automatedReason({ honeypot: input.honeypot, renderedAt: input.renderedAt, elapsedMs: input.elapsedMs });
   if (bot) {
     console.warn(`[contact] dropped automated submission: ${bot}`);
     return { ok: true };
