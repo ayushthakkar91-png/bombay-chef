@@ -4,12 +4,16 @@ import { useState, useTransition } from "react";
 import { motion } from "framer-motion";
 
 import { submitEnquiry } from "./actions";
+import { HONEYPOT_FIELD, RENDERED_AT_FIELD } from "@/lib/antibot";
 
 export default function ContactPage() {
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // When this form appeared. A bot posts in milliseconds; a person cannot.
+  const [renderedAt] = useState(() => Date.now());
 
   const handleFocus = (field: string) => setFocusedField(field);
   const handleBlur = () => setFocusedField(null);
@@ -23,6 +27,8 @@ export default function ContactPage() {
       email: String(fd.get("email") ?? ""),
       subject: String(fd.get("subject") ?? ""),
       message: String(fd.get("message") ?? ""),
+      honeypot: String(fd.get(HONEYPOT_FIELD) ?? ""),
+      renderedAt,
     };
     start(async () => {
       const r = await submitEnquiry(input);
@@ -63,8 +69,8 @@ export default function ContactPage() {
                   Private Events & Catering
                 </h4>
                 <p>Host your next event with us. From corporate lunches to large celebrations.</p>
-                <a href="mailto:info@bombaybicyclechef.com" className="text-[#2B221D] font-medium hover:text-[#B08A3E] transition-colors">
-                  info@bombaybicyclechef.com
+                <a href="mailto:bombaybicyclechefbalham@gmail.com" className="text-[#2B221D] font-medium hover:text-[#B08A3E] transition-colors">
+                  bombaybicyclechefbalham@gmail.com
                 </a>
               </div>
 
@@ -83,6 +89,20 @@ export default function ContactPage() {
           {/* Right Side: Form */}
           <div className="flex flex-col justify-center">
             <form className="flex flex-col space-y-12 w-full max-w-[500px]" onSubmit={onSubmit}>
+              {/* Hidden from people, irresistible to bots. Not display:none —
+                  some bots skip those — but moved out of view and off the tab
+                  order, and labelled so a screen reader skips it too. */}
+              <div aria-hidden="true" className="absolute left-[-9999px] top-auto h-px w-px overflow-hidden">
+                <label htmlFor={HONEYPOT_FIELD}>Company website</label>
+                <input
+                  id={HONEYPOT_FIELD}
+                  name={HONEYPOT_FIELD}
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                />
+              </div>
+              <input type="hidden" name={RENDERED_AT_FIELD} value={renderedAt} readOnly />
               
               {[
                 { id: "name", label: "Full Name", type: "text", placeholder: "Your Name" },

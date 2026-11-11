@@ -12,6 +12,20 @@ import { money, siteUrl } from "@/lib/format";
  * location with the service client (orders aren't readable via RLS for the
  * outbox worker). `status` lets the cancelled template distinguish refunds.
  */
+/**
+ * Which status change tells the customer something worth an email.
+ *
+ * Shared, because both the admin panel and the Sunmi terminal move orders
+ * along and a customer should not get an email only when staff happen to use
+ * the website. Statuses not listed here are internal.
+ */
+export const STATUS_EMAIL: Partial<Record<OrderStatus, TemplateId>> = {
+  accepted: "order_accepted",
+  ready_for_collection: "order_ready_collection",
+  out_for_delivery: "order_out_for_delivery",
+  cancelled: "order_cancelled",
+};
+
 export async function enqueueOrderEmail(
   orderId: string,
   template: TemplateId,

@@ -4,6 +4,7 @@ import { createEnquiry } from "@/lib/repositories/enquiries";
 import { getEmailProvider, ADMIN_NOTIFY_EMAIL } from "@/lib/email/provider";
 import { rateLimit } from "@/lib/ratelimit";
 import { EMAIL_RE } from "@/lib/patterns";
+import { automatedReason } from "@/lib/antibot";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -16,7 +17,19 @@ export async function submitEnquiry(input: {
   email: string;
   subject: string;
   message: string;
+  /** Hidden anti-bot fields; absent on an older cached page. */
+  honeypot?: string | null;
+  renderedAt?: string | number | null;
 }): Promise<{ ok: boolean; error?: string }> {
+  // Invisible bot checks first. A bot is told the message sent, because an
+  // error invites a retry with variations, and the reason is logged only —
+  // telling it which check caught it is how it learns to pass.
+  const bot = automatedReason({ honeypot: input.honeypot, renderedAt: input.renderedAt });
+  if (bot) {
+    console.warn(`[contact] dropped automated submission: ${bot}`);
+    return { ok: true };
+  }
+
   if (!(await rateLimit("contact", { limit: 5, windowSec: 300 })).ok) {
     return { ok: false, error: "Too many messages just now — please wait a moment and try again." };
   }

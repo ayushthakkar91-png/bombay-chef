@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
+import { HONEYPOT_FIELD } from "@/lib/antibot";
 import { flags } from "@/lib/flags";
 import Link from "next/link";
 import { Check } from "lucide-react";
@@ -78,6 +79,9 @@ export function CheckoutForm({
   const [giftMsg, setGiftMsg] = useState<string | null>(null);
   // Payable total reported by the order summary (null until delivery is priced).
   const [payTotal, setPayTotal] = useState<number | null>(null);
+  const [payMethod, setPayMethod] = useState<"card" | "cash">("card");
+  // When this page appeared — a cash order posted in milliseconds is a bot.
+  const [renderedAtForm] = useState(() => Date.now());
 
   // Live delivery check: as the postcode is typed we confirm the area and set it
   // on the cart, which re-prices the summary with the exact distance-tiered fee.
@@ -191,6 +195,9 @@ export function CheckoutForm({
       marketingOptIn,
       giftCardCode: giftBalance != null ? giftCode : null,
       idempotencyKey: idempotencyKey(),
+      paymentMethod: payMethod,
+      honeypot: (document.getElementById(HONEYPOT_FIELD) as HTMLInputElement | null)?.value ?? "",
+      renderedAt: renderedAtForm,
     };
     startTransition(async () => {
       const res = await createCheckout(input);
@@ -337,14 +344,49 @@ export function CheckoutForm({
               <h2 className="font-serif text-[22px] text-[#2B221D] mb-3">Order summary</h2>
               <CartContents menu={menu} locationSlug={locationSlug} showDelivery onTotalChange={setPayTotal} />
               {error && <p role="alert" className="mt-4 text-[14px] text-[#5D0925] font-sans">{error}</p>}
+              {/* Cash is taken at the counter or the door. Offered plainly, because a
+                  customer who wants it will otherwise just phone. */}
+              <div className="mt-5 grid grid-cols-2 gap-2">
+                {([
+                  ["card", "Pay by card"],
+                  ["cash", fulfilment === "delivery" ? "Cash on delivery" : "Cash on collection"],
+                ] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setPayMethod(value)}
+                    aria-pressed={payMethod === value}
+                    className={`h-[52px] border text-[12px] tracking-[0.10em] uppercase font-sans transition-colors duration-200 ${
+                      payMethod === value
+                        ? "border-[#5D0925] bg-[#5D0925]/5 text-[#5D0925]"
+                        : "border-[#2A211C]/20 text-[#5A524B] hover:border-[#5D0925]/40"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              <div aria-hidden="true" className="absolute left-[-9999px] h-px w-px overflow-hidden">
+                <label htmlFor={HONEYPOT_FIELD}>Company website</label>
+                <input id={HONEYPOT_FIELD} name={HONEYPOT_FIELD} type="text" tabIndex={-1} autoComplete="off" />
+              </div>
               <button
                 onClick={pay}
                 disabled={pending}
                 className="mt-5 w-full inline-flex items-center justify-center h-[56px] bg-[#5D0925] text-[#F6F2EA] text-[14px] tracking-[0.12em] uppercase font-sans hover:bg-[#420616] transition-colors duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {pending ? "Starting payment…" : chargePence != null ? `Pay ${money(chargePence)}` : "Pay securely"}
+                {pending
+                    ? (payMethod === "cash" ? "Placing order…" : "Starting payment…")
+                    : payMethod === "cash"
+                      ? (chargePence != null ? `Place order · ${money(chargePence)} on ${fulfilment === "delivery" ? "delivery" : "collection"}` : "Place order")
+                      : chargePence != null ? `Pay ${money(chargePence)}` : "Pay securely"}
               </button>
-              <p className="mt-3 text-[12px] text-[#5A524B] font-sans text-center">Card, Apple Pay &amp; Google Pay · processed securely by Stripe.</p>
+              <p className="mt-3 text-[12px] text-[#5A524B] font-sans text-center">
+                  {payMethod === "cash"
+                    ? `Pay in cash when you ${fulfilment === "delivery" ? "receive your order" : "collect"}. Please have the right amount if you can.`
+                    : "Card, Apple Pay & Google Pay · processed securely by Stripe."}
+                </p>
             </div>
           </aside>
         </div>
