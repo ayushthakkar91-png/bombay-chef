@@ -274,7 +274,9 @@ class MainActivity : ComponentActivity() {
         val delivery = isDelivery(order.orderType)
         val typeColor = if (delivery) Color(0xFFE53935) else Color(0xFF1E88E5)
         val accentColor = when(order.status) { "pending" -> Color(0xFFFF5722); "preparing" -> Color(0xFFFFB300); else -> Color(0xFF4CAF50) }
-        Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
+        // Tapping anywhere on the card opens the order. Staff reach for the card,
+        // not the small button at the bottom of it.
+        Card(modifier = Modifier.fillMaxWidth().clickable { onClick() }, shape = RoundedCornerShape(12.dp), colors = CardDefaults.cardColors(containerColor = Color.White), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
             Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
                 Box(modifier = Modifier.width(6.dp).fillMaxHeight().background(accentColor))
                 Column(modifier = Modifier.padding(start = 14.dp, top = 12.dp, end = 12.dp, bottom = 12.dp)) {

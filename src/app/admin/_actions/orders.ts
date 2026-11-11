@@ -7,7 +7,7 @@ import { getUserClient, getServiceClient } from "@/lib/supabase/clients";
 import { requireRole } from "@/lib/auth/dal";
 import { type ActionState, fail, ok, str } from "@/lib/admin/validation";
 import { ORDER_TRANSITIONS, type OrderStatus } from "@/lib/ordering/constants";
-import { enqueueOrderEmail } from "@/lib/ordering/notify";
+import { enqueueOrderEmail, STATUS_EMAIL } from "@/lib/ordering/notify";
 import { isStripeConfigured, createRefund } from "@/lib/stripe/client";
 import { reverseEarnForOrder } from "@/lib/loyalty/service";
 import type { TemplateId } from "@/lib/email/templates";
@@ -18,12 +18,6 @@ function revalidateOrders() {
   revalidatePath("/admin/orders/history");
 }
 
-const STATUS_EMAIL: Partial<Record<OrderStatus, TemplateId>> = {
-  accepted: "order_accepted",
-  ready_for_collection: "order_ready_collection",
-  out_for_delivery: "order_out_for_delivery",
-  cancelled: "order_cancelled",
-};
 
 /** Advance an order's status (accept / preparing / ready / out / completed / cancel-unpaid). */
 export async function setOrderStatus(_p: ActionState, form: FormData): Promise<ActionState> {

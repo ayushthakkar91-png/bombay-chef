@@ -1,4 +1,5 @@
 import "server-only";
+import { enqueueOrderEmail, STATUS_EMAIL } from "@/lib/ordering/notify";
 
 import { getServiceClient } from "@/lib/supabase/clients";
 import { LIVE_STATUSES, type Fulfilment, type OrderStatus } from "@/lib/ordering/constants";
@@ -102,6 +103,11 @@ export async function updateOrderStatusPos(orderId: string, locationId: string, 
     if (error) return { ok: false, error: "Update failed." };
     if (!data || data.length === 0) return { ok: false, error: "Order changed — please refresh." };
     await recordOrderEvent(orderId, "POS_STATUS_CHANGED", { from: current, to: next, via: "pos" });
+    // Tell the customer. Pressing READY on the terminal used to email nobody,
+    // so whether a customer heard their food was ready depended on which
+    // screen staff happened to use.
+    const tmpl = STATUS_EMAIL[next];
+    if (tmpl) await enqueueOrderEmail(orderId, tmpl);
     current = next;
   }
   return { ok: true };
