@@ -1,1 +1,6 @@
 /build
+# Firebase config. Not a secret — the API key inside ships in every APK and is
+# restricted by package name in Google Cloud — but keeping it out of git stops
+# secret scanners flagging the repo. Download it from the Firebase console:
+# Project settings -> Your apps -> google-services.json
+google-services.json
