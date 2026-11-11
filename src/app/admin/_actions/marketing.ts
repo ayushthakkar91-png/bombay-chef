@@ -16,9 +16,15 @@ export async function createCampaign(_p: ActionState, form: FormData): Promise<A
   const name = str(form, "name");
   const subject = str(form, "subject");
   const body = str(form, "body");
+  const imageUrl = str(form, "imageUrl").trim() || null;
+  const ctaUrl = str(form, "ctaUrl").trim() || null;
+  const ctaLabel = str(form, "ctaLabel").trim() || null;
   const segmentId = str(form, "segmentId") || null;
-  const values = { name, subject, body };
+  const values = { name, subject, body, imageUrl: imageUrl ?? "", ctaUrl: ctaUrl ?? "", ctaLabel: ctaLabel ?? "" };
   if (!name || !subject || !body) return fail("Name, subject and message are all required.", undefined, values);
+  for (const [label, url] of [["image", imageUrl], ["button link", ctaUrl]] as const) {
+    if (url && !/^https:\/\//i.test(url)) return fail(`The ${label} must be a full https:// link.`, undefined, values);
+  }
 
   const supabase = await getUserClient();
   if (!supabase) return fail("Unavailable.");
@@ -27,6 +33,9 @@ export async function createCampaign(_p: ActionState, form: FormData): Promise<A
     name,
     subject,
     body_text: body,
+    image_url: imageUrl,
+    cta_url: ctaUrl,
+    cta_label: ctaLabel,
     segment_id: segmentId,
     audience: segmentId ?? "all subscribers",
     status: "draft",

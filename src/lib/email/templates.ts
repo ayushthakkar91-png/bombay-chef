@@ -8,6 +8,8 @@ import "server-only";
 
 export type ReservationEmailPayload = {
   guestName?: string;
+  /** Staff-only: shown in the admin new-reservation alert. */
+  guestPhone?: string;
   locationName?: string;
   dateLabel?: string;
   timeLabel?: string;
@@ -36,6 +38,10 @@ export type ReservationEmailPayload = {
   bodyText?: string;
   unsubscribeUrl?: string;
   ctaUrl?: string;
+  /** Campaign hero image (an https URL, uploaded or pasted in admin). */
+  imageUrl?: string;
+  /** Label for the campaign's call-to-action button. */
+  ctaLabel?: string;
   // Gift card (Phase 8)
   fromName?: string;
 };
@@ -181,7 +187,33 @@ function orderText(p: ReservationEmailPayload): string {
     .join("\n");
 }
 
+const escapeHtml = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+
+/** Copy of the payload with every string value HTML-escaped (all fields are plain text). */
+function escapePayload(p: ReservationEmailPayload): ReservationEmailPayload {
+  return Object.fromEntries(
+    Object.entries(p).map(([k, v]) => [k, typeof v === "string" ? escapeHtml(v) : v]),
+  ) as ReservationEmailPayload;
+}
+
+/**
+ * Render an email. Payload values include customer-typed text (names, gift-card
+ * messages, cancellation reasons), so the HTML body is rendered from an
+ * HTML-escaped copy — nobody can inject links, images or markup into an email
+ * (e.g. the staff new-order alert or a gift card sent to someone else). The
+ * subject and plain-text body are rendered from the raw values.
+ */
 export function renderTemplate(
+  template: TemplateId,
+  p: ReservationEmailPayload,
+): { subject: string; html: string; text: string } {
+  const { subject, text } = renderInner(template, p);
+  const { html } = renderInner(template, escapePayload(p));
+  return { subject, html, text };
+}
+
+function renderInner(
   template: TemplateId,
   p: ReservationEmailPayload,
 ): { subject: string; html: string; text: string } {
@@ -259,9 +291,10 @@ export function renderTemplate(
         html: shell(
           "New reservation",
           `<p style="font-size:16px;line-height:1.7;">A new booking has come in.</p>${detailRows(p)}
-           <p style="font-family:Arial,sans-serif;font-size:12px;color:${MUTED};">${p.guestName ?? ""}</p>`,
+           <p style="font-family:Arial,sans-serif;font-size:12px;color:${MUTED};">${p.guestName ?? ""}</p>
+           ${p.guestPhone ? `<p style="font-family:Arial,sans-serif;font-size:14px;color:${INK};">Mobile: <a href="tel:${p.guestPhone.replace(/[^\d+]/g, "")}" style="color:${MAROON};">${p.guestPhone}</a></p>` : ""}`,
         ),
-        text: `New reservation.\n\n${textLines(p)}\n${p.guestName ?? ""}`,
+        text: `New reservation.\n\n${textLines(p)}\n${p.guestName ?? ""}${p.guestPhone ? `\nMobile: ${p.guestPhone}` : ""}`,
       };
 
     case "order_confirmation": {
@@ -397,10 +430,18 @@ export function renderTemplate(
         .split(/\n{2,}/)
         .map((para) => `<p style="font-size:16px;line-height:1.7;">${para.replace(/\n/g, "<br/>")}</p>`)
         .join("");
+        // A hero photograph, full width of the card. width is set because Outlook
+        // ignores CSS sizing, and max-width keeps it from overflowing on a phone.
+        const hero = p.imageUrl
+          ? `<img src="${p.imageUrl}" alt="" width="540" style="display:block;width:100%;max-width:540px;height:auto;margin:0 0 22px;" />`
+          : "";
+        const cta = p.ctaUrl ? `<p style="margin-top:18px;">${button(p.ctaUrl, p.ctaLabel || "Find out more")}</p>` : "";
       return {
         subject: p.campaignSubject ?? "Bombay Bicycle Chef",
-        html: shell(p.campaignSubject ?? "Bombay Bicycle Chef", `${paras}${unsub(p.unsubscribeUrl)}`),
-        text: `${p.bodyText ?? ""}${p.unsubscribeUrl ? `\n\nUnsubscribe: ${p.unsubscribeUrl}` : ""}`,
+        html: shell(p.campaignSubject ?? "Bombay Bicycle Chef", `${hero}${paras}${cta}${unsub(p.unsubscribeUrl)}`),
+        text: `${p.bodyText ?? ""}${p.ctaUrl ? `
+
+${p.ctaLabel || "Find out more"}: ${p.ctaUrl}` : ""}${p.unsubscribeUrl ? `\n\nUnsubscribe: ${p.unsubscribeUrl}` : ""}`,
       };
     }
   }
