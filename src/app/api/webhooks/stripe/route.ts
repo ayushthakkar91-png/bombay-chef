@@ -7,6 +7,7 @@ import { getServiceClient } from "@/lib/supabase/clients";
 import { confirmPaidOrder } from "@/lib/ordering/confirm";
 import { confirmGiftCardPurchase } from "@/lib/giftcards/service";
 import { recordOrderEvent } from "@/lib/ordering/events";
+import { dispatchDue } from "@/lib/notifications/outbox";
 import { dispatchTelegramDue } from "@/lib/notifications/telegram-dispatch";
 import { dispatchFcmDue } from "@/lib/notifications/fcm-dispatch";
 
@@ -105,7 +106,10 @@ async function handleEvent(supabase: SupabaseClient, eventType: string, event: R
 
       const confirmed = await confirmPaidOrder(metadata.order_id, { paymentIntent, amountPence: amountTotal, method: "card" });
       if (confirmed) {
-        after(async () => { await Promise.allSettled([dispatchTelegramDue(), dispatchFcmDue()]); });
+        // dispatchDue is the customer's email. Without it the confirmation sat in
+        // the outbox until a cron ran — hours, and the customer had no order
+        // number in writing.
+        after(async () => { await Promise.allSettled([dispatchDue(), dispatchTelegramDue(), dispatchFcmDue()]); });
         return true;
       }
       // Not confirmed by us: fine if it's already past pending_payment (a retry or
