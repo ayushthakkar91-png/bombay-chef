@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import { flags } from "@/lib/flags";
 
 import { IDLE } from "@/lib/admin/validation";
-import { setOrderStatus, refundOrder } from "@/app/admin/_actions/orders";
+import { setOrderStatus, refundOrder, deleteOrder } from "@/app/admin/_actions/orders";
 import type { OrderStatus, Fulfilment } from "@/lib/ordering/constants";
 import { Modal } from "@/components/admin/Modal";
 import { useActionResult } from "@/components/admin/useActionResult";
@@ -39,6 +39,7 @@ export function OrderActions({ order }: { order: OrderLike }) {
     <div className="flex flex-wrap items-center gap-2">
       {primary && <StatusButton order={order} label={primary.label} next={primary.next} />}
       <CancelButton order={order} />
+      <DeleteButton order={order} />
       {canRefund && (
         <Button variant="danger" onClick={() => setRefundOpen(true)}>
           {order.status === "paid" ? "Reject & refund" : "Refund"}
@@ -111,6 +112,35 @@ function CancelButton({ order }: { order: OrderLike }) {
       <input type="hidden" name="status" value="cancelled" />
       <input type="hidden" name="acknowledgeNoRefund" value="yes" />
       <SubmitButton variant="ghost" pendingLabel="Cancelling…">Cancel</SubmitButton>
+    </form>
+  );
+}
+
+/**
+ * Remove an order for good.
+ *
+ * Only shown for orders that never took money — cancelled ones and baskets
+ * abandoned before payment. A paid order is the record of money received, and
+ * deleting it would leave a payment in Stripe with nothing here to reconcile
+ * against. The server enforces this too; the button is just honest about it.
+ */
+function DeleteButton({ order }: { order: OrderLike }) {
+  const [state, action] = useActionState(deleteOrder, IDLE);
+  useActionResult(state);
+
+  const deletable = order.status === "cancelled" || order.status === "pending_payment";
+  if (!deletable) return null;
+
+  return (
+    <form
+      action={action}
+      onSubmit={(e) => {
+        if (!window.confirm("Delete this order permanently?\n\nIt disappears from history and reports. This cannot be undone.")) e.preventDefault();
+      }}
+    >
+      <input type="hidden" name="id" value={order.id} />
+      <input type="hidden" name="locationId" value={order.locationId} />
+      <SubmitButton variant="ghost" pendingLabel="Deleting…">Delete</SubmitButton>
     </form>
   );
 }

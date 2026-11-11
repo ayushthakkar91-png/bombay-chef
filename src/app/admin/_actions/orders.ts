@@ -169,3 +169,55 @@ export async function refundOrder(_p: ActionState, form: FormData): Promise<Acti
   revalidateOrders();
   return ok(full ? "Order refunded." : `Refunded £${(refundAmount / 100).toFixed(2)}.`);
 }
+
+/**
+ * Permanently remove an order.
+ *
+ * Deliberately limited to orders that were never paid: cancelled ones, and
+ * baskets abandoned before payment. A paid order is the record of money you
+ * took — deleting it would leave the payment in Stripe with nothing on this
+ * side to reconcile against, and your sales figures would quietly stop
+ * matching your bank. Those get cancelled or refunded, never deleted.
+ *
+ * order_items, payments and order_events cascade; loyalty and marketing rows
+ * keep their history with the order id nulled.
+ */
+export async function deleteOrder(_p: ActionState, form: FormData): Promise<ActionState> {
+  const id = str(form, "id");
+  const locationId = str(form, "locationId");
+  if (!id || !locationId) return fail("Missing order.");
+
+  await requireRole("restaurant_manager", locationId);
+
+  if (!(await rateLimit("admin-order-delete", { limit: 20, windowSec: 300, failClosed: true })).ok) {
+    return fail("Too many deletions in a row — wait a few minutes.");
+  }
+
+  const supabase = await getUserClient();
+  if (!supabase) return fail("Database not connected.");
+
+  // Never delete something that took money.
+  const { data: order } = await supabase
+    .from("orders")
+    .select("status")
+    .eq("id", id)
+    .eq("location_id", locationId)
+    .maybeSingle();
+  if (!order) return fail("Order not found.");
+
+  const deletable = order.status === "cancelled" || order.status === "pending_payment";
+  if (!deletable) {
+    return fail("Only cancelled or unpaid orders can be deleted — cancel it first, and refund in Stripe if money was taken.");
+  }
+
+  const { data: pay } = await supabase.from("payments").select("status").eq("order_id", id).maybeSingle();
+  if (pay?.status === "succeeded") {
+    return fail("That order was paid. Refund it in Stripe rather than deleting the record.");
+  }
+
+  const { error } = await supabase.from("orders").delete().eq("id", id).eq("location_id", locationId);
+  if (error) return fail(error.message);
+
+  revalidateOrders();
+  return ok("Order deleted.");
+}
