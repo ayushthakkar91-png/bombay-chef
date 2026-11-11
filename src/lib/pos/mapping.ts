@@ -72,6 +72,8 @@ type OrderRow = {
   placed_at: string | null;
   created_at: string;
   printed_at: string | null;
+  /** Joined payment rows; a cash order has method "cash". */
+  payments?: { method: string | null }[] | { method: string | null } | null;
 };
 
 /** BBC order → the JSON shape the Kotlin app already parses. Money in pounds. */
@@ -84,7 +86,10 @@ export function orderToPosJson(order: OrderRow, items: OrderItemRow[]): Record<s
     totalPrice: money(order.total_pence),
     status: bbcStatusToApp(order.status),
     isPrinted: order.printed_at != null,
-    paymentStatus: "paid", // POS only ever sees paid orders
+    // The terminal prints "CASH — UNPAID" for anything that is not "paid",
+    // which is exactly right: a cash order is confirmed but the money has not
+    // been taken yet, and whoever hands it over has to collect it.
+    paymentStatus: isCashOrder(order) ? "cash" : "paid",
     orderType: order.fulfilment, // "collection" | "delivery" — app's isDelivery() matches
     createdAt: order.placed_at ?? order.created_at,
     subtotal: money(order.subtotal_pence),
@@ -107,4 +112,12 @@ export function orderToPosJson(order: OrderRow, items: OrderItemRow[]): Record<s
       selectedToppings: (it.modifiers ?? []).map((m) => ({ name: m.name, quantity: 1 })),
     })),
   };
+}
+
+/** Was this order placed as cash-on-collection / cash-on-delivery? */
+function isCashOrder(order: OrderRow): boolean {
+  const p = order.payments;
+  if (!p) return false;
+  const rows = Array.isArray(p) ? p : [p];
+  return rows.some((r) => r?.method === "cash");
 }

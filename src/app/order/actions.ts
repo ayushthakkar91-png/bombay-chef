@@ -1,6 +1,7 @@
 "use server";
 
 import { getServiceClient } from "@/lib/supabase/clients";
+import { automatedReason } from "@/lib/antibot";
 import { createHash } from "node:crypto";
 import { priceCart, type PriceResult } from "@/lib/ordering/pricing";
 import { checkDelivery, suggestNearestBranch, type DeliveryCheck, type BranchSuggestion } from "@/lib/ordering/delivery";
@@ -86,6 +87,11 @@ export type CheckoutInput = {
   /** Client-generated UUID, one per checkout attempt, stable across refresh/retry.
    *  Makes double-click / network-retry safe — the same key returns the same order. */
   idempotencyKey?: string | null;
+  /** "card" (Stripe) or "cash" (paid on collection / to the driver). */
+  paymentMethod?: "card" | "cash";
+  /** Invisible bot checks; see src/lib/antibot.ts. */
+  honeypot?: string | null;
+  renderedAt?: string | number | null;
 };
 
 export type CheckoutResult =
@@ -120,6 +126,20 @@ export async function createCheckout(input: CheckoutInput): Promise<CheckoutResu
 }
 
 async function createCheckoutInner(input: CheckoutInput): Promise<CheckoutResult> {
+  // Cash orders take no payment up front, so a fake one costs real food and a
+  // real driver. They get the invisible bot checks and a tighter rate limit;
+  // card orders are protected by the card itself.
+  const cash = input.paymentMethod === "cash";
+  if (cash) {
+    const bot = automatedReason({ honeypot: input.honeypot, renderedAt: input.renderedAt });
+    if (bot) {
+      console.warn(`[checkout] dropped automated cash order: ${bot}`);
+      return { ok: false, error: "We couldn't place that order — please try again." };
+    }
+    if (!(await rateLimit("checkout-cash", { limit: 3, windowSec: 600, failClosed: true })).ok) {
+      return { ok: false, error: "Too many cash orders from here just now. Please pay by card, or call us." };
+    }
+  }
   if (!(await rateLimit("checkout", { limit: 10, windowSec: 60, failClosed: true })).ok) {
     return { ok: false, error: "Too many checkout attempts. Please wait a moment and try again." };
   }
@@ -289,6 +309,14 @@ async function createCheckoutInner(input: CheckoutInput): Promise<CheckoutResult
     // the balance is not taken twice.
     await confirmPaidOrder(orderId, { method: "gift_card", amountPence: debit.debitedPence, paymentIntent: null });
     return { ok: true, url: `${await checkoutBaseUrl()}/order/track/${order.track_token as string}?paid=1` };
+  }
+
+  // Cash: nothing to charge now. Confirm it so the kitchen sees it, recorded as
+  // method 'cash' so the sales report and the terminal both know the money has
+  // not been taken yet — whoever hands the food over has to collect it.
+  if (cash) {
+    await confirmPaidOrder(orderId, { method: "cash", amountPence: chargePence, paymentIntent: null });
+    return { ok: true, url: `${await checkoutBaseUrl()}/order/track/${order.track_token as string}?cash=1` };
   }
 
   return resumeCheckout(orderId, order.code as string, order.track_token as string, chargePence, email);

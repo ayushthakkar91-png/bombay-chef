@@ -36,7 +36,10 @@ export async function confirmPaidOrder(
 
   await supabase.from("payments").insert({
     order_id: orderId,
-    provider: opts.method === "gift_card" ? "gift_card" : "stripe",
+    // Cash is taken at the counter or the door, so it is neither Stripe nor a
+    // gift card. Recording it honestly keeps the sales report truthful about
+    // what actually cleared a card processor.
+    provider: opts.method === "gift_card" ? "gift_card" : opts.method === "cash" ? "cash" : "stripe",
     provider_payment_intent: opts.paymentIntent ?? null,
     amount_pence: opts.amountPence,
     currency: "gbp",

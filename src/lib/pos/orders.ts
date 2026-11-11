@@ -6,7 +6,7 @@ import { recordOrderEvent } from "@/lib/ordering/events";
 import { orderToPosJson, appStatusToBbc, forwardStatusPath } from "./mapping";
 
 const ORDER_COLS =
-  "id, code, status, fulfilment, contact_name, total_pence, subtotal_pence, delivery_fee_pence, discount_pence, promo_code, notes, delivery_address, placed_at, created_at, printed_at";
+  "id, code, status, fulfilment, contact_name, total_pence, subtotal_pence, delivery_fee_pence, discount_pence, promo_code, notes, delivery_address, placed_at, created_at, printed_at, payments(method)";
 
 export async function listLiveOrdersForPos(locationId: string): Promise<Record<string, unknown>[]> {
   const supabase = getServiceClient();
