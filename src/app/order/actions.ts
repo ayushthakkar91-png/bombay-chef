@@ -1,6 +1,9 @@
 "use server";
 
 import { getServiceClient } from "@/lib/supabase/clients";
+import { dispatchTelegramDue } from "@/lib/notifications/telegram-dispatch";
+import { dispatchFcmDue } from "@/lib/notifications/fcm-dispatch";
+import { after } from "next/server";
 import { automatedReason } from "@/lib/antibot";
 import { createHash } from "node:crypto";
 import { priceCart, type PriceResult } from "@/lib/ordering/pricing";
@@ -317,6 +320,11 @@ async function createCheckoutInner(input: CheckoutInput): Promise<CheckoutResult
   // has not been taken — whoever hands the food over collects it.
   if (cash) {
     await confirmPaidOrder(orderId, { method: "cash", amountPence: chargePence, paymentIntent: null });
+    // Flush the outbox now. Card orders get this from the Stripe webhook;
+    // cash never touches Stripe, so without it the kitchen's Telegram and
+    // push alerts would wait for the nightly cron. after() keeps it off the
+    // customer's response.
+    after(async () => { await Promise.allSettled([dispatchTelegramDue(), dispatchFcmDue()]); });
     return { ok: true, url: `${await checkoutBaseUrl()}/order/track/${order.track_token as string}?cash=1` };
   }
 
@@ -346,6 +354,11 @@ async function resumeExistingOrder(o: ExistingOrder, cash: boolean): Promise<Che
   // card form they had just rejected.
   if (cash) {
     await confirmPaidOrder(o.id, { method: "cash", amountPence: charge, paymentIntent: null });
+    // Flush the outbox now. Card orders get this from the Stripe webhook;
+    // cash never touches Stripe, so without it the kitchen's Telegram and
+    // push alerts would wait for the nightly cron. after() keeps it off the
+    // customer's response.
+    after(async () => { await Promise.allSettled([dispatchTelegramDue(), dispatchFcmDue()]); });
     return { ok: true, url: `${await checkoutBaseUrl()}/order/track/${o.track_token}?cash=1` };
   }
   return resumeCheckout(o.id, o.code, o.track_token, charge, undefined);
