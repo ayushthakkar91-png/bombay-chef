@@ -18,6 +18,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -29,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -56,6 +60,9 @@ data class OrderRow(
     val orderType: String,
     val rawJson: JSONObject
 )
+
+/** Orders rendered per page. Ten fills a terminal screen with room to spare. */
+private const val PAGE_SIZE = 10
 
 class MainActivity : ComponentActivity() {
 
@@ -180,6 +187,24 @@ class MainActivity : ComponentActivity() {
             }
             .sortedByDescending { parseIsoMillis(it.rawJson.optString("createdAt")) ?: 0L }
 
+        // Render a page at a time. The service still polls EVERY live order —
+        // it has to, or a ticket further down the list would never print — but
+        // the screen only builds what staff are actually looking at, and grows
+        // as they scroll.
+        val listState = rememberLazyListState()
+        var shown by remember { mutableStateOf(PAGE_SIZE) }
+
+        // A new filter or a shorter list starts again from the first page.
+        LaunchedEffect(todayOnly, hideConfirmed) { shown = PAGE_SIZE }
+
+        // Extend when the last rendered card comes into view.
+        LaunchedEffect(listState, visible.size) {
+            snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 }
+                .collect { last -> if (last >= shown - 2 && shown < visible.size) shown += PAGE_SIZE }
+        }
+
+        val page by remember(visible, shown) { derivedStateOf { visible.take(shown) } }
+
         Column(modifier = Modifier.fillMaxSize()) {
             Box(modifier = Modifier.fillMaxWidth().background(Color(0xFF1F2937)).padding(top = 40.dp, bottom = 12.dp, start = 16.dp, end = 8.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -232,10 +257,21 @@ class MainActivity : ComponentActivity() {
                     Text(if (todayOnly) "No orders today yet" else "No orders", color = Color.Gray)
                 }
             } else {
-                LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                LazyColumn(state = listState, modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     // Keyed by order id: without this every poll rebuilds every row, because the
                     // list is replaced wholesale and Compose cannot tell the rows apart.
-                    items(visible, key = { it.id }) { order -> OrderCard(order, onClick = { selectedOrder = order }) }
+                    items(page, key = { it.id }) { order -> OrderCard(order, onClick = { selectedOrder = order }) }
+                    if (shown < visible.size) {
+                        item {
+                            Text(
+                                "Scroll for ${visible.size - shown} more…",
+                                color = Color.Gray,
+                                fontSize = 13.sp,
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
                 }
             }
         }
