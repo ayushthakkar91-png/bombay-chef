@@ -312,7 +312,9 @@ class OrderPrintService : Service() {
                         if (!isPrnt && !hasPrinted(id) && (isAdminReprint || newerThanBaseline)) {
                             // in-flight guard (this poll cycle) + persistent print-once guard
                             if (printingInFlight.add(id)) {
-                                printNow(o, copiesOverride = 1) { success, reason ->
+                                // No copiesOverride: a NEW order honours "Receipts
+                                // per order". Only a manual reprint forces one.
+                                printNow(o) { success, reason ->
                                     if (success) {
                                         // Record locally FIRST — a service restart or a failed
                                         // server mark can then never re-print this order.
