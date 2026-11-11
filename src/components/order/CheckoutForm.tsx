@@ -197,7 +197,7 @@ export function CheckoutForm({
       idempotencyKey: idempotencyKey(),
       paymentMethod: payMethod,
       honeypot: (document.getElementById(HONEYPOT_FIELD) as HTMLInputElement | null)?.value ?? "",
-      renderedAt: renderedAtForm,
+      elapsedMs: Date.now() - renderedAtForm,
     };
     startTransition(async () => {
       const res = await createCheckout(input);

@@ -33,10 +33,10 @@ export default async function OrderTrackPage({
   searchParams,
 }: {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ paid?: string }>;
+  searchParams: Promise<{ paid?: string; cash?: string }>;
 }) {
   const { token } = await params;
-  const { paid } = await searchParams;
+  const { paid, cash } = await searchParams;
   const order = await getOrderByToken(token);
 
   if (!order) {
@@ -58,7 +58,7 @@ export default async function OrderTrackPage({
 
   return (
     <main className="min-h-screen bg-[#F6F2EA] pt-[104px] lg:pt-[120px] pb-24 px-6">
-      <TrackingControls isLive={isLive} paid={paid === "1"} />
+      <TrackingControls isLive={isLive} paid={paid === "1" || cash === "1"} />
       <div className="max-w-[720px] mx-auto">
         {/* Purchase progress: payment still settling = step 3, otherwise done. */}
         {!stopped && <CheckoutSteps current={order.status === "pending_payment" ? 3 : 4} />}

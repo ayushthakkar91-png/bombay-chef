@@ -92,6 +92,7 @@ export type CheckoutInput = {
   /** Invisible bot checks; see src/lib/antibot.ts. */
   honeypot?: string | null;
   renderedAt?: string | number | null;
+  elapsedMs?: number | string | null;
 };
 
 export type CheckoutResult =
@@ -131,7 +132,7 @@ async function createCheckoutInner(input: CheckoutInput): Promise<CheckoutResult
   // protected by the card itself.
   const cash = input.paymentMethod === "cash";
   if (cash) {
-    const bot = automatedReason({ honeypot: input.honeypot, renderedAt: input.renderedAt });
+    const bot = automatedReason({ honeypot: input.honeypot, renderedAt: input.renderedAt, elapsedMs: input.elapsedMs });
     if (bot) {
       console.warn(`[checkout] dropped automated cash order: ${bot}`);
       return { ok: false, error: "We couldn't place that order — please try again." };

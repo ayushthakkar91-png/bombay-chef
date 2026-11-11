@@ -29,6 +29,15 @@ const MIN_SECONDS = 3;
 const MAX_HOURS = 12;
 
 export type BotSignals = {
+  /**
+   * How long the form was on screen, in milliseconds, measured by the browser.
+   *
+   * A duration, not a timestamp: comparing the visitor's clock against the
+   * server's refused anyone whose device ran a few seconds fast. A bot can
+   * send any number it likes — it can fake a honeypot too — but it has to be
+   * built to, which is the whole bar here.
+   */
+  elapsedMs?: number | string | null;
   /** Value of the honeypot field, if the form sent one. */
   honeypot?: string | null;
   /** Value of the rendered-at field, if the form sent one. */
@@ -45,6 +54,18 @@ export function automatedReason(signals: BotSignals, minSeconds = MIN_SECONDS): 
   const pot = typeof signals.honeypot === "string" ? signals.honeypot.trim() : "";
   if (pot) return "honeypot filled";
 
+  const direct = signals.elapsedMs;
+  if (direct != null && direct !== "") {
+    const ms = typeof direct === "number" ? direct : Number.parseInt(String(direct), 10);
+    if (!Number.isFinite(ms) || ms < 0) return "unreadable duration";
+    if (ms < minSeconds * 1000) return `submitted after ${Math.round(ms / 100) / 10}s`;
+    if (ms > MAX_HOURS * 3600 * 1000) return "stale form";
+    return null;
+  }
+
+  // Legacy path: an absolute timestamp, from a page cached before this changed.
+  // Clock skew makes it untrustworthy, so it now only catches an impossibly
+  // fast submission and never a clock that is merely wrong.
   const raw = signals.renderedAt;
   if (raw == null || raw === "") return null; // not sent: an older cached page, so judge it on the honeypot alone
 
@@ -52,7 +73,7 @@ export function automatedReason(signals: BotSignals, minSeconds = MIN_SECONDS): 
   if (!Number.isFinite(started) || started <= 0) return "unreadable timestamp";
 
   const elapsedMs = Date.now() - started;
-  if (elapsedMs < 0) return "timestamp in the future";
+  if (elapsedMs < 0) return null; // clock skew, not a bot
   if (elapsedMs < minSeconds * 1000) return `submitted after ${Math.round(elapsedMs / 100) / 10}s`;
   if (elapsedMs > MAX_HOURS * 3600 * 1000) return "stale form";
 
