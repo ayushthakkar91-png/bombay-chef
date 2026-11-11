@@ -555,6 +555,16 @@ class MainActivity : ComponentActivity() {
                 }
             }
             LazyColumn(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                item {
+                    // Which build is on this terminal. Ends the guesswork when a fix
+                    // is reported as not working.
+                    Text(
+                        "Version ${BuildConfig.VERSION_NAME} · built ${BuildConfig.BUILD_STAMP}",
+                        fontSize = 12.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
                 item { SettingHeader("PRINTING") }
                 item {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp)) {

@@ -485,19 +485,42 @@ class OrderPrintService : Service() {
         // many a NEW order needs, not how many someone wants when they tap reprint.
         val copies = copiesOverride ?: SettingsStore.printCopies.value.coerceIn(1, 5)
 
-        // Each copy is its own print job rather than one buffered strip, so the
-        // pause falls between copies as well as between orders. Only the first
-        // carries the callback: once paper has come out the order is printed, and
-        // a later copy failing must not un-mark it or trigger a reprint loop.
-        var slot = maxOf(SystemClock.elapsedRealtime(), nextPrintAtMs)
-        for (copy in 0 until copies) {
-            val cb = if (copy == 0) onComplete else null
+        // One coroutine prints the copies in order, so the second cannot start
+        // before the first has finished and the pause between them is real.
+        // Reserve the whole run's slot up front, or a second order arriving
+        // mid-run would interleave its tickets with these.
+        val slot = maxOf(SystemClock.elapsedRealtime(), nextPrintAtMs)
+        nextPrintAtMs = slot + gapMs * copies
+
+        scope.launch {
             val wait = slot - SystemClock.elapsedRealtime()
-            if (wait <= 0L) printTicket(order, cb)
-            else scope.launch { delay(wait); printTicket(order, cb) }
-            slot += if (gapMs > 0L) gapMs else 0L
+            if (wait > 0) delay(wait)
+
+            for (copy in 0 until copies) {
+                if (copy > 0 && gapMs > 0L) delay(gapMs)
+
+                var ok = false
+                var why: String? = null
+                printTicket(order) { success, reason ->
+                    ok = success
+                    why = reason
+                    // Only the first copy decides whether the order counts as
+                    // printed: once paper has come out it has, and a later copy
+                    // failing must not un-mark it or start a reprint loop.
+                    if (copy == 0) onComplete?.invoke(success, reason)
+                }
+
+                // A later copy used to vanish without trace when the printer was
+                // momentarily unbound — no callback, no retry, no message. Give it
+                // one more go, then say so rather than quietly printing fewer
+                // tickets than were asked for.
+                if (!ok && copy > 0) {
+                    delay(2000)
+                    printTicket(order) { retried, reason -> ok = retried; why = reason }
+                    if (!ok) updateNotification("Copy ${copy + 1} of $copies did not print: ${why ?: "printer unavailable"}")
+                }
+            }
         }
-        nextPrintAtMs = slot
     }
 
     private fun printTicket(order: JSONObject, onComplete: ((Boolean, String?) -> Unit)?) {

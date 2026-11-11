@@ -1,3 +1,6 @@
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -9,6 +12,10 @@ plugins {
 //   ./gradlew :app:assembleDebug -PposServerUrl=http://10.0.2.2:3000/api/pos -PposLocationSlug=balham
 val posServerUrl = (project.findProperty("posServerUrl") as String?) ?: "https://www.bombay-bicycle-chef.com/api/pos"
 val posLocationSlug = (project.findProperty("posLocationSlug") as String?) ?: "balham"
+
+// Shown in the app Settings so a terminal can say which build it is running,
+// instead of us inferring it from behaviour.
+val buildStamp: String = LocalDateTime.now().format(DateTimeFormatter.ofPattern("d MMM HH:mm"))
 
 android {
     // Keep namespace the same so you don't have to move files
@@ -31,6 +38,9 @@ android {
 
         buildConfigField("String", "SERVER_URL", "\"$posServerUrl\"")
         buildConfigField("String", "LOCATION_SLUG", "\"$posLocationSlug\"")
+        // Printed in Settings so staff (and I) can tell at a glance which build a
+        // terminal is actually running, instead of guessing from behaviour.
+        buildConfigField("String", "BUILD_STAMP", "\"$buildStamp\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

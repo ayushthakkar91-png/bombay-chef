@@ -28,6 +28,8 @@ export type ReservationEmailPayload = {
   // Order fields (Phase 3)
   code?: string;
   fulfilment?: string;
+  /** Where a delivery is going, one line. Absent on collection orders. */
+  deliveryAddressLabel?: string;
   etaLabel?: string;
   totalLabel?: string;
   itemsSummary?: string;
@@ -167,7 +169,9 @@ function orderRows(p: ReservationEmailPayload): string {
   return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0;">
     ${row("Order", p.code)}
     ${row("Location", p.locationName)}
-    ${row(p.fulfilment === "delivery" ? "Delivery" : "Collection", p.fulfilment === "delivery" ? "To your door" : "From the restaurant")}
+    // A customer checking their confirmation wants to see WHERE it is going —
+    // mistyped addresses are caught here or not at all.
+    ${row(p.fulfilment === "delivery" ? "Delivery to" : "Collection", p.fulfilment === "delivery" ? (p.deliveryAddressLabel || "Your address") : "From the restaurant")}
     ${row("Estimated", p.etaLabel)}
     ${row("Total", p.totalLabel)}
   </table>
