@@ -16,7 +16,21 @@ import java.util.TimeZone
 fun money(v: Double): String = String.format(Locale.UK, "%.2f", v)
 
 private val london: TimeZone = TimeZone.getTimeZone("Europe/London")
+private val utc: TimeZone = TimeZone.getTimeZone("UTC")
 
+/**
+ * SimpleDateFormat is expensive to construct and not thread-safe, and these are
+ * called for every order card on every redraw — which, with a dozen orders on
+ * screen, is thousands of throwaway objects a minute. Cache one per pattern per
+ * thread instead.
+ */
+private val formatters = ThreadLocal.withInitial { HashMap<String, SimpleDateFormat>() }
+
+private fun formatterFor(pattern: String, zone: TimeZone): SimpleDateFormat {
+    val f = formatters.get()!!.getOrPut(pattern) { SimpleDateFormat(pattern, Locale.UK) }
+    f.timeZone = zone
+    return f
+}
 private val isoPatterns = listOf(
     "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
     "yyyy-MM-dd'T'HH:mm:ss'Z'",
@@ -38,9 +52,8 @@ private fun parseIso(iso: String?): Date? {
     val normalised = longFraction.replace(iso) { it.groupValues[1] }
     for (p in isoPatterns) {
         try {
-            val f = SimpleDateFormat(p, Locale.UK)
+            val f = formatterFor(p, if (p.endsWith("'Z'")) utc else london)
             f.isLenient = false
-            if (p.endsWith("'Z'")) f.timeZone = TimeZone.getTimeZone("UTC")
             return f.parse(normalised)
         } catch (e: Exception) { /* try next pattern */ }
     }
@@ -53,21 +66,21 @@ fun parseIsoMillis(iso: String?): Long? = parseIso(iso)?.time
 /** "HH:mm" in London time, or "" if the timestamp can't be parsed. */
 fun formatTime(iso: String?): String {
     val d = parseIso(iso) ?: return ""
-    val f = SimpleDateFormat("HH:mm", Locale.UK); f.timeZone = london
+    val f = formatterFor("HH:mm", london)
     return f.format(d)
 }
 
 /** "dd/MM/yyyy" in London time, or "" if unparseable. */
 fun formatDate(iso: String?): String {
     val d = parseIso(iso) ?: return ""
-    val f = SimpleDateFormat("dd/MM/yyyy", Locale.UK); f.timeZone = london
+    val f = formatterFor("dd/MM/yyyy", london)
     return f.format(d)
 }
 
 /** True if the timestamp is on today's London date. */
 fun isToday(iso: String?): Boolean {
     val d = parseIso(iso) ?: return false
-    val f = SimpleDateFormat("yyyy-MM-dd", Locale.UK); f.timeZone = london
+    val f = formatterFor("yyyy-MM-dd", london)
     return f.format(d) == f.format(Date())
 }
 

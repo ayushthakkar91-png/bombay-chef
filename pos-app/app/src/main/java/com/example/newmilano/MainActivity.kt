@@ -233,7 +233,9 @@ class MainActivity : ComponentActivity() {
                 }
             } else {
                 LazyColumn(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    items(visible) { order -> OrderCard(order, onClick = { selectedOrder = order }) }
+                    // Keyed by order id: without this every poll rebuilds every row, because the
+                    // list is replaced wholesale and Compose cannot tell the rows apart.
+                    items(visible, key = { it.id }) { order -> OrderCard(order, onClick = { selectedOrder = order }) }
                 }
             }
         }

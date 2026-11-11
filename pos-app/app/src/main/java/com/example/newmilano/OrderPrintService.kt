@@ -359,8 +359,16 @@ class OrderPrintService : Service() {
                     // orders, so a slower fallback poll costs no real ticket latency.
                     pollIntervalMs = if (parsed.any { it.status == "pending" || it.status == "preparing" }) ACTIVE_POLL_MS else IDLE_POLL_MS
                     withContext(Dispatchers.Main) {
-                        OrderStore.orders.clear()
-                        OrderStore.orders.addAll(parsed)
+                        // Most polls return exactly what we already have. Rewriting the list anyway
+                        // makes Compose rebuild every card on screen every few seconds, which is
+                        // what made the terminal feel sluggish. Compare first, write only on a
+                        // real change.
+                        val signature = parsed.joinToString("|") { "${it.id}:${it.status}:${it.isPrinted}" }
+                        if (signature != lastSignature) {
+                            lastSignature = signature
+                            OrderStore.orders.clear()
+                            OrderStore.orders.addAll(parsed)
+                        }
                     }
                     // Keep the printer advisory banner live + self-clearing.
                     refreshPrinterAdvisory()
@@ -460,6 +468,8 @@ class OrderPrintService : Service() {
     // as one continuous strip staff have to work out where to tear. Measured on
     // elapsedRealtime, not the wall clock, because a terminal with the wrong date
     // would otherwise schedule prints into next week.
+    // What the UI is currently showing, so an unchanged poll costs nothing.
+    @Volatile private var lastSignature: String = ""
     @Volatile private var nextPrintAtMs = 0L
 
     /**
