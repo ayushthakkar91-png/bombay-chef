@@ -36,6 +36,23 @@ export function PublicChrome({
     return <Maintenance />;
   }
 
+  // Ordering is a task, not a story. The cinematic layer — Lenis smooth scroll,
+  // the GSAP ticker driving it, the grain filter, the mobile bar and the offers
+  // popup — costs frames on exactly the pages where a customer is trying to pay,
+  // and the scroll-triggered animations look for elements these pages do not
+  // have (hence the "GSAP target null" warnings on checkout). So the order flow
+  // gets the navbar, the page and the footer, and nothing else.
+  if (pathname?.startsWith("/order")) {
+    return (
+      <>
+        <Navbar />
+        <main className="flex-grow">{children}</main>
+        <Footer />
+        <CookieNotice />
+      </>
+    );
+  }
+
   return (
     <SmoothScroll>
       {/* Global Atmosphere: Cinematic Grain & Depth.
