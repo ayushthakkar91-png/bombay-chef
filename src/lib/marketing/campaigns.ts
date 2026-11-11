@@ -16,7 +16,7 @@ export async function sendCampaign(campaignId: string): Promise<{ ok: boolean; r
   const supabase = getServiceClient();
   if (!supabase) return { ok: false, error: "Unavailable." };
 
-  const { data: c } = await supabase.from("campaigns").select("id, subject, body_text, segment_id, status").eq("id", campaignId).maybeSingle();
+  const { data: c } = await supabase.from("campaigns").select("id, subject, body_text, segment_id, status, image_url, cta_url, cta_label").eq("id", campaignId).maybeSingle();
   if (!c) return { ok: false, error: "Campaign not found." };
   if (c.status === "sent") return { ok: false, error: "This campaign has already been sent." };
   if (!c.subject || !c.body_text) return { ok: false, error: "Add a subject and message first." };
@@ -57,6 +57,9 @@ export async function sendCampaign(campaignId: string): Promise<{ ok: boolean; r
         guestName: r.name ?? undefined,
         campaignSubject: c.subject as string,
         bodyText: c.body_text as string,
+        imageUrl: (c.image_url as string | null) ?? undefined,
+        ctaUrl: (c.cta_url as string | null) ?? undefined,
+        ctaLabel: (c.cta_label as string | null) ?? undefined,
         unsubscribeUrl: unsubscribeUrl(r.unsubscribe_token),
       },
     });

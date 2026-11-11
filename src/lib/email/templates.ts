@@ -38,6 +38,10 @@ export type ReservationEmailPayload = {
   bodyText?: string;
   unsubscribeUrl?: string;
   ctaUrl?: string;
+  /** Campaign hero image (an https URL, uploaded or pasted in admin). */
+  imageUrl?: string;
+  /** Label for the campaign's call-to-action button. */
+  ctaLabel?: string;
   // Gift card (Phase 8)
   fromName?: string;
 };
@@ -426,10 +430,18 @@ function renderInner(
         .split(/\n{2,}/)
         .map((para) => `<p style="font-size:16px;line-height:1.7;">${para.replace(/\n/g, "<br/>")}</p>`)
         .join("");
+        // A hero photograph, full width of the card. width is set because Outlook
+        // ignores CSS sizing, and max-width keeps it from overflowing on a phone.
+        const hero = p.imageUrl
+          ? `<img src="${p.imageUrl}" alt="" width="540" style="display:block;width:100%;max-width:540px;height:auto;margin:0 0 22px;" />`
+          : "";
+        const cta = p.ctaUrl ? `<p style="margin-top:18px;">${button(p.ctaUrl, p.ctaLabel || "Find out more")}</p>` : "";
       return {
         subject: p.campaignSubject ?? "Bombay Bicycle Chef",
-        html: shell(p.campaignSubject ?? "Bombay Bicycle Chef", `${paras}${unsub(p.unsubscribeUrl)}`),
-        text: `${p.bodyText ?? ""}${p.unsubscribeUrl ? `\n\nUnsubscribe: ${p.unsubscribeUrl}` : ""}`,
+        html: shell(p.campaignSubject ?? "Bombay Bicycle Chef", `${hero}${paras}${cta}${unsub(p.unsubscribeUrl)}`),
+        text: `${p.bodyText ?? ""}${p.ctaUrl ? `
+
+${p.ctaLabel || "Find out more"}: ${p.ctaUrl}` : ""}${p.unsubscribeUrl ? `\n\nUnsubscribe: ${p.unsubscribeUrl}` : ""}`,
       };
     }
   }

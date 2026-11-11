@@ -17,13 +17,17 @@ export function ImageUrlField({
   defaultValue = "",
   error,
   folder = "misc",
+  onChange,
 }: {
   defaultValue?: string;
   error?: string;
   /** Storage folder for uploads (allowlisted server-side). */
   folder?: "popup" | "menu" | "misc";
+  /** Called whenever the URL changes, for callers that preview it live. */
+  onChange?: (url: string) => void;
 }) {
   const [url, setUrl] = useState(defaultValue);
+  const update = (next: string) => { setUrl(next); onChange?.(next); };
   const [broken, setBroken] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, startUpload] = useTransition();
@@ -39,7 +43,7 @@ export function ImageUrlField({
     startUpload(async () => {
       const res = await uploadImage(fd);
       if (res.ok) {
-        setUrl(res.url);
+        update(res.url);
         setBroken(false);
       } else {
         setUploadError(res.error);
@@ -87,7 +91,7 @@ export function ImageUrlField({
               {uploading ? "Uploading…" : valid ? "Replace image" : "Upload image"}
             </button>
             {valid && !uploading && (
-              <button type="button" onClick={() => { setUrl(""); setBroken(false); }} className="text-sm text-body hover:text-primary">
+              <button type="button" onClick={() => { update(""); setBroken(false); }} className="text-sm text-body hover:text-primary">
                 Remove
               </button>
             )}
@@ -97,7 +101,7 @@ export function ImageUrlField({
             name="imageUrl"
             value={url}
             onChange={(e) => {
-              setUrl(e.target.value);
+              update(e.target.value);
               setBroken(false);
             }}
             placeholder="…or paste https:// link"
