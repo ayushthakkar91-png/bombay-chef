@@ -38,6 +38,7 @@ export function OrderActions({ order }: { order: OrderLike }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       {primary && <StatusButton order={order} label={primary.label} next={primary.next} />}
+      <CancelButton order={order} />
       {canRefund && (
         <Button variant="danger" onClick={() => setRefundOpen(true)}>
           {order.status === "paid" ? "Reject & refund" : "Refund"}
@@ -82,6 +83,34 @@ function RefundForm({ order, onDone }: { order: OrderLike; onDone: () => void })
         <Button type="button" variant="secondary" onClick={onDone}>Cancel</Button>
         <SubmitButton variant="danger" pendingLabel="Refunding…">Issue refund</SubmitButton>
       </div>
+    </form>
+  );
+}
+
+/**
+ * Clear an order the kitchen cannot fulfil.
+ *
+ * Cancelling does NOT return the customer's money — refunds are issued in the
+ * Stripe dashboard. The confirmation says so in as many words, because the two
+ * used to be one button and staff will reasonably assume they still are.
+ */
+function CancelButton({ order }: { order: OrderLike }) {
+  const [state, action] = useActionState(setOrderStatus, IDLE);
+  useActionResult(state);
+
+  const paid = order.status !== "pending_payment";
+  const warn = paid
+    ? "Cancel this order?\n\nThe customer has paid and this does NOT refund them. Refund it in Stripe if they are owed the money."
+    : "Cancel this order?";
+
+  return (
+    <form action={action} onSubmit={(e) => { if (!window.confirm(warn)) e.preventDefault(); }}>
+      <input type="hidden" name="id" value={order.id} />
+      <input type="hidden" name="locationId" value={order.locationId} />
+      <input type="hidden" name="current" value={order.status} />
+      <input type="hidden" name="status" value="cancelled" />
+      <input type="hidden" name="acknowledgeNoRefund" value="yes" />
+      <SubmitButton variant="ghost" pendingLabel="Cancelling…">Cancel</SubmitButton>
     </form>
   );
 }
