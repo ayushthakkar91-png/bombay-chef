@@ -663,7 +663,19 @@ class OrderPrintService : Service() {
         prnt.printText("TOTAL  £${money(order.optDouble("totalPrice", 0.0))}\n", null)
         trySetFont(prnt, norm)
         val paid = order.optString("paymentStatus", "") == "paid"
-        prnt.printText(if (paid) "PAID (CARD)\n" else "CASH - UNPAID\n", null)
+        // Whoever hands the food over has to know at a glance whether there is money
+        // to collect. Centred and double-width, with the amount repeated on a cash
+        // ticket so nobody has to hunt for it among the totals.
+        prnt.setAlignment(1, null)
+        trySetFont(prnt, big)
+        if (paid) {
+            prnt.printText("PAID BY CARD\n", null)
+        } else {
+            prnt.printText("CASH - UNPAID\n", null)
+            prnt.printText("COLLECT £${money(order.optDouble("totalPrice", 0.0))}\n", null)
+        }
+        trySetFont(prnt, norm)
+        prnt.setAlignment(0, null)
 
         // ---- Footer: app version ----
         if (s.printVersion.value) {
