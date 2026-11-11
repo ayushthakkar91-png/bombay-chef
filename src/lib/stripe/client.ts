@@ -75,6 +75,11 @@ export async function createCheckoutSession(opts: {
     if (opts.cancelUrl) p.set("cancel_url", opts.cancelUrl);
   }
   if (opts.customerEmail) p.set("customer_email", opts.customerEmail);
+  // Card only. Left open, Stripe also offers Link, which interrupts a first-time
+  // customer with "confirm it is you" and a code to their phone — a login wall in
+  // the middle of paying for a curry. Apple Pay and Google Pay are delivered
+  // through the card type, so they are unaffected.
+  p.set("payment_method_types[0]", "card");
   p.set("line_items[0][quantity]", "1");
   p.set("line_items[0][price_data][currency]", "gbp");
   p.set("line_items[0][price_data][unit_amount]", String(opts.amountPence));

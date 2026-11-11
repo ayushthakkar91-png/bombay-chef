@@ -170,10 +170,15 @@ class MainActivity : ComponentActivity() {
         val hideConfirmed by SettingsStore.hideConfirmed
 
         // Live filtered view: today-only + hide-confirmed come from Settings.
-        val visible = OrderStore.orders.filter { o ->
-            (!todayOnly || isToday(o.rawJson.optString("createdAt"))) &&
-            (!hideConfirmed || o.status != "confirmed")
-        }
+        // Newest first: the server sends oldest-first (the order to cook in), but on
+        // a terminal the thing that just arrived is the thing staff are looking for,
+        // and it was landing underneath everything else.
+        val visible = OrderStore.orders
+            .filter { o ->
+                (!todayOnly || isToday(o.rawJson.optString("createdAt"))) &&
+                (!hideConfirmed || o.status != "confirmed")
+            }
+            .sortedByDescending { parseIsoMillis(it.rawJson.optString("createdAt")) ?: 0L }
 
         Column(modifier = Modifier.fillMaxSize()) {
             Box(modifier = Modifier.fillMaxWidth().background(Color(0xFF1F2937)).padding(top = 40.dp, bottom = 12.dp, start = 16.dp, end = 8.dp)) {
