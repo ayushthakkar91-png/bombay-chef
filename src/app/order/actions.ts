@@ -175,7 +175,7 @@ async function createCheckoutInner(input: CheckoutInput): Promise<CheckoutResult
       .select("id, code, track_token, status, total_pence, gift_card_pence")
       .eq("idempotency_key", idem)
       .maybeSingle();
-    if (existing) return resumeExistingOrder(existing);
+    if (existing) return resumeExistingOrder(existing, cash);
   }
 
   const locationId = await locationIdFromSlug(input.locationSlug);
@@ -255,7 +255,7 @@ async function createCheckoutInner(input: CheckoutInput): Promise<CheckoutResult
         .select("id, code, track_token, status, total_pence, gift_card_pence")
         .eq("idempotency_key", idem)
         .maybeSingle();
-      if (raced) return resumeExistingOrder(raced);
+      if (raced) return resumeExistingOrder(raced, cash);
     }
     return { ok: false, error: "We couldn't start your order — please try again." };
   }
@@ -328,7 +328,7 @@ type ExistingOrder = { id: string; code: string; track_token: string; status: st
  * Return the right CheckoutResult for an order that already exists for this
  * idempotency key (network retry / double-submit). Never creates a new order.
  */
-async function resumeExistingOrder(o: ExistingOrder): Promise<CheckoutResult> {
+async function resumeExistingOrder(o: ExistingOrder, cash: boolean): Promise<CheckoutResult> {
   const track = `${await checkoutBaseUrl()}/order/track/${o.track_token}?paid=1`;
   if (o.status === "cancelled" || o.status === "refunded") {
     return { ok: false, error: "That order was cancelled. Please start a new order." };
@@ -340,6 +340,13 @@ async function resumeExistingOrder(o: ExistingOrder): Promise<CheckoutResult> {
   // Still awaiting payment: re-open a Stripe session for the outstanding amount.
   const charge = o.total_pence - (o.gift_card_pence ?? 0);
   if (charge <= 0) return { ok: true, url: track };
+  // The customer may have started on card and come back to choose cash. This
+  // path used to re-open a Stripe session regardless, which sent them to the
+  // card form they had just rejected.
+  if (cash) {
+    await confirmPaidOrder(o.id, { method: "cash", amountPence: charge, paymentIntent: null });
+    return { ok: true, url: `${await checkoutBaseUrl()}/order/track/${o.track_token}?cash=1` };
+  }
   return resumeCheckout(o.id, o.code, o.track_token, charge, undefined);
 }
 
