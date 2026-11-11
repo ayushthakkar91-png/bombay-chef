@@ -6,6 +6,7 @@ import { getServiceClient } from "@/lib/supabase/clients";
 import { confirmPaidOrder } from "@/lib/ordering/confirm";
 import { confirmGiftCardPurchase } from "@/lib/giftcards/service";
 import { recordOrderEvent } from "@/lib/ordering/events";
+import { dispatchDue } from "@/lib/notifications/outbox";
 import { dispatchTelegramDue } from "@/lib/notifications/telegram-dispatch";
 import { dispatchFcmDue } from "@/lib/notifications/fcm-dispatch";
 
@@ -66,7 +67,10 @@ export async function POST(request: Request) {
         await recordOrderEvent(metadata.order_id, "PAYMENT_AMOUNT_MISMATCH", { expected, amountTotal, currency });
       } else {
         const ok = await confirmPaidOrder(metadata.order_id, { paymentIntent, amountPence: amountTotal, method: "card" });
-        if (ok) after(async () => { await Promise.allSettled([dispatchTelegramDue(), dispatchFcmDue()]); });
+        if (ok) // dispatchDue is the customer's email. Without it the confirmation sat in
+        // the outbox until a cron ran — hours, and the customer had no order
+        // number in writing.
+        after(async () => { await Promise.allSettled([dispatchDue(), dispatchTelegramDue(), dispatchFcmDue()]); });
       }
     } else if (metadata.gift_card_id) {
       await confirmGiftCardPurchase(metadata.gift_card_id, paymentIntent);
