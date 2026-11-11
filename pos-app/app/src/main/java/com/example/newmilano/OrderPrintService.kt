@@ -52,6 +52,9 @@ class OrderPrintService : Service() {
         private const val NOTIF_ID = 1001
         private val SERVER_URL = BuildConfig.SERVER_URL
         // Adaptive poll cadence (battery): fast while orders are active, slow when idle.
+        // New-order alert: a short burst, not an endless siren.
+        private const val ALARM_BEEPS = 5
+        private const val ALARM_BEEP_GAP_MS = 1200L
         private const val ACTIVE_POLL_MS = 5000L
         private const val IDLE_POLL_MS = 20000L
     }
@@ -384,15 +387,29 @@ class OrderPrintService : Service() {
     }
 
     /** Repeats the alarm tone until stopped (all orders accepted, or muted). */
+    /**
+     * Announce new orders with a short burst, then fall silent.
+     *
+     * This used to beep every 3 seconds for as long as anything sat unaccepted,
+     * which is unbearable during a rush and trains staff to mute it — the worst
+     * outcome, because a muted terminal really can miss an order. A burst is
+     * loud enough to notice and short enough that nobody reaches for mute.
+     *
+     * It re-arms on a genuinely new order (see newPending in pollOnce), so a
+     * second order always sounds even while the first is still waiting.
+     */
     private fun startAlarmLoop() {
         if (alarmJob?.isActive == true) return
         alarmJob = scope.launch {
-            while (isActive) {
-                // Re-check each beat so tapping mute (or disabling sound) silences it within one cycle.
-                if (OrderStore.alarmMuted.value || !SettingsStore.soundEnabled.value) break
+            repeat(ALARM_BEEPS) {
+                // Re-check each beat so mute (or disabling sound) silences it at once.
+                if (OrderStore.alarmMuted.value || !SettingsStore.soundEnabled.value) return@launch
                 try { toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP2) } catch (e: Exception) {}
-                delay(3000)
+                delay(ALARM_BEEP_GAP_MS)
             }
+            // Burst done. Mute so the poll loop does not immediately restart it;
+            // a new order clears this and sounds again.
+            OrderStore.alarmMuted.value = true
         }
     }
 
