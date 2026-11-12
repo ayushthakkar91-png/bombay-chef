@@ -610,6 +610,14 @@ namespace BombayBicycleChef
         // ESC/POS, as the TM-T20III and every other receipt printer speaks it.
         private static readonly byte[] Reset = { 0x1B, 0x40 };
         private static readonly byte[] CodePage437 = { 0x1B, 0x74, 0x00 };
+
+        // ESC M 0 — Font A, 12x24 dots. The printer has exactly two fonts and
+        // the other one (Font B, 9x17) is SMALLER, so this is as large as the
+        // built-in character set goes; everything beyond it is the size
+        // multiplier below. Selected explicitly because a previous job, or the
+        // printer's own memory switch, can leave it on Font B, and then every
+        // ticket comes out small for reasons nothing in this file explains.
+        private static readonly byte[] FontA = { 0x1B, 0x4D, 0x00 };
         private static readonly byte[] AlignLeft = { 0x1B, 0x61, 0x00 };
         private static readonly byte[] AlignCentre = { 0x1B, 0x61, 0x01 };
         private static readonly byte[] BoldOn = { 0x1B, 0x45, 0x01 };
@@ -638,7 +646,7 @@ namespace BombayBicycleChef
         public static byte[] Build(Order order, Config config)
         {
             var w = new Writer();
-            w.Raw(Reset).Raw(CodePage437);
+            w.Raw(Reset).Raw(FontA).Raw(CodePage437);
 
             w.Raw(AlignCentre).Strong().Raw(Size(1, 2));
             w.Line("BOMBAY BICYCLE CHEF");
@@ -665,7 +673,7 @@ namespace BombayBicycleChef
                 // pass, so it goes out at double width as well as double
                 // height. Double width halves how much fits on a line, so the
                 // wrap has to be told about it or long names run off the roll.
-                w.Strong().Raw(Size(2, 2));
+                w.Strong().Raw(Size(2, 3));
                 w.Wrapped(line.Qty + " x " + line.Name, 0, 4, Width / 2);
                 w.Raw(Size(1, 1));
 
@@ -719,7 +727,7 @@ namespace BombayBicycleChef
         public static byte[] Test()
         {
             var w = new Writer();
-            w.Raw(Reset).Raw(CodePage437).Raw(AlignCentre).Strong().Raw(Size(1, 2));
+            w.Raw(Reset).Raw(FontA).Raw(CodePage437).Raw(AlignCentre).Strong().Raw(Size(1, 2));
             w.Line("BOMBAY BICYCLE CHEF");
             w.Raw(Size(1, 1)).Plain();
             w.Line("Printer test");
