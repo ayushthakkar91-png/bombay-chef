@@ -135,6 +135,18 @@ export async function checkGiftCard(code: string): Promise<{ ok: boolean; balanc
  */
 const IDEMPOTENCY_WINDOW_MS = 2 * 60 * 60 * 1000;
 
+/**
+ * How long an ALREADY COMPLETED order keeps answering to its key.
+ *
+ * Resuming an unpaid order for two hours is right — the payment may still
+ * finish. Resuming a finished one for that long is not: a customer who orders
+ * the same dishes again, having closed the tab before the tracking page
+ * cleared their basket, would be shown the old order instead of placing a new
+ * one. Long enough to absorb a double-click, short enough that a real second
+ * order always gets through.
+ */
+const COMPLETED_RESUME_WINDOW_MS = 5 * 60 * 1000;
+
 export async function createCheckout(input: CheckoutInput): Promise<CheckoutResult> {
   const res = await createCheckoutInner(input);
   // Log WHY a checkout was refused (the customer-facing message only — no PII),
@@ -190,12 +202,15 @@ async function createCheckoutInner(input: CheckoutInput): Promise<CheckoutResult
   if (idem) {
     const { data: existing } = await supabase
       .from("orders")
-      .select("id, code, track_token, status, total_pence, gift_card_pence")
+      .select("id, code, track_token, status, total_pence, gift_card_pence, created_at")
       .eq("idempotency_key", idem)
       // Only a recent key resumes an order; an older one starts a new one.
       .gte("created_at", new Date(Date.now() - IDEMPOTENCY_WINDOW_MS).toISOString())
       .maybeSingle();
-    if (existing) return resumeExistingOrder(existing, cash);
+    if (existing) {
+      const resumed = await resumeExistingOrder(existing, cash);
+      if (resumed) return resumed;
+    }
   }
 
   const locationId = await locationIdFromSlug(input.locationSlug);
@@ -272,12 +287,15 @@ async function createCheckoutInner(input: CheckoutInput): Promise<CheckoutResult
     if (idem) {
       const { data: raced } = await supabase
         .from("orders")
-        .select("id, code, track_token, status, total_pence, gift_card_pence")
+        .select("id, code, track_token, status, total_pence, gift_card_pence, created_at")
         .eq("idempotency_key", idem)
         // Only a recent key resumes an order; an older one starts a new one.
         .gte("created_at", new Date(Date.now() - IDEMPOTENCY_WINDOW_MS).toISOString())
         .maybeSingle();
-      if (raced) return resumeExistingOrder(raced, cash);
+      if (raced) {
+        const r2 = await resumeExistingOrder(raced, cash);
+        if (r2) return r2;
+      }
     }
     return { ok: false, error: "We couldn't start your order — please try again." };
   }
@@ -349,18 +367,22 @@ async function createCheckoutInner(input: CheckoutInput): Promise<CheckoutResult
   return resumeCheckout(orderId, order.code as string, order.track_token as string, chargePence, email);
 }
 
-type ExistingOrder = { id: string; code: string; track_token: string; status: string; total_pence: number; gift_card_pence: number };
+type ExistingOrder = { id: string; code: string; track_token: string; status: string; total_pence: number; gift_card_pence: number; created_at: string };
 
 /**
  * Return the right CheckoutResult for an order that already exists for this
  * idempotency key (network retry / double-submit). Never creates a new order.
  */
-async function resumeExistingOrder(o: ExistingOrder, cash: boolean): Promise<CheckoutResult> {
+async function resumeExistingOrder(o: ExistingOrder, cash: boolean): Promise<CheckoutResult | null> {
   const track = `${await checkoutBaseUrl()}/order/track/${o.track_token}?paid=1`;
   if (o.status === "cancelled" || o.status === "refunded") {
     return { ok: false, error: "That order was cancelled. Please start a new order." };
   }
   if (o.status !== "pending_payment") {
+    // Finished long ago: this is a new order that happens to match, not a
+    // retry. Returning null lets the caller create one.
+    const age = Date.now() - new Date(o.created_at).getTime();
+    if (age > COMPLETED_RESUME_WINDOW_MS) return null;
     // Already paid / in the kitchen — send them to tracking, don't re-charge.
     return { ok: true, url: track };
   }
