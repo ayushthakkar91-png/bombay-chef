@@ -9,6 +9,7 @@ import {
   UtensilsCrossed,
   FolderTree,
   ListOrdered,
+  Printer,
   MapPin,
   ToggleRight,
   CalendarDays,
@@ -76,6 +77,7 @@ const NAV: NavGroup[] = [
       { href: "/admin/orders", label: "Orders", icon: ShoppingBag, minRank: 1 },
       { href: "/admin/orders/live", label: "Live orders", icon: Clock, minRank: 1 },
       { href: "/admin/orders/history", label: "Order history", icon: ListOrdered, minRank: 1 },
+      { href: "/admin/orders/print", label: "Kitchen printer", icon: Printer, minRank: 1 },
     ],
   },
   {
