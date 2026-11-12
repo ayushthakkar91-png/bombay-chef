@@ -132,6 +132,8 @@ namespace BombayBicycleChef
         private volatile bool _stopping;
         private readonly ManualResetEvent _wake = new ManualResetEvent(false);
         private Session _session;
+        private int _signInFailures;
+        private DateTime _signInBlockedUntil = DateTime.MinValue;
 
         public void Stop()
         {
@@ -180,12 +182,24 @@ namespace BombayBicycleChef
         {
             if (_session == null || _session.NeedsRefresh)
             {
+                // Back off after a refusal. Retrying a rejected password every
+                // five seconds got the agent rate-limited by its own server,
+                // which turns "the password is wrong" into "the server is
+                // refusing everyone" and hides the real fault.
+                if (DateTime.UtcNow < _signInBlockedUntil) return;
+
                 _session = Api.SignIn(config, _session);
                 if (_session == null)
                 {
-                    Log.Write("Not signed in. Check the saved email and password.");
+                    _signInFailures++;
+                    int waitSeconds = Math.Min(300, 30 * _signInFailures);
+                    _signInBlockedUntil = DateTime.UtcNow.AddSeconds(waitSeconds);
+                    Log.Write(string.Format(
+                        "Not signed in - check the saved email and password. Trying again in {0} seconds.",
+                        waitSeconds));
                     return;
                 }
+                _signInFailures = 0;
             }
 
             List<Order> orders;
@@ -251,7 +265,10 @@ namespace BombayBicycleChef
 
     /* ---- the API ------------------------------------------------------- */
 
-    internal sealed class UnauthorizedException : Exception { }
+    internal sealed class UnauthorizedException : Exception
+    {
+        public UnauthorizedException(string message) : base(message) { }
+    }
 
     internal sealed class Session
     {
@@ -399,15 +416,20 @@ namespace BombayBicycleChef
             catch (WebException e)
             {
                 var response = e.Response as HttpWebResponse;
-                if (response != null && response.StatusCode == HttpStatusCode.Unauthorized) throw new UnauthorizedException();
-                string detail = "";
-                if (response != null)
-                {
-                    using (var reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
-                        detail = " " + reader.ReadToEnd();
-                    throw new Exception("HTTP " + (int)response.StatusCode + detail.Trim());
-                }
-                throw new Exception(e.Message);
+                if (response == null) throw new Exception(e.Message);
+
+                // Always read what the server said. A refusal whose reason is
+                // thrown away leaves a log full of "Exception of type ... was
+                // thrown", which says nothing to the person reading it at
+                // eight on a Friday.
+                string detail;
+                using (var reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
+                    detail = reader.ReadToEnd().Trim();
+
+                if (response.StatusCode == HttpStatusCode.Unauthorized)
+                    throw new UnauthorizedException(detail.Length > 0 ? detail : "Rejected by the server.");
+
+                throw new Exception("HTTP " + (int)response.StatusCode + " " + detail);
             }
         }
     }
@@ -597,6 +619,16 @@ namespace BombayBicycleChef
 
         private const int Width = 42; // 80mm roll, font A
 
+        /// <summary>
+        /// Print the whole ticket in bold.
+        ///
+        /// Thermal output at the default weight came out grey and hard to read
+        /// in a kitchen. Bold burns a heavier dot, which is darker on every
+        /// roll and costs nothing. If the paper ever looks over-inked, set this
+        /// to false — and check the printer's own density setting first.
+        /// </summary>
+        private static readonly bool AlwaysBold = true;
+
         private static byte[] Size(int width, int height)
         {
             // GS ! n — the low nibble is height, the high nibble width, 0 = 1x.
@@ -608,13 +640,13 @@ namespace BombayBicycleChef
             var w = new Writer();
             w.Raw(Reset).Raw(CodePage437);
 
-            w.Raw(AlignCentre).Raw(BoldOn).Raw(Size(1, 2));
+            w.Raw(AlignCentre).Strong().Raw(Size(1, 2));
             w.Line("BOMBAY BICYCLE CHEF");
-            w.Raw(Size(1, 1)).Raw(BoldOff);
+            w.Raw(Size(1, 1)).Plain();
             w.Line(order.PlacedAt.ToString("ddd dd MMM  HH:mm", CultureInfo.InvariantCulture));
             w.Feed();
 
-            w.Raw(BoldOn).Raw(Size(2, 2));
+            w.Strong().Raw(Size(2, 2));
             w.Line(order.IsDelivery ? "DELIVERY" : "COLLECTION");
             w.Line("#" + order.Code);
             w.Raw(Size(1, 1));
@@ -624,7 +656,7 @@ namespace BombayBicycleChef
             w.Line(new string('=', Width));
             w.Line(order.IsCash ? "COLLECT CASH  " + Money(order.Total) : "PAID ONLINE");
             w.Line(new string('=', Width));
-            w.Raw(BoldOff).Raw(AlignLeft);
+            w.Plain().Raw(AlignLeft);
             w.Feed();
 
             foreach (OrderLine line in order.Items)
@@ -633,20 +665,20 @@ namespace BombayBicycleChef
                 // pass, so it goes out at double width as well as double
                 // height. Double width halves how much fits on a line, so the
                 // wrap has to be told about it or long names run off the roll.
-                w.Raw(BoldOn).Raw(Size(2, 2));
+                w.Strong().Raw(Size(2, 2));
                 w.Wrapped(line.Qty + " x " + line.Name, 0, 4, Width / 2);
                 w.Raw(Size(1, 1));
 
                 // What is done TO the dish stays a step down from its name, but
                 // still double height — this is where "no nuts" lives, and it
                 // was set in the same small type as the subtotal.
-                w.Raw(Size(1, 2)).Raw(BoldOff);
+                w.Raw(Size(1, 2)).Plain();
                 foreach (string modifier in line.Modifiers) w.Wrapped("+ " + modifier, 2, Width);
                 if (line.Notes.Length > 0)
                 {
-                    w.Raw(BoldOn);
+                    w.Strong();
                     w.Wrapped("** " + line.Notes.ToUpperInvariant(), 2, Width);
-                    w.Raw(BoldOff);
+                    w.Plain();
                 }
                 w.Raw(Size(1, 1));
                 w.Feed();
@@ -655,29 +687,29 @@ namespace BombayBicycleChef
             if (order.Notes.Length > 0)
             {
                 w.Line(new string('-', Width));
-                w.Raw(BoldOn);
+                w.Strong();
                 w.Wrapped("NOTE: " + order.Notes.ToUpperInvariant(), 0, Width);
-                w.Raw(BoldOff);
+                w.Plain();
             }
 
             w.Line(new string('-', Width));
             w.Columns("Subtotal", Money(order.Subtotal));
             if (order.DeliveryFee > 0) w.Columns("Delivery", Money(order.DeliveryFee));
             if (order.Discount > 0) w.Columns("Discount " + order.PromoCode, "-" + Money(order.Discount));
-            w.Raw(BoldOn).Raw(Size(1, 2));
+            w.Strong().Raw(Size(1, 2));
             w.Columns("TOTAL", Money(order.Total));
-            w.Raw(Size(1, 1)).Raw(BoldOff);
+            w.Raw(Size(1, 1)).Plain();
             w.Line(new string('-', Width));
 
             // Read by a driver in the dark, holding a bag. All of it double
             // height — a wrong door costs the whole delivery, and the small
             // type that used to be here was the first thing to go on a ticket
             // that had sat in a warm kitchen.
-            w.Raw(BoldOn).Raw(Size(1, 2));
+            w.Strong().Raw(Size(1, 2));
             if (order.CustomerName.Length > 0) w.Wrapped(order.CustomerName, 0, 2, Width);
             if (order.CustomerPhone.Length > 0) w.Line(order.CustomerPhone);
             if (order.IsDelivery && order.Address.Length > 0) w.Wrapped(order.Address, 0, 2, Width);
-            w.Raw(Size(1, 1)).Raw(BoldOff);
+            w.Raw(Size(1, 1)).Plain();
 
             w.Feed(4).Raw(Cut);
             if (order.IsCash && config.OpenDrawerOnCash) w.Raw(KickDrawer);
@@ -687,9 +719,9 @@ namespace BombayBicycleChef
         public static byte[] Test()
         {
             var w = new Writer();
-            w.Raw(Reset).Raw(CodePage437).Raw(AlignCentre).Raw(BoldOn).Raw(Size(1, 2));
+            w.Raw(Reset).Raw(CodePage437).Raw(AlignCentre).Strong().Raw(Size(1, 2));
             w.Line("BOMBAY BICYCLE CHEF");
-            w.Raw(Size(1, 1)).Raw(BoldOff);
+            w.Raw(Size(1, 1)).Plain();
             w.Line("Printer test");
             w.Line(DateTime.Now.ToString("ddd dd MMM  HH:mm:ss", CultureInfo.InvariantCulture));
             w.Feed();
@@ -762,6 +794,25 @@ namespace BombayBicycleChef
             {
                 _out.Write(bytes, 0, bytes.Length);
                 return this;
+            }
+
+            /// <summary>Emphasis — headings, dish names, the things that matter.</summary>
+            public Writer Strong()
+            {
+                return Raw(BoldOn);
+            }
+
+            /// <summary>
+            /// Back to ordinary text — which on a receipt still means bold.
+            ///
+            /// A thermal head burns a heavier dot for bold, and that is the
+            /// difference between a ticket that reads across the pass and the
+            /// grey one this printed at first. Size carries the hierarchy here;
+            /// weight is spent entirely on being legible.
+            /// </summary>
+            public Writer Plain()
+            {
+                return Raw(AlwaysBold ? BoldOn : BoldOff);
             }
 
             public Writer Text(string text)
