@@ -1,6 +1,7 @@
 "use server";
 
 import { getServiceClient } from "@/lib/supabase/clients";
+import { resumeDecision, IDEMPOTENCY_WINDOW_MS } from "@/lib/ordering/idempotency";
 import { dispatchDue } from "@/lib/notifications/outbox";
 import { dispatchTelegramDue } from "@/lib/notifications/telegram-dispatch";
 import { dispatchFcmDue } from "@/lib/notifications/fcm-dispatch";
@@ -117,35 +118,6 @@ export async function checkGiftCard(code: string): Promise<{ ok: boolean; balanc
   return { ok: true, balancePence: plan.balancePence };
 }
 
-/**
- * Create a pending order + items from a server-priced cart and open a Stripe
- * hosted Checkout session. The order is only marked paid by the webhook — never
- * trust the client redirect. Card data never touches us (PCI SAQ A).
- */
-/**
- * How long a checkout idempotency key keeps pointing at its order.
- *
- * The key exists to stop a double-click, a lost response or a WiFi-to-4G
- * switch creating two orders. That is a question of seconds. It was unbounded,
- * so a key still sitting in a browser from yesterday matched yesterday's
- * order: the customer ordered again, got sent to the old order's tracking
- * page, and nothing new was created or printed.
- *
- * Two hours is far longer than any retry and far shorter than a day.
- */
-const IDEMPOTENCY_WINDOW_MS = 2 * 60 * 60 * 1000;
-
-/**
- * How long an ALREADY COMPLETED order keeps answering to its key.
- *
- * Resuming an unpaid order for two hours is right — the payment may still
- * finish. Resuming a finished one for that long is not: a customer who orders
- * the same dishes again, having closed the tab before the tracking page
- * cleared their basket, would be shown the old order instead of placing a new
- * one. Long enough to absorb a double-click, short enough that a real second
- * order always gets through.
- */
-const COMPLETED_RESUME_WINDOW_MS = 5 * 60 * 1000;
 
 export async function createCheckout(input: CheckoutInput): Promise<CheckoutResult> {
   const res = await createCheckoutInner(input);
@@ -375,15 +347,16 @@ type ExistingOrder = { id: string; code: string; track_token: string; status: st
  */
 async function resumeExistingOrder(o: ExistingOrder, cash: boolean): Promise<CheckoutResult | null> {
   const track = `${await checkoutBaseUrl()}/order/track/${o.track_token}?paid=1`;
-  if (o.status === "cancelled" || o.status === "refunded") {
+
+  // One rule, tested in src/lib/ordering/idempotency.test.ts.
+  const decision = resumeDecision(o.status, Date.now() - new Date(o.created_at).getTime());
+  if (decision === "new") return null;
+  if (decision === "cancelled") {
     return { ok: false, error: "That order was cancelled. Please start a new order." };
   }
+
   if (o.status !== "pending_payment") {
-    // Finished long ago: this is a new order that happens to match, not a
-    // retry. Returning null lets the caller create one.
-    const age = Date.now() - new Date(o.created_at).getTime();
-    if (age > COMPLETED_RESUME_WINDOW_MS) return null;
-    // Already paid / in the kitchen — send them to tracking, don't re-charge.
+    // Already paid and recent — a retry. Send them to tracking, don't re-charge.
     return { ok: true, url: track };
   }
   // Still awaiting payment: re-open a Stripe session for the outstanding amount.
