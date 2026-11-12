@@ -673,7 +673,7 @@ namespace BombayBicycleChef
                 // pass, so it goes out at double width as well as double
                 // height. Double width halves how much fits on a line, so the
                 // wrap has to be told about it or long names run off the roll.
-                w.Strong().Raw(Size(2, 3));
+                w.Strong().Raw(Size(2, 2));
                 w.Wrapped(line.Qty + " x " + line.Name, 0, 4, Width / 2);
                 w.Raw(Size(1, 1));
 
@@ -689,7 +689,11 @@ namespace BombayBicycleChef
                     w.Plain();
                 }
                 w.Raw(Size(1, 1));
-                w.Feed();
+
+                // A blank line only where one dish's extras could be read as
+                // the next dish's. A plain item needs no separator — its name
+                // is twice the size of everything around it.
+                if (line.Modifiers.Count > 0 || line.Notes.Length > 0) w.Feed();
             }
 
             if (order.Notes.Length > 0)
@@ -719,7 +723,11 @@ namespace BombayBicycleChef
             if (order.IsDelivery && order.Address.Length > 0) w.Wrapped(order.Address, 0, 2, Width);
             w.Raw(Size(1, 1)).Plain();
 
-            w.Feed(4).Raw(Cut);
+            // Two blank lines, not four. The cutter sits a little above the
+            // print head, so some feed is needed or the last line is cut
+            // through — but every line past that is paper on the floor, and at
+            // a few hundred tickets a week it adds up to a roll.
+            w.Feed(2).Raw(Cut);
             if (order.IsCash && config.OpenDrawerOnCash) w.Raw(KickDrawer);
             return w.ToArray();
         }
