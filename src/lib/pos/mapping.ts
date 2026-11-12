@@ -62,6 +62,7 @@ type OrderRow = {
   status: OrderStatus;
   fulfilment: Fulfilment;
   contact_name: string | null;
+  contact_phone: string | null;
   total_pence: number;
   subtotal_pence: number;
   delivery_fee_pence: number;
@@ -83,6 +84,9 @@ export function orderToPosJson(order: OrderRow, items: OrderItemRow[]): Record<s
     _id: order.id,
     orderNumber: order.code,
     customerName: order.contact_name ?? "Guest",
+    // A delivery ticket without a phone number is no use to whoever is stood
+    // outside the wrong door with the food going cold.
+    customerPhone: order.contact_phone ?? "",
     totalPrice: money(order.total_pence),
     status: bbcStatusToApp(order.status),
     isPrinted: order.printed_at != null,
