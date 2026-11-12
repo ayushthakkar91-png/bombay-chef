@@ -122,6 +122,19 @@ export async function checkGiftCard(code: string): Promise<{ ok: boolean; balanc
  * hosted Checkout session. The order is only marked paid by the webhook — never
  * trust the client redirect. Card data never touches us (PCI SAQ A).
  */
+/**
+ * How long a checkout idempotency key keeps pointing at its order.
+ *
+ * The key exists to stop a double-click, a lost response or a WiFi-to-4G
+ * switch creating two orders. That is a question of seconds. It was unbounded,
+ * so a key still sitting in a browser from yesterday matched yesterday's
+ * order: the customer ordered again, got sent to the old order's tracking
+ * page, and nothing new was created or printed.
+ *
+ * Two hours is far longer than any retry and far shorter than a day.
+ */
+const IDEMPOTENCY_WINDOW_MS = 2 * 60 * 60 * 1000;
+
 export async function createCheckout(input: CheckoutInput): Promise<CheckoutResult> {
   const res = await createCheckoutInner(input);
   // Log WHY a checkout was refused (the customer-facing message only — no PII),
@@ -179,6 +192,8 @@ async function createCheckoutInner(input: CheckoutInput): Promise<CheckoutResult
       .from("orders")
       .select("id, code, track_token, status, total_pence, gift_card_pence")
       .eq("idempotency_key", idem)
+      // Only a recent key resumes an order; an older one starts a new one.
+      .gte("created_at", new Date(Date.now() - IDEMPOTENCY_WINDOW_MS).toISOString())
       .maybeSingle();
     if (existing) return resumeExistingOrder(existing, cash);
   }
@@ -259,6 +274,8 @@ async function createCheckoutInner(input: CheckoutInput): Promise<CheckoutResult
         .from("orders")
         .select("id, code, track_token, status, total_pence, gift_card_pence")
         .eq("idempotency_key", idem)
+        // Only a recent key resumes an order; an older one starts a new one.
+        .gte("created_at", new Date(Date.now() - IDEMPOTENCY_WINDOW_MS).toISOString())
         .maybeSingle();
       if (raced) return resumeExistingOrder(raced, cash);
     }
