@@ -90,16 +90,38 @@ Say "Built $Exe" "Green"
 
 # --- settings --------------------------------------------------------------
 
-$config = [ordered]@{
-  baseUrl          = $BaseUrl.TrimEnd("/")
-  location         = $Location
-  printer          = $Printer
-  copies           = $Copies
-  gapSeconds       = $GapSeconds
-  pollSeconds      = 5
-  openDrawerOnCash = [bool]$OpenDrawerOnCash
-}
+# Settings already saved are kept unless this run names them.
+#
+# Re-running to pick up a new version used to quietly put every setting back to
+# its default, so a kitchen set to two tickets an order went back to one and
+# nobody noticed until the counter had no copy.
+
 $configPath = Join-Path $DataDir "config.json"
+$existing = $null
+if (Test-Path $configPath) {
+  try { $existing = Get-Content $configPath -Raw | ConvertFrom-Json } catch { $existing = $null }
+}
+
+function Setting($name, $passed, $saved, $fallback) {
+  if ($PSBoundParameters_Keys -contains $name) { return $passed }       # named on this run
+  if ($null -ne $saved -and "$saved".Length -gt 0) { return $saved }    # kept from last time
+  return $fallback
+}
+
+$PSBoundParameters_Keys = $PSBoundParameters.Keys
+
+$config = [ordered]@{
+  baseUrl          = (Setting "BaseUrl"  $BaseUrl.TrimEnd("/") $existing.baseUrl  "https://www.bombay-bicycle-chef.com")
+  location         = (Setting "Location" $Location             $existing.location "balham")
+  printer          = (Setting "Printer"  $Printer              $existing.printer  "")
+  copies           = [int](Setting "Copies"     $Copies     $existing.copies     1)
+  gapSeconds       = [int](Setting "GapSeconds" $GapSeconds $existing.gapSeconds 3)
+  pollSeconds      = 5
+  openDrawerOnCash = [bool](Setting "OpenDrawerOnCash" ([bool]$OpenDrawerOnCash) $existing.openDrawerOnCash $false)
+}
+
+Say ("Tickets per order: {0}{1}" -f $config.copies,
+     $(if ($config.copies -gt 1) { " (kept from the last install)" } else { "" }))
 $config | ConvertTo-Json | Out-File -FilePath $configPath -Encoding utf8
 Say "Settings saved to $configPath" "Green"
 
