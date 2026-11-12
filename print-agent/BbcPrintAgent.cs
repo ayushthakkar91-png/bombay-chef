@@ -629,16 +629,26 @@ namespace BombayBicycleChef
 
             foreach (OrderLine line in order.Items)
             {
-                w.Raw(BoldOn).Raw(Size(1, 2));
-                w.Wrapped(line.Qty + " x " + line.Name, 0, Width);
-                w.Raw(Size(1, 1)).Raw(BoldOff);
-                foreach (string modifier in line.Modifiers) w.Wrapped("+ " + modifier, 4, Width);
+                // The dish name is the one thing a cook reads from across the
+                // pass, so it goes out at double width as well as double
+                // height. Double width halves how much fits on a line, so the
+                // wrap has to be told about it or long names run off the roll.
+                w.Raw(BoldOn).Raw(Size(2, 2));
+                w.Wrapped(line.Qty + " x " + line.Name, 0, 4, Width / 2);
+                w.Raw(Size(1, 1));
+
+                // What is done TO the dish stays a step down from its name, but
+                // still double height — this is where "no nuts" lives, and it
+                // was set in the same small type as the subtotal.
+                w.Raw(Size(1, 2)).Raw(BoldOff);
+                foreach (string modifier in line.Modifiers) w.Wrapped("+ " + modifier, 2, Width);
                 if (line.Notes.Length > 0)
                 {
                     w.Raw(BoldOn);
-                    w.Wrapped("** " + line.Notes.ToUpperInvariant(), 4, Width);
+                    w.Wrapped("** " + line.Notes.ToUpperInvariant(), 2, Width);
                     w.Raw(BoldOff);
                 }
+                w.Raw(Size(1, 1));
                 w.Feed();
             }
 
@@ -659,11 +669,15 @@ namespace BombayBicycleChef
             w.Raw(Size(1, 1)).Raw(BoldOff);
             w.Line(new string('-', Width));
 
-            w.Raw(BoldOn);
-            if (order.CustomerName.Length > 0) w.Line(order.CustomerName);
-            if (order.CustomerPhone.Length > 0) w.Raw(Size(1, 2)).Line(order.CustomerPhone).Raw(Size(1, 1));
-            if (order.IsDelivery && order.Address.Length > 0) w.Wrapped(order.Address, 0, Width);
-            w.Raw(BoldOff);
+            // Read by a driver in the dark, holding a bag. All of it double
+            // height — a wrong door costs the whole delivery, and the small
+            // type that used to be here was the first thing to go on a ticket
+            // that had sat in a warm kitchen.
+            w.Raw(BoldOn).Raw(Size(1, 2));
+            if (order.CustomerName.Length > 0) w.Wrapped(order.CustomerName, 0, 2, Width);
+            if (order.CustomerPhone.Length > 0) w.Line(order.CustomerPhone);
+            if (order.IsDelivery && order.Address.Length > 0) w.Wrapped(order.Address, 0, 2, Width);
+            w.Raw(Size(1, 1)).Raw(BoldOff);
 
             w.Feed(4).Raw(Cut);
             if (order.IsCash && config.OpenDrawerOnCash) w.Raw(KickDrawer);
@@ -787,25 +801,46 @@ namespace BombayBicycleChef
             /// </summary>
             public Writer Wrapped(string text, int indent, int width)
             {
-                string pad = new string(' ', indent);
-                int room = width - indent;
+                return Wrapped(text, indent, indent, width);
+            }
+
+            /// <summary>
+            /// Wraps on spaces, with a deeper indent on continuation lines.
+            ///
+            /// A dish name too long for one line used to carry on at the left
+            /// margin, where "Chicken Tikka / Masala" reads as two dishes to
+            /// somebody glancing at the pass. The hanging indent makes a
+            /// continuation look like one.
+            /// </summary>
+            public Writer Wrapped(string text, int indent, int continuationIndent, int width)
+            {
+                string firstPad = new string(' ', indent);
+                string contPad = new string(' ', continuationIndent);
+                bool first = true;
+
+                Action<string> emit = delegate(string s)
+                {
+                    Line((first ? firstPad : contPad) + s);
+                    first = false;
+                };
+
+                int room = width - Math.Max(indent, continuationIndent);
                 if (room < 8) room = 8;
 
-                string[] words = text.Split(' ');
                 string line = "";
-                foreach (string word in words)
+                foreach (string word in text.Split(' '))
                 {
                     if (line.Length == 0) line = word;
                     else if (line.Length + 1 + word.Length <= room) line += " " + word;
-                    else { Line(pad + line); line = word; }
+                    else { emit(line); line = word; }
 
                     while (line.Length > room)
                     {
-                        Line(pad + line.Substring(0, room));
+                        emit(line.Substring(0, room));
                         line = line.Substring(room);
                     }
                 }
-                if (line.Length > 0) Line(pad + line);
+                if (line.Length > 0) emit(line);
                 return this;
             }
 
