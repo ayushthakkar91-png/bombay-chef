@@ -22,9 +22,9 @@ export async function submitEnquiry(input: {
   renderedAt?: string | number | null;
   elapsedMs?: number | string | null;
 }): Promise<{ ok: boolean; error?: string }> {
-  // Invisible bot checks first, before any work. Reporting success to a bot
-  // keeps it from retrying with variations, and tells it nothing about which
-  // check caught it.
+  // Invisible bot checks first. A bot is told the message sent, because an
+  // error invites a retry with variations, and the reason is logged only —
+  // telling it which check caught it is how it learns to pass.
   const bot = automatedReason({ honeypot: input.honeypot, renderedAt: input.renderedAt, elapsedMs: input.elapsedMs });
   if (bot) {
     console.warn(`[contact] dropped automated submission: ${bot}`);

@@ -118,7 +118,13 @@ export async function checkGiftCard(code: string): Promise<{ ok: boolean; balanc
   return { ok: true, balancePence: plan.balancePence };
 }
 
-
+/**
+ * Create a pending order + items from a server-priced cart and either open a
+ * Stripe Checkout session or confirm it as cash.
+ *
+ * A card order is only marked paid by the webhook — never trust the client
+ * redirect. Card data never touches us (PCI SAQ A).
+ */
 export async function createCheckout(input: CheckoutInput): Promise<CheckoutResult> {
   const res = await createCheckoutInner(input);
   // Log WHY a checkout was refused (the customer-facing message only — no PII),
