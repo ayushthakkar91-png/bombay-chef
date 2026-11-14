@@ -159,8 +159,20 @@ function LocationForm({
           <Field label="Delivery fee (£)" htmlFor="deliveryFeeGbp">
             <TextInput id="deliveryFeeGbp" name="deliveryFeeGbp" inputMode="decimal" defaultValue={location ? (location.deliveryFeePence / 100).toFixed(2) : "3.50"} placeholder="3.50" />
           </Field>
-          <Field label="Free delivery over (£)" htmlFor="freeDeliveryOverGbp" hint="Leave blank for no free-delivery threshold." error={state.errors?.freeDeliveryOverGbp}>
-            <TextInput id="freeDeliveryOverGbp" name="freeDeliveryOverGbp" inputMode="decimal" defaultValue={location?.freeDeliveryOverPence != null ? (location.freeDeliveryOverPence / 100).toFixed(2) : ""} placeholder="30.00" />
+          <Field
+            label="Free delivery over (£)"
+            htmlFor="freeDeliveryOverGbp"
+            // Spelled out because this quietly overrides the distance bands:
+            // a threshold set here was giving away every delivery over £30,
+            // and the screen said nothing about it.
+            hint={
+              location?.freeDeliveryOverPence != null && location.freeDeliveryOverPence > 0
+                ? `Orders of £${(location.freeDeliveryOverPence / 100).toFixed(2)} or more pay no delivery fee, whatever the distance. Clear this box to always charge by distance.`
+                : "Blank means every delivery is charged by distance. Set an amount to give free delivery on larger orders."
+            }
+            error={state.errors?.freeDeliveryOverGbp}
+          >
+            <TextInput id="freeDeliveryOverGbp" name="freeDeliveryOverGbp" inputMode="decimal" defaultValue={location?.freeDeliveryOverPence != null && location.freeDeliveryOverPence > 0 ? (location.freeDeliveryOverPence / 100).toFixed(2) : ""} placeholder="30.00" />
           </Field>
           <Field label="Minimum order (£)" htmlFor="minOrderGbp">
             <TextInput id="minOrderGbp" name="minOrderGbp" inputMode="decimal" defaultValue={location ? (location.minOrderPence / 100).toFixed(2) : "15.00"} placeholder="15.00" />

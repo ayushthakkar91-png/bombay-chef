@@ -3,6 +3,7 @@ import "server-only";
 import { getServiceClient } from "@/lib/supabase/clients";
 import type { Fulfilment } from "./constants";
 import type { CartLineInput } from "./types";
+import { freeDeliveryApplies } from "./delivery-tiers";
 
 /**
  * Server-authoritative cart pricing. Clients send only item ids, modifier ids,
@@ -136,11 +137,7 @@ export async function priceCart(
 
   let deliveryFeePence = fulfilment === "delivery" ? (deliveryFeePenceOverride ?? config.delivery_fee_pence) : 0;
   // Free delivery once the subtotal reaches the branch's threshold (if set).
-  if (
-    fulfilment === "delivery" &&
-    config.free_delivery_over_pence != null &&
-    subtotalPence >= config.free_delivery_over_pence
-  ) {
+  if (fulfilment === "delivery" && freeDeliveryApplies(subtotalPence, config.free_delivery_over_pence)) {
     deliveryFeePence = 0;
   }
 

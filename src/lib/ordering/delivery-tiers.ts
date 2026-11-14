@@ -41,3 +41,18 @@ export function feeForMiles(miles: number, tiers: DeliveryTier[]): number | null
 export function maxDeliveryMiles(tiers: DeliveryTier[]): number | null {
   return tiers.length ? Math.max(...tiers.map((t) => t.maxMiles)) : null;
 }
+
+/**
+ * Does this order qualify for free delivery?
+ *
+ * A threshold of 0 means "no threshold", not "free on everything". The check
+ * used to be `!= null`, so a 0 typed into the admin box — the obvious way to
+ * say "turn this off" — would have given away every single delivery, with
+ * nothing on screen to say so. Nobody would notice until the month's figures.
+ *
+ * Pulled out of priceCart so this rule can be tested without a database.
+ */
+export function freeDeliveryApplies(subtotalPence: number, thresholdPence: number | null): boolean {
+  if (thresholdPence == null || thresholdPence <= 0) return false;
+  return subtotalPence >= thresholdPence;
+}
