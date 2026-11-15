@@ -14,18 +14,31 @@ const STORAGE_KEY = "bbc:cookie-consent";
  * the mobile bottom bar (60px + safe area) on small screens.
  */
 export function CookieNotice() {
-  const [visible, setVisible] = useState(false);
+  // Three states, not two. "Not yet looked" has to be distinct from "looked
+  // and they have already chosen", or the banner flashes up on every page load
+  // for people who dismissed it months ago — the server cannot read
+  // localStorage, so the first render never knows.
+  const [decided, setDecided] = useState<boolean | null>(null);
 
   useEffect(() => {
-    try {
-      if (!localStorage.getItem(STORAGE_KEY)) setVisible(true);
-    } catch {
-      /* storage unavailable — stay hidden */
-    }
+    const read = () => {
+      try {
+        setDecided(Boolean(localStorage.getItem(STORAGE_KEY)));
+      } catch {
+        setDecided(true); // storage unavailable — stay hidden rather than nag
+      }
+    };
+    // After paint: reading storage during the effect body is a synchronous
+    // setState in an effect, which cascades a second render before the first
+    // has been shown.
+    const id = requestAnimationFrame(read);
+    return () => cancelAnimationFrame(id);
   }, []);
 
+  const visible = decided === false;
+
   const choose = (choice: "accepted" | "rejected") => {
-    setVisible(false);
+    setDecided(true);
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ choice, at: new Date().toISOString() }));
     } catch {

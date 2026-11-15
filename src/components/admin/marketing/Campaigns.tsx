@@ -24,7 +24,7 @@ export function CampaignComposer({ segments }: { segments: SegmentSize[] }) {
   const [ctaLabel, setCtaLabel] = useState(state.values?.ctaLabel ?? "");
   const [applied, setApplied] = useState<string | null>(null);
 
-  const useTemplate = (id: string) => {
+  const applyTemplate = (id: string) => {
     const t = CAMPAIGN_TEMPLATES.find((x) => x.id === id);
     if (!t) return;
     if ((subject.trim() || body.trim()) && !window.confirm("Replace what you've written with this template?")) return;
@@ -57,7 +57,7 @@ export function CampaignComposer({ segments }: { segments: SegmentSize[] }) {
               <button
                 key={t.id}
                 type="button"
-                onClick={() => useTemplate(t.id)}
+                onClick={() => applyTemplate(t.id)}
                 title={t.when}
                 className={
                   "rounded-md border px-3 py-1.5 text-left text-xs transition-colors " +

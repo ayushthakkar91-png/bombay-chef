@@ -230,7 +230,8 @@ function renderInner(
   p: ReservationEmailPayload,
 ): { subject: string; html: string; text: string } {
   const hi = p.guestName ? `Dear ${p.guestName},` : "Hello,";
-  const manage = p.manageUrl ? button(p.manageUrl, "Manage booking") : "";
+  // The HTML "Manage booking" button is rendered by reservationActions(); only
+  // the plain-text line is still built here.
   const manageText = p.manageUrl ? `\nManage your booking: ${p.manageUrl}` : "";
 
   switch (template) {

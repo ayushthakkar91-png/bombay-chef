@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import type { OrderDetail } from "@/lib/repositories/orders";
 import type { OrderStatus } from "@/lib/ordering/constants";
 import { EmptyState } from "@/components/admin/primitives";
+import { useNow } from "@/components/admin/useNow";
 import { OrderActions } from "./OrderActions";
 
 import { money } from "@/lib/format";
@@ -61,16 +62,13 @@ export function LiveOrders({ orders, locationId }: { orders: OrderDetail[]; loca
   const router = useRouter();
   // null until mounted: the wait is measured against the viewer's clock, and
   // rendering it on the server would hydrate with a different number.
-  const [now, setNow] = useState<number | null>(null);
+  const now = useNow();
 
+  // Pull new orders in. Separate from the clock above: one is this screen
+  // asking the server what changed, the other is time passing.
   useEffect(() => {
-    setNow(Date.now());
-    const tick = setInterval(() => setNow(Date.now()), 30000);
     const refresh = setInterval(() => router.refresh(), 15000);
-    return () => {
-      clearInterval(tick);
-      clearInterval(refresh);
-    };
+    return () => clearInterval(refresh);
   }, [router]);
 
   if (orders.length === 0) {
