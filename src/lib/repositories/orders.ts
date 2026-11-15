@@ -38,7 +38,22 @@ export type Order = {
 
 export type OrderDetail = Order & {
   items: OrderLine[];
-  payment: { status: string; cardBrand: string | null; cardLast4: string | null; paymentIntent: string | null } | null;
+  payment: {
+    status: string;
+    /** 'card', 'cash', 'gift_card'… — whether the money has actually arrived. */
+    method: string | null;
+    cardBrand: string | null;
+    cardLast4: string | null;
+    paymentIntent: string | null;
+  } | null;
+  /**
+   * Cash on collection or delivery: the order is confirmed, the money is not in.
+   *
+   * Status "paid" means "the order is placed and the kitchen should cook it",
+   * which for a cash order reads to staff as "already paid for" — and somebody
+   * hands over food without taking the money.
+   */
+  isCash: boolean;
 };
 
 const SELECT =
@@ -91,7 +106,7 @@ export async function listLiveOrders(locationId: string): Promise<OrderDetail[]>
   if (!supabase) return [];
   const { data } = await supabase
     .from("orders")
-    .select(`${SELECT}, order_items(name, unit_price_pence, qty, modifiers, line_total_pence, notes), payments(status, card_brand, card_last4, provider_payment_intent)`)
+    .select(`${SELECT}, order_items(name, unit_price_pence, qty, modifiers, line_total_pence, notes), payments(status, method, card_brand, card_last4, provider_payment_intent)`)
     .eq("location_id", locationId)
     .in("status", LIVE_STATUSES)
     .order("created_at", { ascending: true });
@@ -115,7 +130,7 @@ export async function getOrderAdmin(id: string): Promise<OrderDetail | null> {
   if (!supabase) return null;
   const { data } = await supabase
     .from("orders")
-    .select(`${SELECT}, order_items(name, unit_price_pence, qty, modifiers, line_total_pence, notes), payments(status, card_brand, card_last4, provider_payment_intent)`)
+    .select(`${SELECT}, order_items(name, unit_price_pence, qty, modifiers, line_total_pence, notes), payments(status, method, card_brand, card_last4, provider_payment_intent)`)
     .eq("id", id)
     .maybeSingle();
   if (!data) return null;
@@ -218,7 +233,7 @@ export async function getOrderByToken(token: string): Promise<OrderDetail | null
   if (!supabase || !token) return null;
   const { data } = await supabase
     .from("orders")
-    .select(`${SELECT}, order_items(name, unit_price_pence, qty, modifiers, line_total_pence, notes), payments(status, card_brand, card_last4, provider_payment_intent), locations(name)`)
+    .select(`${SELECT}, order_items(name, unit_price_pence, qty, modifiers, line_total_pence, notes), payments(status, method, card_brand, card_last4, provider_payment_intent), locations(name)`)
     .eq("track_token", token)
     .maybeSingle();
   if (!data) return null;
@@ -234,10 +249,13 @@ function toDetail(data: Record<string, unknown>): OrderDetail {
     payment: p
       ? {
           status: p.status as string,
+          method: (p.method as string | null) ?? null,
           cardBrand: (p.card_brand as string | null) ?? null,
           cardLast4: (p.card_last4 as string | null) ?? null,
           paymentIntent: (p.provider_payment_intent as string | null) ?? null,
         }
       : null,
+    // Any cash leg means cash has to be collected, however the row is ordered.
+    isCash: payments.some((row) => row.method === "cash"),
   };
 }

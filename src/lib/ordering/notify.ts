@@ -38,7 +38,7 @@ export async function enqueueOrderEmail(
   const { data } = await supabase
     .from("orders")
     .select(
-      "code, fulfilment, status, total_pence, prep_time_min, contact_name, contact_email, track_token, delivery_address, order_items(name, qty), locations(name)",
+      "code, fulfilment, status, total_pence, prep_time_min, contact_name, contact_email, track_token, delivery_address, order_items(name, qty), payments(method), locations(name)",
     )
     .eq("id", orderId)
     .maybeSingle();
@@ -62,10 +62,19 @@ export async function enqueueOrderEmail(
     itemsSummary: items.map((i) => `${i.qty}× ${i.name}`).join(", "),
     trackUrl: `${siteUrl()}/order/track/${data.track_token as string}`,
     statusLabel: ORDER_STATUS_LABEL[data.status as OrderStatus],
+    // Status 'paid' means 'placed', not 'money received'. Without this every
+    // message about a cash order read as though it had already been paid for.
+    isCash: payRows(data.payments).some((r) => r.method === "cash"),
     ...extra,
   };
 
   await enqueueEmail({ template, to: recipient, toName: payload.guestName, payload, orderId });
+}
+
+/** Supabase returns a joined row as an object or an array depending on the join. */
+function payRows(p: unknown): { method?: string | null }[] {
+  if (!p) return [];
+  return (Array.isArray(p) ? p : [p]) as { method?: string | null }[];
 }
 
 /** One-line delivery address for an email, or undefined when there isn't one. */

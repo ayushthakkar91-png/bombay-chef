@@ -150,7 +150,16 @@ export function LiveOrders({ orders, locationId }: { orders: OrderDetail[]; loca
                   </div>
 
                   <footer className="flex items-center justify-between gap-2 border-t border-sand px-4 py-2.5">
-                    <span className="text-sm font-semibold tabular-nums text-text">{money(o.totalPence)}</span>
+                    {/* Whether the money is in. An order sitting at status
+                        "paid" reads as already paid for, and that is how food
+                        goes out of the door with the cash still in a pocket. */}
+                    {o.isCash ? (
+                      <span className="rounded-md bg-[#fdf1dd] px-2 py-1 text-sm font-semibold tabular-nums text-[#7a5312]">
+                        Collect {money(o.totalPence)} cash
+                      </span>
+                    ) : (
+                      <span className="text-sm font-semibold tabular-nums text-text">{money(o.totalPence)} paid</span>
+                    )}
                     <OrderActions order={{ id: o.id, locationId, status: o.status, fulfilment: o.fulfilment, totalPence: o.totalPence }} />
                   </footer>
                 </article>

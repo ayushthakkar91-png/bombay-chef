@@ -32,6 +32,14 @@ export type ReservationEmailPayload = {
   deliveryAddressLabel?: string;
   etaLabel?: string;
   totalLabel?: string;
+  /**
+   * Cash on collection or delivery — the money has NOT been taken.
+   *
+   * Order status "paid" means "placed, cook it", and every message built from
+   * it read as though the customer had already paid. Whoever hands the food
+   * over has to know to collect.
+   */
+  isCash?: boolean;
   itemsSummary?: string;
   trackUrl?: string;
   statusLabel?: string;
@@ -303,15 +311,23 @@ function renderInner(
 
     case "order_confirmation": {
       const track = p.trackUrl ? button(p.trackUrl, "Track your order") : "";
+      // A cash customer needs telling what to have ready, and the old wording
+      // ("your order is confirmed") let them assume they had already paid.
+      const payLine = p.isCash
+        ? `<p style="font-size:16px;line-height:1.7;">Please have <strong>${p.totalLabel ?? "the total"}</strong> in cash ready ${p.fulfilment === "delivery" ? "for the driver" : "when you collect"}.</p>`
+        : "";
+      const payText = p.isCash
+        ? `\n\nPlease have ${p.totalLabel ?? "the total"} in cash ready ${p.fulfilment === "delivery" ? "for the driver" : "when you collect"}.`
+        : "";
       return {
         subject: `Order ${p.code ?? ""} confirmed — Bombay Bicycle Chef`,
         html: shell(
           "Order confirmed",
           `<p style="font-size:16px;line-height:1.7;">${hi}</p>
            <p style="font-size:16px;line-height:1.7;">Thank you — your order is confirmed and we've started preparing it.</p>
-           ${orderRows(p)}<p style="margin-top:8px;">${track}</p>`,
+           ${payLine}${orderRows(p)}<p style="margin-top:8px;">${track}</p>`,
         ),
-        text: `${hi}\n\nYour order is confirmed.\n\n${orderText(p)}${p.trackUrl ? `\n\nTrack: ${p.trackUrl}` : ""}\n\n— Bombay Bicycle Chef`,
+        text: `${hi}\n\nYour order is confirmed.${payText}\n\n${orderText(p)}${p.trackUrl ? `\n\nTrack: ${p.trackUrl}` : ""}\n\n— Bombay Bicycle Chef`,
       };
     }
 
@@ -363,12 +379,22 @@ function renderInner(
         text: `${hi}\n\nYour order has been ${p.statusLabel === "Refunded" ? "refunded" : "cancelled"}.${p.reason ? ` (${p.reason})` : ""}\n\n${orderText(p)}\n\n— Bombay Bicycle Chef`,
       };
 
-    case "admin_new_order":
+    case "admin_new_order": {
+      // "A new paid order" went out for cash orders too, because the order
+      // status is "paid" either way. Whoever reads this has to know whether
+      // there is money to collect at the door.
+      const lead = p.isCash
+        ? `A new order has come in. <strong>Cash on ${p.fulfilment === "delivery" ? "delivery" : "collection"} — collect ${p.totalLabel ?? "the total"}.</strong>`
+        : "A new paid order has come in.";
+      const leadText = p.isCash
+        ? `New order — CASH on ${p.fulfilment === "delivery" ? "delivery" : "collection"}. Collect ${p.totalLabel ?? "the total"}.`
+        : "New paid order.";
       return {
-        subject: `New ${p.fulfilment ?? ""} order ${p.code ?? ""}${p.locationName ? ` — ${p.locationName}` : ""}`,
-        html: shell("New order", `<p style="font-size:16px;line-height:1.7;">A new paid order has come in.</p>${orderRows(p)}<p style="font-family:Arial,sans-serif;font-size:12px;color:${MUTED};">${p.guestName ?? ""}</p>`),
-        text: `New paid order.\n\n${orderText(p)}\n${p.guestName ?? ""}`,
+        subject: `${p.isCash ? "CASH " : ""}New ${p.fulfilment ?? ""} order ${p.code ?? ""}${p.locationName ? ` — ${p.locationName}` : ""}`,
+        html: shell("New order", `<p style="font-size:16px;line-height:1.7;">${lead}</p>${orderRows(p)}<p style="font-family:Arial,sans-serif;font-size:12px;color:${MUTED};">${p.guestName ?? ""}</p>`),
+        text: `${leadText}\n\n${orderText(p)}\n${p.guestName ?? ""}`,
       };
+    }
 
     case "loyalty_birthday":
       return {
