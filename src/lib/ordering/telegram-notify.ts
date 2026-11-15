@@ -62,7 +62,16 @@ type OrderRow = {
   notes: string | null;
   delivery_address: Record<string, string> | null;
   order_items: { name: string; qty: number }[] | null;
+  /** Joined payment rows. A cash order has one with method 'cash'. */
+  payments?: { method: string | null }[] | { method: string | null } | null;
 };
+
+/** Was this order placed as cash on collection / cash on delivery? */
+function isCashOrder(o: OrderRow): boolean {
+  if (!o.payments) return false;
+  const rows = Array.isArray(o.payments) ? o.payments : [o.payments];
+  return rows.some((r) => r?.method === "cash");
+}
 
 /** Full Telegram message text for an order (used on enqueue and on button edits). */
 export function renderOrderMessage(o: OrderRow): string {
@@ -87,12 +96,15 @@ export function renderOrderMessage(o: OrderRow): string {
     lines.push(`🏪 COLLECTION`);
   }
   if (o.notes) lines.push(`📝 ${esc(o.notes)}`);
-  lines.push(`💳 PAID`);
+  // This said PAID on every order, cash included, because the order status is
+  // "paid" either way. It is the last line somebody reads before handing food
+  // over, so it has to be the one line that is never wrong.
+  lines.push(isCashOrder(o) ? `💵 <b>CASH — COLLECT ${money(o.total_pence)}</b>` : `💳 PAID`);
   return lines.join("\n");
 }
 
 const ORDER_SELECT =
-  "code, status, fulfilment, subtotal_pence, delivery_fee_pence, discount_pence, gift_card_pence, total_pence, contact_name, contact_phone, notes, delivery_address, order_items(name, qty)";
+  "code, status, fulfilment, subtotal_pence, delivery_fee_pence, discount_pence, gift_card_pence, total_pence, contact_name, contact_phone, notes, delivery_address, order_items(name, qty), payments(method)";
 
 /** Load an order shaped for Telegram rendering. */
 export async function loadOrderForTelegram(orderId: string): Promise<OrderRow | null> {
