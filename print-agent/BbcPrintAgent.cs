@@ -623,6 +623,9 @@ namespace BombayBicycleChef
         private static readonly byte[] BoldOn = { 0x1B, 0x45, 0x01 };
         private static readonly byte[] BoldOff = { 0x1B, 0x45, 0x00 };
         private static readonly byte[] Cut = { 0x1D, 0x56, 0x42, 0x00 };
+        // GS B — white on black. One line that cannot be skimmed past.
+        private static readonly byte[] ReverseOn = { 0x1D, 0x42, 0x01 };
+        private static readonly byte[] ReverseOff = { 0x1D, 0x42, 0x00 };
         private static readonly byte[] KickDrawer = { 0x1B, 0x70, 0x00, 0x19, 0xFA };
 
         private const int Width = 42; // 80mm roll, font A
@@ -648,47 +651,41 @@ namespace BombayBicycleChef
             var w = new Writer();
             w.Raw(Reset).Raw(FontA).Raw(CodePage437);
 
+            // One header line, not four. The shop name is gone — a ticket in
+            // this kitchen is from this kitchen — and the type of order sits
+            // next to its number instead of above it. Together that is three
+            // double-height lines of roll saved on every ticket printed.
             w.Raw(AlignCentre).Strong().Raw(Size(1, 2));
-            w.Line("BOMBAY BICYCLE CHEF");
+            w.Line((order.IsDelivery ? "DELIVERY" : "COLLECTION") + " #" + order.Code);
             w.Raw(Size(1, 1)).Plain();
             w.Line(order.PlacedAt.ToString("ddd dd MMM  HH:mm", CultureInfo.InvariantCulture));
-            w.Feed();
-
-            w.Strong().Raw(Size(2, 2));
-            w.Line(order.IsDelivery ? "DELIVERY" : "COLLECTION");
-            w.Line("#" + order.Code);
-            w.Raw(Size(1, 1));
 
             // Whether money still has to change hands is the one thing nobody
-            // can afford to misread, so it gets its own band.
-            w.Line(new string('=', Width));
-            w.Line(order.IsCash ? "COLLECT CASH  " + Money(order.Total) : "PAID ONLINE");
-            w.Line(new string('=', Width));
-            w.Plain().Raw(AlignLeft);
+            // can afford to misread. White-on-black says that in one line,
+            // where a band of equals signs took three.
+            w.Strong().Raw(ReverseOn);
+            w.Line(order.IsCash ? " COLLECT CASH  " + Money(order.Total) + " " : " PAID ONLINE ");
+            w.Raw(ReverseOff).Plain().Raw(AlignLeft);
             w.Feed();
 
             foreach (OrderLine line in order.Items)
             {
-                // The dish name is the one thing a cook reads from across the
-                // pass, so it goes out at double width as well as double
-                // height. Double width halves how much fits on a line, so the
-                // wrap has to be told about it or long names run off the roll.
-                w.Strong().Raw(Size(2, 2));
-                w.Wrapped(line.Qty + " x " + line.Name, 0, 4, Width / 2);
-                w.Raw(Size(1, 1));
+                // Double height, full width. Double width was costing a wrapped
+                // line on most dishes here — "Garlic & Coriander Naan" does not
+                // fit in 21 characters — and two short lines read no better
+                // than one long one, for twice the paper.
+                w.Strong().Raw(Size(1, 2));
+                w.Wrapped(line.Qty + " x " + line.Name, 0, 5, Width);
+                w.Raw(Size(1, 1)).Plain();
 
-                // What is done TO the dish stays a step down from its name, but
-                // still double height — this is where "no nuts" lives, and it
-                // was set in the same small type as the subtotal.
-                w.Raw(Size(1, 2)).Plain();
-                foreach (string modifier in line.Modifiers) w.Wrapped("+ " + modifier, 2, Width);
+                // Modifiers and notes drop to ordinary height. They are read
+                // standing over the ticket, not across the pass, and they are
+                // still bold like everything else.
+                foreach (string modifier in line.Modifiers) w.Wrapped("+ " + modifier, 5, Width);
                 if (line.Notes.Length > 0)
                 {
-                    w.Strong();
-                    w.Wrapped("** " + line.Notes.ToUpperInvariant(), 2, Width);
-                    w.Plain();
+                    w.Wrapped("** " + line.Notes.ToUpperInvariant(), 5, Width);
                 }
-                w.Raw(Size(1, 1));
 
                 // A blank line only where one dish's extras could be read as
                 // the next dish's. A plain item needs no separator — its name
@@ -713,15 +710,13 @@ namespace BombayBicycleChef
             w.Raw(Size(1, 1)).Plain();
             w.Line(new string('-', Width));
 
-            // Read by a driver in the dark, holding a bag. All of it double
-            // height — a wrong door costs the whole delivery, and the small
-            // type that used to be here was the first thing to go on a ticket
-            // that had sat in a warm kitchen.
-            w.Strong().Raw(Size(1, 2));
+            // The phone number stays double height: it is dialled one-handed,
+            // often in the dark. The name and address read fine at ordinary
+            // size once they are bold, and they were costing three tall lines
+            // on every delivery.
             if (order.CustomerName.Length > 0) w.Wrapped(order.CustomerName, 0, 2, Width);
-            if (order.CustomerPhone.Length > 0) w.Line(order.CustomerPhone);
+            if (order.CustomerPhone.Length > 0) w.Raw(Size(1, 2)).Line(order.CustomerPhone).Raw(Size(1, 1));
             if (order.IsDelivery && order.Address.Length > 0) w.Wrapped(order.Address, 0, 2, Width);
-            w.Raw(Size(1, 1)).Plain();
 
             // Two blank lines, not four. The cutter sits a little above the
             // print head, so some feed is needed or the last line is cut
