@@ -14,12 +14,16 @@ import { money } from "@/lib/format";
 /**
  * The kitchen queue.
  *
- * Staff are standing up, mid-service, glancing at this between tasks. It has to
- * answer one question in a single look: what do I do next. So orders are split
- * by the stage they are waiting on, oldest first within each stage, and
- * numbered in the order they should be worked. How long an order has been
- * waiting is the loudest thing on the card, because that is what turns a fine
- * service into a complaint.
+ * Staff are standing up, mid-service, glancing at this between tasks. Orders
+ * are split by the stage they are waiting on, newest first within each stage,
+ * so an order that has just come in is at the top of the screen where somebody
+ * will see it. How long an order has been waiting is the loudest thing on the
+ * card, because that is what turns a fine service into a complaint.
+ *
+ * Newest-first is a deliberate reversal. Oldest-first reads better as a
+ * cook-next queue, but only while the screen is kept clean: leave a few orders
+ * unfinished and they hold the top for days while live ones arrive below the
+ * fold.
  */
 
 type Stage = "new" | "cooking" | "ready";
@@ -116,10 +120,10 @@ export function LiveOrders({ orders, locationId }: { orders: OrderDetail[]; loca
   }, [router]);
 
   if (orders.length === 0) {
-    return <EmptyState title="Nothing in the kitchen" description="Paid orders appear here the moment they arrive, oldest first." />;
+    return <EmptyState title="Nothing in the kitchen" description="Paid orders appear here the moment they arrive, newest first." />;
   }
 
-  // listLiveOrders already returns oldest first, which is the order to work in.
+  // listLiveOrders returns newest first.
   const groups = (["new", "cooking", "ready"] as Stage[])
     .map((stage) => ({ stage, orders: orders.filter((o) => stageOf(o.status) === stage) }))
     .filter((g) => g.orders.length > 0);
@@ -146,9 +150,14 @@ export function LiveOrders({ orders, locationId }: { orders: OrderDetail[]; loca
                 <article key={o.id} className="flex flex-col rounded-lg border border-sand bg-surface">
                   <header className="flex items-start justify-between gap-3 px-4 pt-3">
                     <div className="flex items-center gap-2.5">
-                      {/* Position in the queue. The number is the instruction. */}
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-[13px] font-semibold tabular-nums text-white">
-                        {i + 1}
+                      {/* Newest at the top, so this counts DOWN the list: the
+                          highest number is the oldest order, the one that has
+                          been waiting longest. A plain 1,2,3 from the top
+                          would have read as "do this first" and pointed at the
+                          order that only just arrived. Urgency is carried by
+                          the wait chip beside it, which is the honest signal. */}
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[13px] font-semibold tabular-nums text-primary">
+                        {group.length - i}
                       </span>
                       <div>
                         <p className="font-semibold tabular-nums text-text">{o.code}</p>

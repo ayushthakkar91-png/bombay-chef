@@ -109,7 +109,11 @@ export async function listLiveOrders(locationId: string): Promise<OrderDetail[]>
     .select(`${SELECT}, order_items(name, unit_price_pence, qty, modifiers, line_total_pence, notes), payments(status, method, card_brand, card_last4, provider_payment_intent)`)
     .eq("location_id", locationId)
     .in("status", LIVE_STATUSES)
-    .order("created_at", { ascending: true });
+    // Newest first. The screen was built oldest-first, as a cook-next queue,
+    // which is right in a clean service — but the moment anything is left
+    // unfinished those stale orders hold the top of the screen and a new order
+    // arrives below the fold, where nobody is looking.
+    .order("created_at", { ascending: false });
   return (data as Record<string, unknown>[] | null ?? []).map(toDetail);
 }
 
