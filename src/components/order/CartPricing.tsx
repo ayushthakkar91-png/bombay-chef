@@ -22,7 +22,7 @@ export type CartPricing = {
 };
 
 const PricingContext = createContext<CartPricing | null>(null);
-const DEBOUNCE_MS = 250;
+const DEBOUNCE_MS = 150;
 
 export function CartPricingProvider({ locationSlug, children }: { locationSlug: string; children: ReactNode }) {
   const { lines, fulfilment, promoCode, postcode, ready } = useOrder();

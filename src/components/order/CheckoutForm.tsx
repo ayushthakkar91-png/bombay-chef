@@ -107,12 +107,21 @@ export function CheckoutForm({
     let cancelled = false;
     const t = setTimeout(async () => {
       setPcChecking(true);
+      // Hand the postcode to the cart NOW, so the re-price runs alongside this
+      // check instead of waiting for it. The two used to be serial — check,
+      // then price, and the price call repeated the same check internally —
+      // which is most of why entering a postcode felt slow.
+      //
+      // The typed value is passed rather than the formatted one that comes
+      // back: they differ by a space, and that difference alone would re-run
+      // the pricing a second time for nothing. The server decides the fee
+      // either way, so an unserved postcode simply gets no distance fee.
+      setPostcode(pcValue);
       const res = await checkDeliveryAction(locationSlug, pcValue);
       if (cancelled) return;
       setPcChecking(false);
       setPcCheck(res);
-      setPostcode(res.served ? (res.postcode ?? pcValue) : null);
-    }, 450);
+    }, 300);
     return () => { cancelled = true; clearTimeout(t); };
     // setPostcode's identity changes whenever cart state changes; depending on it
     // would re-run this check in a loop. Re-check only when the postcode changes.
