@@ -5,9 +5,10 @@ import { getServiceClient } from "@/lib/supabase/clients";
 import { LIVE_STATUSES, type Fulfilment, type OrderStatus } from "@/lib/ordering/constants";
 import { recordOrderEvent } from "@/lib/ordering/events";
 import { orderToPosJson, appStatusToBbc, forwardStatusPath } from "./mapping";
+import { releaseCutoff } from "@/lib/ordering/scheduling";
 
 const ORDER_COLS =
-  "id, code, status, fulfilment, contact_name, contact_phone, total_pence, subtotal_pence, delivery_fee_pence, discount_pence, promo_code, notes, delivery_address, placed_at, created_at, printed_at, payments(method)";
+  "id, code, status, fulfilment, contact_name, contact_phone, total_pence, subtotal_pence, delivery_fee_pence, discount_pence, promo_code, notes, delivery_address, placed_at, created_at, printed_at, scheduled_for, payments(method)";
 
 export async function listLiveOrdersForPos(locationId: string): Promise<Record<string, unknown>[]> {
   const supabase = getServiceClient();
@@ -17,6 +18,10 @@ export async function listLiveOrdersForPos(locationId: string): Promise<Record<s
     .select(ORDER_COLS)
     .eq("location_id", locationId)
     .in("status", LIVE_STATUSES)
+    // A scheduled order is held back until an hour before its slot: a ticket
+    // on the rail gets cooked, and food that waited two hours is worse than
+    // none. ASAP orders have no slot and are unaffected.
+    .or(`scheduled_for.is.null,scheduled_for.lte.${releaseCutoff()}`)
     .order("placed_at", { ascending: false })
     .limit(100);
   if (!orders?.length) return [];

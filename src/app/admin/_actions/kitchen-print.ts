@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/auth/dal";
 import { getServiceClient } from "@/lib/supabase/clients";
 import { markPrinted } from "@/lib/pos/orders";
 import { LIVE_STATUSES } from "@/lib/ordering/constants";
+import { releaseCutoff } from "@/lib/ordering/scheduling";
 
 /**
  * Printing from a PC instead of the Sunmi terminal.
@@ -25,6 +26,8 @@ export type PrintTicket = {
   notes: string | null;
   /** Paid by card already, or cash to collect on handover. */
   cash: boolean;
+  /** The time the customer asked for, or null for as-soon-as-possible. */
+  scheduledFor: string | null;
   subtotalPence: number;
   deliveryFeePence: number;
   discountPence: number;
@@ -45,13 +48,15 @@ export async function listPrintQueue(locationId: string): Promise<PrintTicket[]>
   const { data } = await supabase
     .from("orders")
     .select(
-      "id, code, fulfilment, placed_at, created_at, contact_name, contact_phone, delivery_address, notes, " +
+      "id, code, fulfilment, placed_at, created_at, scheduled_for, contact_name, contact_phone, delivery_address, notes, " +
         "subtotal_pence, delivery_fee_pence, discount_pence, promo_code, total_pence, " +
         "order_items(name, qty, notes, modifiers), payments(method, status)",
     )
     .eq("location_id", locationId)
     .in("status", LIVE_STATUSES)
     .is("printed_at", null)
+    // Held back until an hour before the slot — see lib/ordering/scheduling.
+    .or(`scheduled_for.is.null,scheduled_for.lte.${releaseCutoff()}`)
     .order("created_at", { ascending: true })
     .limit(20);
 
@@ -74,6 +79,7 @@ export async function listPrintQueue(locationId: string): Promise<PrintTicket[]>
       address: a ? [a.line1, a.line2, a.city, a.postcode].filter(Boolean).join(", ") : null,
       notes: (r.notes as string | null) ?? null,
       cash: pays.some((p) => p.method === "cash"),
+      scheduledFor: (r.scheduled_for as string | null) ?? null,
       subtotalPence: (r.subtotal_pence as number) ?? 0,
       deliveryFeePence: (r.delivery_fee_pence as number) ?? 0,
       discountPence: (r.discount_pence as number) ?? 0,

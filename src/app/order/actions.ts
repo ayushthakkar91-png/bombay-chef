@@ -15,6 +15,8 @@ import { confirmPaidOrder } from "@/lib/ordering/confirm";
 import { getShoppingCustomer } from "@/lib/auth/customer";
 import { isInternalOrdering } from "@/lib/ordering/routing";
 import { getOrderingStatusBySlug } from "@/lib/repositories/ordering-status";
+import { getOrderingHours } from "@/lib/repositories/ordering-hours";
+import { closedMessage, isOpenAt, isValidSlot, slotsForToday } from "@/lib/ordering/hours";
 import { recordOrderEvent } from "@/lib/ordering/events";
 import type { CartLineInput } from "@/lib/ordering/types";
 import type { Fulfilment } from "@/lib/ordering/constants";
@@ -78,6 +80,61 @@ export async function priceCartAction(input: {
   return priceCart(locationId, input.fulfilment, input.lines, input.promoCode, customer?.userId ?? null, deliveryFeeOverride);
 }
 
+/**
+ * How long before food can be ready: the kitchen's prep, plus the drive for a
+ * delivery. Read from the branch so a change in admin takes effect at once.
+ */
+async function leadMinutesFor(locationId: string, fulfilment: Fulfilment): Promise<number> {
+  const supabase = getServiceClient();
+  if (!supabase) return fulfilment === "delivery" ? 45 : 20;
+  const { data } = await supabase
+    .from("locations")
+    .select("prep_time_min, delivery_time_min")
+    .eq("id", locationId)
+    .maybeSingle();
+  const prep = (data?.prep_time_min as number | null) ?? 20;
+  const drive = (data?.delivery_time_min as number | null) ?? 25;
+  return fulfilment === "delivery" ? prep + drive : prep;
+}
+
+export type OrderingWindow = {
+  /** Can an order be placed for right now? */
+  openNow: boolean;
+  /** Why not, in words for the customer. Empty when open. */
+  closedMessage: string;
+  /** Times that can still be chosen today, as ISO instants. */
+  slots: { value: string; label: string }[];
+};
+
+/**
+ * When this branch can feed somebody today.
+ *
+ * Public: the menu and checkout both need it, and it gives away nothing a
+ * customer could not read off the door.
+ */
+export async function orderingWindowAction(locationSlug: string, fulfilment: Fulfilment): Promise<OrderingWindow> {
+  const locationId = await locationIdFromSlug(locationSlug);
+  if (!locationId) return { openNow: false, closedMessage: "That location isn't available.", slots: [] };
+
+  const hours = await getOrderingHours(locationId);
+  // No hours configured: the branch has never been set up, and refusing every
+  // order would be a worse failure than taking one out of hours.
+  if (hours.length === 0) return { openNow: true, closedMessage: "", slots: [] };
+
+  const now = new Date();
+  const lead = await leadMinutesFor(locationId, fulfilment);
+  const fmt = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", hour: "2-digit", minute: "2-digit" });
+
+  return {
+    openNow: isOpenAt(hours, now, fulfilment),
+    closedMessage: isOpenAt(hours, now, fulfilment) ? "" : closedMessage(hours, now, fulfilment),
+    slots: slotsForToday(hours, now, fulfilment, { leadMinutes: lead }).map((d) => ({
+      value: d.toISOString(),
+      label: fmt.format(d),
+    })),
+  };
+}
+
 export type CheckoutInput = {
   locationSlug: string;
   fulfilment: Fulfilment;
@@ -93,6 +150,12 @@ export type CheckoutInput = {
   idempotencyKey?: string | null;
   /** "card" (Stripe) or "cash" (paid on collection / to the driver). */
   paymentMethod?: "card" | "cash";
+  /**
+   * A time the customer chose, as an ISO instant, or absent for "as soon as
+   * you can". Validated against the branch's hours server-side — the slot list
+   * came from a browser, and a browser can send anything.
+   */
+  scheduledFor?: string | null;
   /** Invisible bot checks; see src/lib/antibot.ts. */
   honeypot?: string | null;
   renderedAt?: string | number | null;
@@ -159,6 +222,30 @@ async function createCheckoutInner(input: CheckoutInput): Promise<CheckoutResult
   const orderingStatus = await getOrderingStatusBySlug(input.locationSlug);
   if (!orderingStatus.accepting) {
     return { ok: false, error: orderingStatus.message?.trim() || "We're not accepting online orders right now." };
+  }
+
+  // Opening hours. The real boundary, not the screen: a form left open at
+  // 17:00 can be submitted at 03:00, and until now it would have been taken.
+  //
+  // A scheduled order is allowed to arrive while we are closed — that is the
+  // whole point of scheduling — but the TIME it asks for still has to be one
+  // the kitchen offered.
+  const hoursLocationId = await locationIdFromSlug(input.locationSlug);
+  if (!hoursLocationId) return { ok: false, error: "That location isn't available." };
+  const hours = await getOrderingHours(hoursLocationId);
+  if (hours.length > 0) {
+    const now = new Date();
+    const lead = await leadMinutesFor(hoursLocationId, input.fulfilment);
+    const wanted = input.scheduledFor ? new Date(input.scheduledFor) : null;
+
+    if (wanted) {
+      if (Number.isNaN(wanted.getTime())) return { ok: false, error: "Please choose a time." };
+      if (!isValidSlot(hours, now, wanted, input.fulfilment, { leadMinutes: lead })) {
+        return { ok: false, error: "That time is no longer available — please choose another." };
+      }
+    } else if (!isOpenAt(hours, now, input.fulfilment)) {
+      return { ok: false, error: closedMessage(hours, now, input.fulfilment) };
+    }
   }
   const name = input.contact?.name?.trim();
   const email = input.contact?.email?.trim();
@@ -248,6 +335,9 @@ async function createCheckoutInner(input: CheckoutInput): Promise<CheckoutResult
       gift_card_id: giftCardId,
       gift_card_pence: giftRedeem,
       prep_time_min: price.etaMin,
+      // Null means "as soon as you can". A time here is one the kitchen
+      // offered and the server re-checked above.
+      scheduled_for: input.scheduledFor ? new Date(input.scheduledFor).toISOString() : null,
       delivery_address: input.fulfilment === "delivery" ? input.deliveryAddress : null,
       contact_name: name,
       contact_email: email,
