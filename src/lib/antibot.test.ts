@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { automatedReason } from "./antibot";
+import { checkForm, automatedReason } from "./antibot";
 
 const now = () => Date.now();
 
@@ -79,5 +79,33 @@ describe("invisible bot checks", () => {
     it("rejects a form left open half a day", () => {
       expect(automatedReason({ honeypot: "", elapsedMs: 13 * 3600 * 1000 })).toBe("stale form");
     });
+  });
+});
+
+describe("an old page is a person, not a robot", () => {
+  const THIRTEEN_HOURS = 13 * 3600 * 1000;
+
+  it("calls a long-open form stale rather than automated", () => {
+    // A customer left the checkout open overnight. Refusing with "please try
+    // again" sent them round a loop that could never succeed, because trying
+    // again from the same page produces the same refusal.
+    expect(checkForm({ elapsedMs: THIRTEEN_HOURS })).toEqual({ kind: "stale" });
+  });
+
+  it("still calls an instant submission automated", () => {
+    const v = checkForm({ elapsedMs: 200 });
+    expect(v.kind).toBe("automated");
+  });
+
+  it("still calls a filled honeypot automated", () => {
+    expect(checkForm({ honeypot: "http://spam.example", elapsedMs: 10_000 }).kind).toBe("automated");
+  });
+
+  it("passes an ordinary submission", () => {
+    expect(checkForm({ elapsedMs: 45_000 })).toEqual({ kind: "human" });
+  });
+
+  it("treats a stale legacy timestamp the same way", () => {
+    expect(checkForm({ renderedAt: Date.now() - THIRTEEN_HOURS })).toEqual({ kind: "stale" });
   });
 });

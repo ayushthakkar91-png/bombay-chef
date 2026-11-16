@@ -50,6 +50,37 @@ export type BotSignals = {
  * The reason is for logs only — never show it to the sender. Telling a bot
  * which check it failed is how it learns to pass.
  */
+export type FormVerdict =
+  /** Looks like a person. Proceed. */
+  | { kind: "human" }
+  /**
+   * A real person on a page that has been open a long time.
+   *
+   * NOT a bot. Somebody left the tab open overnight, or the browser restored
+   * it. Treating this as automated gave a customer "We couldn't place that
+   * order — please try again", which they then did, from the same stale page,
+   * for ever. They have to be told to refresh.
+   */
+  | { kind: "stale" }
+  /** Refuse, and say nothing about which check caught it. */
+  | { kind: "automated"; reason: string };
+
+/**
+ * What this submission looks like.
+ *
+ * Separates "old page" from "robot", because they need different answers:
+ * one is a person who deserves a way forward, the other is told nothing.
+ */
+export function checkForm(signals: BotSignals, minSeconds = MIN_SECONDS): FormVerdict {
+  const reason = automatedReason(signals, minSeconds);
+  if (!reason) return { kind: "human" };
+  if (reason === STALE) return { kind: "stale" };
+  return { kind: "automated", reason };
+}
+
+/** The one reason that means "person on an old page", not "bot". */
+const STALE = "stale form";
+
 export function automatedReason(signals: BotSignals, minSeconds = MIN_SECONDS): string | null {
   const pot = typeof signals.honeypot === "string" ? signals.honeypot.trim() : "";
   if (pot) return "honeypot filled";
@@ -59,7 +90,7 @@ export function automatedReason(signals: BotSignals, minSeconds = MIN_SECONDS): 
     const ms = typeof direct === "number" ? direct : Number.parseInt(String(direct), 10);
     if (!Number.isFinite(ms) || ms < 0) return "unreadable duration";
     if (ms < minSeconds * 1000) return `submitted after ${Math.round(ms / 100) / 10}s`;
-    if (ms > MAX_HOURS * 3600 * 1000) return "stale form";
+    if (ms > MAX_HOURS * 3600 * 1000) return STALE;
     return null;
   }
 
@@ -75,7 +106,7 @@ export function automatedReason(signals: BotSignals, minSeconds = MIN_SECONDS): 
   const elapsedMs = Date.now() - started;
   if (elapsedMs < 0) return null; // clock skew, not a bot
   if (elapsedMs < minSeconds * 1000) return `submitted after ${Math.round(elapsedMs / 100) / 10}s`;
-  if (elapsedMs > MAX_HOURS * 3600 * 1000) return "stale form";
+  if (elapsedMs > MAX_HOURS * 3600 * 1000) return STALE;
 
   return null;
 }

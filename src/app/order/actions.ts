@@ -5,7 +5,7 @@ import { resumeDecision, IDEMPOTENCY_WINDOW_MS } from "@/lib/ordering/idempotenc
 import { dispatchDue } from "@/lib/notifications/outbox";
 import { dispatchTelegramDue } from "@/lib/notifications/telegram-dispatch";
 import { after } from "next/server";
-import { automatedReason } from "@/lib/antibot";
+import { checkForm } from "@/lib/antibot";
 import { createHash } from "node:crypto";
 import { priceCart, type PriceResult } from "@/lib/ordering/pricing";
 import { checkDelivery, suggestNearestBranch, type DeliveryCheck, type BranchSuggestion } from "@/lib/ordering/delivery";
@@ -201,9 +201,15 @@ async function createCheckoutInner(input: CheckoutInput): Promise<CheckoutResult
   // card orders are protected by the card itself.
   const cash = input.paymentMethod === "cash";
   if (cash) {
-    const bot = automatedReason({ honeypot: input.honeypot, renderedAt: input.renderedAt, elapsedMs: input.elapsedMs });
-    if (bot) {
-      console.warn(`[checkout] dropped automated cash order: ${bot}`);
+    const verdict = checkForm({ honeypot: input.honeypot, renderedAt: input.renderedAt, elapsedMs: input.elapsedMs });
+    // An old page is a person, not a robot, and has to be told what to do.
+    // "Please try again" on a stale form is advice that cannot work: trying
+    // again from the same page produces the same refusal, for ever.
+    if (verdict.kind === "stale") {
+      return { ok: false, error: "This page has been open a while — please refresh it and place your order again." };
+    }
+    if (verdict.kind === "automated") {
+      console.warn(`[checkout] dropped automated cash order: ${verdict.reason}`);
       return { ok: false, error: "We couldn't place that order — please try again." };
     }
     if (!(await rateLimit("checkout-cash", { limit: 3, windowSec: 600, failClosed: true })).ok) {
