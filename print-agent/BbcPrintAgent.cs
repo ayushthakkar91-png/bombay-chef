@@ -658,7 +658,6 @@ namespace BombayBicycleChef
         // so it is stated once here rather than typed per till.
         private const string BUSINESS_NAME = "BOMBAY BICYCLE CHEF";
         private const string VAT_NUMBER = "256200238";
-        private const string MOBILE = "+44 7742 427701";
         private const string WEBSITE = "bombaybicyclechef.com";
 
         /// <summary>
@@ -698,7 +697,6 @@ namespace BombayBicycleChef
             w.Raw(Size(1, 1)).Plain();
             if (order.BranchAddress.Length > 0) w.Wrapped(order.BranchAddress, 0, 0, Width);
             if (order.BranchPhone.Length > 0) w.Line("Tel " + order.BranchPhone);
-            w.Line("Tel " + MOBILE);
             w.Line("VAT " + VAT_NUMBER);
             w.Feed();
 
