@@ -19,7 +19,31 @@ export default async function OrderMenuPage({ searchParams }: { searchParams: Pr
     (l) => (l.collectionEnabled || l.deliveryEnabled) && isInternalOrdering(l.slug),
   );
   if (orderable.length === 0) redirect("/order"); // single hop → /order (branch picker)
-  const slug = orderable.find((l) => l.slug === loc)?.slug ?? orderable[0].slug;
+
+  // A branch that was ASKED FOR but cannot take orders must be said out loud.
+  // This used to fall through to the first orderable branch, so choosing
+  // Battersea silently served Balham's menu — and an order placed from it
+  // would have been cooked in the wrong kitchen. Falling back is only right
+  // when no branch was named at all.
+  const asked = loc?.trim();
+  const chosen = asked ? orderable.find((l) => l.slug === asked) : orderable[0];
+  if (!chosen) {
+    const name = (await getOrderLocations()).find((l) => l.slug === asked)?.name ?? asked;
+    return (
+      <main className="min-h-screen bg-[#F6F2EA] px-6 pb-24 pt-[120px] text-center">
+        <p className="mb-3 font-serif text-[30px] text-[#2B221D]">
+          {name} isn&rsquo;t taking online orders yet
+        </p>
+        <p className="mx-auto mb-8 max-w-md font-sans text-[15px] leading-relaxed text-[#5A524B]">
+          Our other kitchens are open — choose one below and we&rsquo;ll get your order started.
+        </p>
+        <Link href="/order" className="inline-flex h-[52px] items-center justify-center bg-[#5D0925] px-8 font-sans text-[12px] uppercase tracking-[0.15em] text-[#F6F2EA] transition-colors hover:bg-[#420616]">
+          Choose a branch
+        </Link>
+      </main>
+    );
+  }
+  const slug = chosen.slug;
 
   // Live pause switch (admin → Orders). Uncached, so it reflects instantly.
   const status = await getOrderingStatusBySlug(slug);

@@ -71,3 +71,24 @@ describe("the Telegram order message", () => {
     expect(text).toContain("&lt;b&gt;Bobby&lt;/b&gt; &amp; Co");
   });
 });
+
+describe("which kitchen is cooking", () => {
+  it("names the branch in the headline", () => {
+    // Both branches report into one Telegram chat, so an alert that does not
+    // say where the order is leaves whoever reads it guessing.
+    const text = renderOrderMessage({ ...base, locations: { name: "Battersea" }, payments: [{ method: "card" }] });
+    expect(text.split("\n")[0]).toContain("Battersea");
+  });
+
+  it("reads the branch whether the join is an object or an array", () => {
+    const text = renderOrderMessage({ ...base, locations: [{ name: "Balham" }], payments: [{ method: "card" }] });
+    expect(text.split("\n")[0]).toContain("Balham");
+  });
+
+  it("still sends the order when the branch is missing", () => {
+    // An alert without a branch name is worse than no alert only if it stops
+    // being sent. Degrade, never throw.
+    const text = renderOrderMessage({ ...base, payments: [{ method: "card" }] });
+    expect(text).toContain("NEW ORDER A1B2C3D4");
+  });
+});

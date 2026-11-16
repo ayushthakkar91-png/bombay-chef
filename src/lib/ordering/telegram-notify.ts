@@ -64,7 +64,17 @@ type OrderRow = {
   order_items: { name: string; qty: number }[] | null;
   /** Joined payment rows. A cash order has one with method 'cash'. */
   payments?: { method: string | null }[] | { method: string | null } | null;
+  /** Joined branch, so one chat can serve more than one kitchen. */
+  locations?: { name: string } | { name: string }[] | null;
 };
+
+/** The branch this order belongs to, or null when the join is absent. */
+function branchName(o: OrderRow): string | null {
+  const l = o.locations;
+  if (!l) return null;
+  const row = Array.isArray(l) ? l[0] : l;
+  return row?.name ?? null;
+}
 
 /** Was this order placed as cash on collection / cash on delivery? */
 function isCashOrder(o: OrderRow): boolean {
@@ -76,8 +86,12 @@ function isCashOrder(o: OrderRow): boolean {
 /** Full Telegram message text for an order (used on enqueue and on button edits). */
 export function renderOrderMessage(o: OrderRow): string {
   const items = (o.order_items ?? []).map((i) => `${i.qty}× ${esc(i.name)}`).join("\n");
+  // The branch goes in the headline, not buried below. Both kitchens report
+  // into the same chat, so "NEW ORDER A1B2C3D4" alone leaves whoever reads it
+  // not knowing which shop is cooking.
+  const branch = branchName(o);
   const lines: string[] = [
-    `🔔 <b>NEW ORDER ${esc(o.code)}</b>`,
+    `🔔 <b>NEW ORDER ${esc(o.code)}</b>${branch ? ` — ${esc(branch)}` : ""}`,
     `Status: <b>${ORDER_STATUS_LABEL[o.status]}</b>`,
     "",
     items || "(no items)",
@@ -104,7 +118,7 @@ export function renderOrderMessage(o: OrderRow): string {
 }
 
 const ORDER_SELECT =
-  "code, status, fulfilment, subtotal_pence, delivery_fee_pence, discount_pence, gift_card_pence, total_pence, contact_name, contact_phone, notes, delivery_address, order_items(name, qty), payments(method)";
+  "code, status, fulfilment, subtotal_pence, delivery_fee_pence, discount_pence, gift_card_pence, total_pence, contact_name, contact_phone, notes, delivery_address, order_items(name, qty), payments(method), locations(name)";
 
 /** Load an order shaped for Telegram rendering. */
 export async function loadOrderForTelegram(orderId: string): Promise<OrderRow | null> {
