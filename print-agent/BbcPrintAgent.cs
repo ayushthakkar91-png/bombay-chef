@@ -772,11 +772,26 @@ namespace BombayBicycleChef
 
             // Whether money still has to change hands is the one thing nobody
             // can afford to misread, so it is the last thing read before the
-            // bag is handed over, in white on black.
+            // bag is handed over — and the largest text on the ticket.
+            //
+            // Plain bold at double size rather than white on black: reversed
+            // text is a solid block of thermal burn, which comes out greyer on
+            // a tired roll and is harder to read across a counter than the big
+            // letters it was meant to emphasise.
             w.Feed();
-            w.Raw(AlignCentre).Strong().Raw(ReverseOn);
-            w.Line(order.IsCash ? " COLLECT CASH  " + Money(order.Total) + " " : " PAID ONLINE ");
-            w.Raw(ReverseOff).Plain().Raw(AlignLeft);
+            w.Raw(AlignCentre).Strong().Raw(Size(2, 2));
+            if (order.IsCash)
+            {
+                // Two lines: at double width only 21 characters fit, and the
+                // amount matters more than keeping it on one line.
+                w.Line("COLLECT CASH");
+                w.Line(Money(order.Total));
+            }
+            else
+            {
+                w.Line("PAID ONLINE");
+            }
+            w.Raw(Size(1, 1)).Plain().Raw(AlignLeft);
 
             // Two blank lines, not four. The cutter sits a little above the
             // print head, so some feed is needed or the last line is cut
