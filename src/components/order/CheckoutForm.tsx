@@ -275,7 +275,7 @@ export function CheckoutForm({
                   at all right now. Finding out after filling everything in is
                   the way to lose a customer for good. */}
               <section>
-                <h2 className="font-serif text-[22px] text-[#2B221D] mb-3">When</h2>
+                <h2 className="font-serif text-[22px] text-[#2B221D] mb-3">When would you like it?</h2>
                 <WhenToOrder
                   locationSlug={locationSlug}
                   fulfilment={fulfilment}

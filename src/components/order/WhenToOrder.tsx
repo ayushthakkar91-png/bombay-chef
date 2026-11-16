@@ -59,18 +59,28 @@ export function WhenToOrder({
   }, [locationSlug, fulfilment]);
 
   if (!window_) {
-    return <p className="font-sans text-[13.5px] text-[#5A524B]">{pending ? "Checking today's times…" : ""}</p>;
+    return (
+      <p className="font-sans text-[13.5px] text-[#5A524B]">{pending ? "Checking today's times…" : ""}</p>
+    );
   }
 
   const closed = !window_.openNow;
   const noTimesLeft = closed && window_.slots.length === 0;
+  const scheduled = value !== "";
+  const chosen = window_.slots.find((s) => s.value === value);
+
+  // Matches the address and contact fields either side of it — this sat on the
+  // page in a different type size and border weight from everything around it.
+  const field =
+    "w-full bg-white border border-[#2A211C]/20 px-4 py-3 text-[16px] text-[#2B221D] font-sans focus:outline-none focus:border-[#B08A3E]";
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       {closed && (
         <p
           className={
-            "font-sans text-[13.5px] " + (noTimesLeft ? "text-[#5D0925]" : "text-[#2B221D]")
+            "font-sans text-[14px] leading-relaxed " +
+            (noTimesLeft ? "text-[#5D0925]" : "text-[#2B221D]")
           }
         >
           {window_.closedMessage}
@@ -79,25 +89,43 @@ export function WhenToOrder({
       )}
 
       {!noTimesLeft && (
-        <label className="flex flex-col gap-1">
-          <span className="font-sans text-[12px] uppercase tracking-[0.12em] text-[#5A524B]">
-            {closed ? "Choose a time" : "When"}
-          </span>
+        <>
           <select
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full max-w-[280px] border border-[#2A211C]/20 bg-white px-3 py-2 font-sans text-[15px] text-[#2B221D] focus:border-[#B08A3E] focus:outline-none"
+            aria-label="When you would like your order"
+            className={field + " max-w-[320px] appearance-none bg-[length:16px] bg-[right_1rem_center] bg-no-repeat pr-10"}
+            style={{
+              // A caret, so it reads as a menu rather than a text box. Inline
+              // because it is one data URI, not worth a Tailwind plugin.
+              backgroundImage:
+                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%232A211C' stroke-width='1.5'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E\")",
+            }}
           >
             {/* Only offered while the kitchen is actually cooking. Leaving it
                 on a closed shop would promise food nobody is there to make. */}
             {!closed && <option value="">As soon as possible</option>}
             {window_.slots.map((s) => (
               <option key={s.value} value={s.value}>
-                {s.label}
+                {closed ? s.label : `Later today — ${s.label}`}
               </option>
             ))}
           </select>
-        </label>
+
+          {/* Say the choice back in words. A time sitting in a dropdown is
+              easy to scroll past, and arriving an hour early for food is a
+              bad way to find out. */}
+          {scheduled && chosen && (
+            <p className="font-sans text-[13.5px] text-[#3a6b2e]">
+              Scheduled for <strong>{chosen.label}</strong> today.
+            </p>
+          )}
+          {!scheduled && !closed && window_.slots.length > 0 && (
+            <p className="font-sans text-[13.5px] text-[#5A524B]">
+              Or pick a later time today from the list.
+            </p>
+          )}
+        </>
       )}
     </div>
   );
