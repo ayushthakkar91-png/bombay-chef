@@ -24,6 +24,9 @@ export type OrderEventType =
   | "TELEGRAM_NOTIFICATION_CREATED"
   | "TELEGRAM_NOTIFICATION_SENT"
   | "TELEGRAM_NOTIFICATION_FAILED"
+  // Historical. Nothing writes these any more — the Android terminal they woke
+  // was retired — but order_events still holds rows carrying them, and reading
+  // an order's history has to keep working.
   | "FCM_NOTIFICATION_CREATED"
   | "FCM_NOTIFICATION_SENT"
   | "FCM_NOTIFICATION_FAILED"

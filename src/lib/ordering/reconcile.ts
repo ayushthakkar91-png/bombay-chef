@@ -4,7 +4,6 @@ import { getServiceClient } from "@/lib/supabase/clients";
 import { isStripeConfigured, retrieveCheckoutSession, searchPaymentIntentsByOrderId } from "@/lib/stripe/client";
 import { dispatchDue } from "@/lib/notifications/outbox";
 import { dispatchTelegramDue } from "@/lib/notifications/telegram-dispatch";
-import { dispatchFcmDue } from "@/lib/notifications/fcm-dispatch";
 import { confirmPaidOrder } from "./confirm";
 import { recordOrderEvent } from "./events";
 
@@ -171,5 +170,5 @@ export async function reconcileRecentPending(opts: { locationId?: string; limit?
 
 /** Send any queued email / Telegram / POS-push notifications (retries included). */
 export async function dispatchAllNotifications(limit = 25): Promise<void> {
-  await Promise.allSettled([dispatchDue(limit), dispatchTelegramDue(limit), dispatchFcmDue(limit)]);
+  await Promise.allSettled([dispatchDue(limit), dispatchTelegramDue(limit)]);
 }

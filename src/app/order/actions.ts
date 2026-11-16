@@ -4,7 +4,6 @@ import { getServiceClient } from "@/lib/supabase/clients";
 import { resumeDecision, IDEMPOTENCY_WINDOW_MS } from "@/lib/ordering/idempotency";
 import { dispatchDue } from "@/lib/notifications/outbox";
 import { dispatchTelegramDue } from "@/lib/notifications/telegram-dispatch";
-import { dispatchFcmDue } from "@/lib/notifications/fcm-dispatch";
 import { after } from "next/server";
 import { automatedReason } from "@/lib/antibot";
 import { createHash } from "node:crypto";
@@ -338,7 +337,7 @@ async function createCheckoutInner(input: CheckoutInput): Promise<CheckoutResult
     // cash never touches Stripe, so without it the kitchen's Telegram and
     // push alerts would wait for the nightly cron. after() keeps it off the
     // customer's response.
-    after(async () => { await Promise.allSettled([dispatchDue(), dispatchTelegramDue(), dispatchFcmDue()]); });
+    after(async () => { await Promise.allSettled([dispatchDue(), dispatchTelegramDue()]); });
     return { ok: true, url: `${await checkoutBaseUrl()}/order/track/${order.track_token as string}?cash=1` };
   }
 
@@ -377,7 +376,7 @@ async function resumeExistingOrder(o: ExistingOrder, cash: boolean): Promise<Che
     // cash never touches Stripe, so without it the kitchen's Telegram and
     // push alerts would wait for the nightly cron. after() keeps it off the
     // customer's response.
-    after(async () => { await Promise.allSettled([dispatchDue(), dispatchTelegramDue(), dispatchFcmDue()]); });
+    after(async () => { await Promise.allSettled([dispatchDue(), dispatchTelegramDue()]); });
     return { ok: true, url: `${await checkoutBaseUrl()}/order/track/${o.track_token}?cash=1` };
   }
   return resumeCheckout(o.id, o.code, o.track_token, charge, undefined);

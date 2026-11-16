@@ -9,7 +9,6 @@ import { confirmGiftCardPurchase } from "@/lib/giftcards/service";
 import { recordOrderEvent } from "@/lib/ordering/events";
 import { dispatchDue } from "@/lib/notifications/outbox";
 import { dispatchTelegramDue } from "@/lib/notifications/telegram-dispatch";
-import { dispatchFcmDue } from "@/lib/notifications/fcm-dispatch";
 
 export const dynamic = "force-dynamic";
 
@@ -109,7 +108,7 @@ async function handleEvent(supabase: SupabaseClient, eventType: string, event: R
         // dispatchDue is the customer's email. Without it the confirmation sat in
         // the outbox until a cron ran — hours, and the customer had no order
         // number in writing.
-        after(async () => { await Promise.allSettled([dispatchDue(), dispatchTelegramDue(), dispatchFcmDue()]); });
+        after(async () => { await Promise.allSettled([dispatchDue(), dispatchTelegramDue()]); });
         return true;
       }
       // Not confirmed by us: fine if it's already past pending_payment (a retry or
