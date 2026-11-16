@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { MapPin, ChevronDown, Check, Bike, ShoppingBag, Navigation } from "lucide-react";
 
 import type { OrderingMenu } from "@/lib/repositories/ordering-menu";
@@ -19,6 +19,10 @@ type Branch = { slug: string; name: string };
  */
 export function OrderBar({ menu, branches, locationSlug }: { menu: OrderingMenu; branches: Branch[]; locationSlug: string }) {
   const router = useRouter();
+  const params = useSearchParams();
+  // Set when the postcode moved them here from another branch.
+  const movedFrom = params.get("from");
+  const movedFromName = branches.find((b) => b.slug === movedFrom)?.name ?? null;
   const { fulfilment, setFulfilment, setPostcode } = useOrder();
   const [pcInput, setPcInput] = useState("");
   const [check, setCheck] = useState<DeliveryCheck | null>(null);
@@ -33,11 +37,16 @@ export function OrderBar({ menu, branches, locationSlug }: { menu: OrderingMenu;
   const multi = branches.length > 1;
 
   /** Soft-navigate to a branch, carrying method + postcode into the cart context. */
-  const switchToBranch = (slug: string, opts: { delivery?: boolean; postcode?: string } = {}) => {
+  const switchToBranch = (slug: string, opts: { delivery?: boolean; postcode?: string; movedFrom?: string } = {}) => {
     if (opts.delivery) setFulfilment("delivery");
     if (opts.postcode) setPostcode(opts.postcode);
     setLocOpen(false);
-    if (slug !== locationSlug) router.push(`/order/menu?loc=${slug}`);
+    if (slug === locationSlug) return;
+    // `from` survives the navigation so the new page can say what happened. A
+    // customer who typed a postcode and found themselves looking at a
+    // different restaurant deserves to be told why.
+    const from = opts.movedFrom ? `&from=${encodeURIComponent(opts.movedFrom)}` : "";
+    router.push(`/order/menu?loc=${slug}${from}`);
   };
 
   const runCheck = () => startTransition(async () => {
@@ -46,21 +55,24 @@ export function OrderBar({ menu, branches, locationSlug }: { menu: OrderingMenu;
     setCheck(res);
     if (res.served) setPostcode(res.postcode ?? pcInput);
 
-    // Is another branch nearer? Asked whether or not this one can deliver.
+    // Move them to the nearest branch that can actually deliver.
     //
-    // It used to be asked only when the chosen branch COULDN'T deliver, so a
-    // customer in Tooting who happened to land on Battersea was quietly served
-    // from 2.4 miles away while Balham sat 1.1 miles off — £2 more for
-    // delivery and a longer wait, with nothing on screen to say a nearer
-    // kitchen existed.
+    // A customer in Tooting who landed on Battersea was served from 2.4 miles
+    // away while Balham sat 1.1 miles off — £2 more delivery and a longer
+    // wait. Nobody picks the further kitchen on purpose, and the postcode is
+    // the real answer to "which shop is yours", arriving after the branch was
+    // chosen. So the switch is made rather than offered.
     //
-    // suggestNearestBranch returns the closest branch that can actually
-    // deliver, so a different slug coming back always means "nearer than this
-    // one". Offered, never forced: switching branches changes the menu and the
-    // prices, and that is the customer's decision to make.
+    // suggestNearestBranch returns the closest branch that can deliver, so a
+    // different slug coming back always means nearer than this one. The new
+    // page says what happened and offers the way back — moving somebody
+    // without a word would be worse than leaving them where they were.
     if (multi) {
       const sug = await suggestBranchAction(pcInput);
-      if (sug && sug.slug !== locationSlug) setSuggestion(sug);
+      if (sug && sug.slug !== locationSlug) {
+        switchToBranch(sug.slug, { delivery: true, postcode: pcInput, movedFrom: locationSlug });
+        return;
+      }
     }
   });
 
@@ -131,6 +143,23 @@ export function OrderBar({ menu, branches, locationSlug }: { menu: OrderingMenu;
           <p className="mt-2 font-sans text-[12.5px] text-[#5A524B]">Free collection from {menu.locationName} · ready in {collectFrom}–{collectTo} mins.</p>
         ) : (
           <div className="mt-2.5">
+            {/* Moved here by their postcode. Said plainly, with the way back:
+                somebody who deliberately chose the other branch must be able
+                to go straight back to it. */}
+            {movedFromName && (
+              <p className="mb-2 flex flex-wrap items-center gap-2 font-sans text-[12.5px] text-[#2B221D]">
+                <Navigation className="h-3.5 w-3.5 shrink-0 text-[#B08A3E]" />
+                <span>
+                  Switched to <strong>{menu.locationName}</strong> — it&apos;s closer to you, so delivery is quicker and cheaper.
+                </span>
+                <button
+                  onClick={() => switchToBranch(movedFrom as string, { delivery: true })}
+                  className="text-[#5A524B] underline underline-offset-2 hover:text-[#2B221D]"
+                >
+                  Back to {movedFromName}
+                </button>
+              </p>
+            )}
             {check?.served ? (
               <div className="flex flex-wrap items-center gap-2 font-sans text-[12.5px] text-[#3a6b2e]">
                 <Check className="h-4 w-4 shrink-0" /> We deliver to {check.postcode} · min {money(menu.minOrderPence)} · ~{check.etaMin} mins.
