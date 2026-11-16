@@ -8,7 +8,7 @@ import { orderToPosJson, appStatusToBbc, forwardStatusPath } from "./mapping";
 import { releaseCutoff } from "@/lib/ordering/scheduling";
 
 const ORDER_COLS =
-  "id, code, status, fulfilment, contact_name, contact_phone, total_pence, subtotal_pence, delivery_fee_pence, discount_pence, promo_code, notes, delivery_address, placed_at, created_at, printed_at, scheduled_for, payments(method)";
+  "id, code, status, fulfilment, contact_name, contact_phone, total_pence, subtotal_pence, delivery_fee_pence, discount_pence, promo_code, notes, delivery_address, placed_at, created_at, printed_at, scheduled_for, prep_time_min, locations(name, address, phone), payments(method)";
 
 export async function listLiveOrdersForPos(locationId: string): Promise<Record<string, unknown>[]> {
   const supabase = getServiceClient();

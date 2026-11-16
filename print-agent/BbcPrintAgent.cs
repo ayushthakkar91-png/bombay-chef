@@ -451,6 +451,13 @@ namespace BombayBicycleChef
         public string CustomerName = "";
         public string CustomerPhone = "";
         public string Fulfilment = "collection";
+        public string BranchName = "BOMBAY BICYCLE CHEF";
+        public string BranchAddress = "";
+        public string BranchPhone = "";
+        /** Minutes from the order being placed to the food being ready. */
+        public int EtaMinutes;
+        /** A slot the customer chose. Beats the estimate when present. */
+        public DateTime? ScheduledFor;
         public bool IsPrinted;
         public bool IsCash;
         public double Total, Subtotal, DeliveryFee, Discount;
@@ -471,6 +478,10 @@ namespace BombayBicycleChef
                 Code = "F6FC4E4D",
                 CustomerName = "A. Patel",
                 CustomerPhone = "07700 900123",
+                BranchName = "Bombay Bicycle Chef",
+                BranchAddress = "28 Queenstown Rd, London SW8 3RX",
+                BranchPhone = "020 7720 0500",
+                EtaMinutes = 45,
                 Fulfilment = "delivery",
                 IsCash = true,
                 Subtotal = 28.40,
@@ -495,6 +506,10 @@ namespace BombayBicycleChef
                 Code = Json.Str(row, "orderNumber"),
                 CustomerName = Json.Str(row, "customerName"),
                 CustomerPhone = Json.Str(row, "customerPhone"),
+                BranchName = Json.Str(row, "branchName"),
+                BranchAddress = Json.Str(row, "branchAddress"),
+                BranchPhone = Json.Str(row, "branchPhone"),
+                EtaMinutes = (int)Json.Number(row, "etaMinutes"),
                 Fulfilment = Json.Str(row, "orderType"),
                 IsPrinted = Json.Bool(row, "isPrinted"),
                 IsCash = Json.Str(row, "paymentStatus") == "cash",
@@ -510,6 +525,11 @@ namespace BombayBicycleChef
             if (DateTime.TryParse(Json.Str(row, "createdAt"), CultureInfo.InvariantCulture,
                                   DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out placed))
                 o.PlacedAt = placed.ToLocalTime();
+
+            DateTime slot;
+            if (DateTime.TryParse(Json.Str(row, "scheduledFor"), CultureInfo.InvariantCulture,
+                                  DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out slot))
+                o.ScheduledFor = slot.ToLocalTime();
 
             var address = Json.Object(row, "deliveryAddress");
             if (address != null)
@@ -630,6 +650,13 @@ namespace BombayBicycleChef
 
         private const int Width = 42; // 80mm roll, font A
 
+        // Fixed for the business, unlike the branch address and landline which
+        // arrive with each order. A VAT number on a receipt is a legal detail,
+        // so it is stated once here rather than typed per till.
+        private const string VAT_NUMBER = "256200238";
+        private const string MOBILE = "+44 7742 427701";
+        private const string WEBSITE = "bombaybicyclechef.com";
+
         /// <summary>
         /// Print the whole ticket in bold.
         ///
@@ -651,21 +678,51 @@ namespace BombayBicycleChef
             var w = new Writer();
             w.Raw(Reset).Raw(FontA).Raw(CodePage437);
 
-            // One header line, not four. The shop name is gone — a ticket in
-            // this kitchen is from this kitchen — and the type of order sits
-            // next to its number instead of above it. Together that is three
-            // double-height lines of roll saved on every ticket printed.
+            // The shop, for the customer's copy. The branch's own address and
+            // landline come down with the order, so the Battersea till cannot
+            // print Balham's address and changing either in admin reaches both
+            // printers without reinstalling anything.
             w.Raw(AlignCentre).Strong().Raw(Size(1, 2));
+            w.Line(order.BranchName.ToUpperInvariant());
+            w.Raw(Size(1, 1)).Plain();
+            if (order.BranchAddress.Length > 0) w.Wrapped(order.BranchAddress, 0, 0, Width);
+            if (order.BranchPhone.Length > 0) w.Line("Tel " + order.BranchPhone);
+            w.Line("Tel " + MOBILE);
+            w.Line("VAT " + VAT_NUMBER);
+            w.Feed();
+
+            // What kind of order, and its number. The loudest thing on the
+            // ticket after the dishes.
+            w.Strong().Raw(Size(1, 2));
             w.Line((order.IsDelivery ? "DELIVERY" : "COLLECTION") + " #" + order.Code);
             w.Raw(Size(1, 1)).Plain();
-            w.Line(order.PlacedAt.ToString("ddd dd MMM  HH:mm", CultureInfo.InvariantCulture));
+            w.Line(order.PlacedAt.ToString("ddd dd MMM yyyy  HH:mm", CultureInfo.InvariantCulture));
+            w.Line(WEBSITE);
+            w.Feed();
 
-            // Whether money still has to change hands is the one thing nobody
-            // can afford to misread. White-on-black says that in one line,
-            // where a band of equals signs took three.
-            w.Strong().Raw(ReverseOn);
-            w.Line(order.IsCash ? " COLLECT CASH  " + Money(order.Total) + " " : " PAID ONLINE ");
-            w.Raw(ReverseOff).Plain().Raw(AlignLeft);
+            w.Raw(AlignLeft);
+            if (order.CustomerName.Length > 0) {
+                w.Strong();
+                w.Wrapped("For: " + order.CustomerName, 0, 5, Width);
+                w.Plain();
+            }
+
+            // When they were told to expect it. A chosen slot is a promise and
+            // beats the estimate; otherwise it is the branch's own ETA, so
+            // changing that in admin changes what the ticket says.
+            string expected = ExpectedLabel(order);
+            if (expected.Length > 0) {
+                w.Strong().Raw(Size(1, 2));
+                w.Line(expected);
+                w.Raw(Size(1, 1)).Plain();
+            }
+
+            if (order.CustomerPhone.Length > 0) w.Line("Tel " + order.CustomerPhone);
+            if (order.IsDelivery && order.Address.Length > 0) {
+                w.Strong();
+                w.Wrapped(order.Address, 0, 2, Width);
+                w.Plain();
+            }
             w.Feed();
 
             foreach (OrderLine line in order.Items)
@@ -702,21 +759,24 @@ namespace BombayBicycleChef
             }
 
             w.Line(new string('-', Width));
+            // Total items, so whoever packs the bag can count against it.
+            int totalQty = 0;
+            foreach (OrderLine l in order.Items) totalQty += l.Qty;
+            w.Columns("Items", totalQty.ToString(CultureInfo.InvariantCulture));
             w.Columns("Subtotal", Money(order.Subtotal));
             if (order.DeliveryFee > 0) w.Columns("Delivery", Money(order.DeliveryFee));
             if (order.Discount > 0) w.Columns("Discount " + order.PromoCode, "-" + Money(order.Discount));
             w.Strong().Raw(Size(1, 2));
             w.Columns("TOTAL", Money(order.Total));
             w.Raw(Size(1, 1)).Plain();
-            w.Line(new string('-', Width));
 
-            // The phone number stays double height: it is dialled one-handed,
-            // often in the dark. The name and address read fine at ordinary
-            // size once they are bold, and they were costing three tall lines
-            // on every delivery.
-            if (order.CustomerName.Length > 0) w.Wrapped(order.CustomerName, 0, 2, Width);
-            if (order.CustomerPhone.Length > 0) w.Raw(Size(1, 2)).Line(order.CustomerPhone).Raw(Size(1, 1));
-            if (order.IsDelivery && order.Address.Length > 0) w.Wrapped(order.Address, 0, 2, Width);
+            // Whether money still has to change hands is the one thing nobody
+            // can afford to misread, so it is the last thing read before the
+            // bag is handed over, in white on black.
+            w.Feed();
+            w.Raw(AlignCentre).Strong().Raw(ReverseOn);
+            w.Line(order.IsCash ? " COLLECT CASH  " + Money(order.Total) + " " : " PAID ONLINE ");
+            w.Raw(ReverseOff).Plain().Raw(AlignLeft);
 
             // Two blank lines, not four. The cutter sits a little above the
             // print head, so some feed is needed or the last line is cut
@@ -742,6 +802,24 @@ namespace BombayBicycleChef
             w.Line(Money(12.34) + " prints the right way round.");
             w.Feed(4).Raw(Cut);
             return w.ToArray();
+        }
+
+        /**
+         * When the customer was told to expect their food.
+         *
+         * A slot they chose is a promise and wins. Otherwise it is the time
+         * the order was placed plus the branch's own ETA — which already
+         * includes the drive on a delivery — so the figure on the ticket is
+         * the same one the website quoted them.
+         */
+        private static string ExpectedLabel(Order order)
+        {
+            if (order.ScheduledFor.HasValue)
+                return "Expected " + order.ScheduledFor.Value.ToString("HH:mm", CultureInfo.InvariantCulture);
+            if (order.EtaMinutes <= 0) return "";
+            DateTime due = order.PlacedAt.AddMinutes(order.EtaMinutes);
+            return "Expected " + due.ToString("HH:mm", CultureInfo.InvariantCulture)
+                 + " (" + order.EtaMinutes + " min)";
         }
 
         private static string Money(double pounds)

@@ -73,6 +73,10 @@ type OrderRow = {
   placed_at: string | null;
   created_at: string;
   printed_at: string | null;
+  scheduled_for: string | null;
+  prep_time_min: number | null;
+  /** The branch, for the receipt header. */
+  locations?: { name: string; address: string; phone: string | null } | { name: string; address: string; phone: string | null }[] | null;
   /** Joined payment rows; a cash order has method "cash". */
   payments?: { method: string | null }[] | { method: string | null } | null;
 };
@@ -87,6 +91,17 @@ export function orderToPosJson(order: OrderRow, items: OrderItemRow[]): Record<s
     // A delivery ticket without a phone number is no use to whoever is stood
     // outside the wrong door with the food going cold.
     customerPhone: order.contact_phone ?? "",
+    // The branch's own details for the receipt header. Sent from here rather
+    // than held in the printer, so the Battersea till cannot print Balham's
+    // address, and a change in admin reaches both without reinstalling.
+    branchName: branchOf(order)?.name ?? "Bombay Bicycle Chef",
+    branchAddress: branchOf(order)?.address ?? "",
+    branchPhone: branchOf(order)?.phone ?? "",
+    // When the customer should expect it. prep_time_min is stored per order
+    // and already includes the drive on a delivery.
+    etaMinutes: order.prep_time_min ?? 0,
+    // A chosen slot wins over the estimate: it is a promise, not a guess.
+    scheduledFor: order.scheduled_for ?? "",
     totalPrice: money(order.total_pence),
     status: bbcStatusToApp(order.status),
     isPrinted: order.printed_at != null,
@@ -116,6 +131,13 @@ export function orderToPosJson(order: OrderRow, items: OrderItemRow[]): Record<s
       selectedToppings: (it.modifiers ?? []).map((m) => ({ name: m.name, quantity: 1 })),
     })),
   };
+}
+
+/** The joined branch, which Supabase returns as an object or a single-item array. */
+function branchOf(order: OrderRow): { name: string; address: string; phone: string | null } | null {
+  const l = order.locations;
+  if (!l) return null;
+  return (Array.isArray(l) ? l[0] : l) ?? null;
 }
 
 /** Was this order placed as cash-on-collection / cash-on-delivery? */
