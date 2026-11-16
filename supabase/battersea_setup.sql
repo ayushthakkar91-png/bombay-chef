@@ -19,8 +19,9 @@ begin;
 -- 28 Queenstown Rd, London SW8 3RX.
 --
 -- The coordinates are what the delivery radius is measured FROM, so a wrong
--- pair silently changes who is allowed to order. Check them on a map before
--- taking real orders: 51.4751, -0.1476 should land on Queenstown Road.
+-- pair silently changes who is allowed to order. These are the owner's own,
+-- and sit about 1.5 miles north of Balham — which is the right sort of
+-- distance between the two shops.
 insert into locations (
   slug, name, address, phone, is_active, sort_order,
   accepting_orders, delivery_enabled, collection_enabled,
@@ -35,8 +36,8 @@ insert into locations (
   null,     -- NO free-delivery threshold: always charge by distance
   20,       -- collection: 20 minutes
   25,       -- plus 25 more for delivery = 45 minutes to the door
-  51.4751,
-  -0.1476,
+  51.46748275457527,   -- confirmed by the owner, 2026-11-16
+  -0.15031368969054232,
   3         -- miles
 )
 on conflict (slug) do update set
