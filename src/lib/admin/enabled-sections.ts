@@ -19,7 +19,7 @@ export const ADMIN_ENABLED_PREFIXES = [
   "/admin/enquiries", // contact-form messages
   "/admin/orders", // core: live + history
   "/admin/reservations", // bookings, calendar, waitlist, tables & hours
-  "/admin/menu/availability", // mark dishes sold-out (full menu editing stays hidden)
+  "/admin/menu", // dishes and prices, categories, and the sold-out switches
   "/admin/marketing", // email marketing: CRM, campaigns, segments, promotions, offers popup
   "/admin/locations", // delivery radius/fee, opening hours
   "/admin/reports/sales", // revenue

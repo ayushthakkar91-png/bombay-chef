@@ -42,7 +42,18 @@ export async function listRecentActivity(nowMs: number, limit = 15): Promise<Act
   return out.slice(0, limit);
 }
 
-export async function getDashboardData(nowMs: number): Promise<DashboardData> {
+/**
+ * The dashboard figures.
+ *
+ * locationId scopes orders and reservations to one branch. The header already
+ * had a branch switcher, but these numbers ignored it: with two shops open,
+ * "Today's revenue" under the word "Battersea" was both branches added
+ * together, which is a worse answer than no answer.
+ *
+ * Customers, loyalty and gift cards stay group-wide. They are not held per
+ * branch, and inventing a split would be a guess presented as a fact.
+ */
+export async function getDashboardData(nowMs: number, locationId?: string | null): Promise<DashboardData> {
   const supabase = getServiceClient();
   const empty: DashboardData = { todayRevenuePence: 0, todayOrders: 0, todayReservations: 0, todayCovers: 0, monthRevenuePence: 0, returningCustomers: 0, loyaltyMembers: 0, giftCardSalesPence: 0, revenueByDay: [], activity: [] };
   if (!supabase) return empty;
@@ -52,9 +63,23 @@ export async function getDashboardData(nowMs: number): Promise<DashboardData> {
   const tomorrow = new Date(todayStart); tomorrow.setDate(tomorrow.getDate() + 1);
   const monthStart = new Date(nowMs - 30 * 86400000);
 
+  // Scoped to one branch when the header's switcher names one.
+  const ordersQ = supabase
+    .from("orders")
+    .select("status, total_pence, placed_at, code, contact_name")
+    .not("placed_at", "is", null)
+    .gte("placed_at", monthStart.toISOString())
+    .limit(20000);
+  const reservationsQ = supabase
+    .from("reservations")
+    .select("party_size, status, starts_at, guest_name, created_at")
+    .gte("created_at", monthStart.toISOString())
+    .order("created_at", { ascending: false })
+    .limit(400);
+
   const [orders, reservations, giftCards, redemptions, returningRes, loyaltyRes, gcSalesRes] = await Promise.all([
-    supabase.from("orders").select("status, total_pence, placed_at, code, contact_name").not("placed_at", "is", null).gte("placed_at", monthStart.toISOString()).limit(20000),
-    supabase.from("reservations").select("party_size, status, starts_at, guest_name, created_at").gte("created_at", monthStart.toISOString()).order("created_at", { ascending: false }).limit(400),
+    locationId ? ordersQ.eq("location_id", locationId) : ordersQ,
+    locationId ? reservationsQ.eq("location_id", locationId) : reservationsQ,
     supabase.from("gift_cards").select("initial_pence, status, recipient_name, code, created_at").gte("created_at", monthStart.toISOString()).order("created_at", { ascending: false }).limit(50),
     supabase.from("loyalty_ledger").select("delta, reason, customer_id, created_at").eq("reason", "redeem").order("created_at", { ascending: false }).limit(8),
     supabase.from("customers").select("id", { count: "exact", head: true }).gte("orders_count", 2),

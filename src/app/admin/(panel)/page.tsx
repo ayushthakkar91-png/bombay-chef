@@ -2,6 +2,8 @@ import { AlertTriangle, ShoppingBag, CalendarDays, Gift, Award } from "lucide-re
 
 import { getStaffContext } from "@/lib/auth/dal";
 import { getDashboardData } from "@/lib/repositories/dashboard";
+import { listLocations } from "@/lib/repositories/admin-locations";
+import { scopedLocationIds, filterScoped } from "@/lib/auth/scope";
 import { PageHeader, Panel, Stat } from "@/components/admin/ui";
 import { BarChart } from "@/components/admin/reports/charts";
 import { StatusBadge } from "@/components/admin/StatusBadge";
@@ -10,13 +12,17 @@ const gbp = (p: number) => `£${Math.round(p / 100).toLocaleString("en-GB")}`;
 const KIND_ICON = { order: ShoppingBag, reservation: CalendarDays, giftcard: Gift, loyalty: Award } as const;
 const at = (iso: string) => new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 
-export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ denied?: string }> }) {
-  const [{ denied }, ctx, data] = await Promise.all([
-    searchParams,
-    getStaffContext(),
-    // eslint-disable-next-line react-hooks/purity -- request-time boundary in a Server Component
-    getDashboardData(Date.now()),
-  ]);
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ denied?: string; loc?: string }> }) {
+  const [{ denied, loc }, ctx] = await Promise.all([searchParams, getStaffContext()]);
+
+  // The header's branch switcher writes ?loc=. These figures used to ignore
+  // it, so "Today's revenue" under the word "Battersea" was both branches
+  // added together.
+  const scoped = ctx ? filterScoped(await listLocations(false), scopedLocationIds(ctx)) : [];
+  const branch = scoped.find((l) => l.slug === loc || l.id === loc) ?? null;
+
+  // eslint-disable-next-line react-hooks/purity -- request-time boundary in a Server Component
+  const data = await getDashboardData(Date.now(), branch?.id ?? null);
   const firstName = ctx?.fullName?.split(" ")[0] ?? null;
 
   return (
