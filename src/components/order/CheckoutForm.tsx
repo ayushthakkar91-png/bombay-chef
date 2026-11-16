@@ -15,7 +15,8 @@ import { useOrder } from "./OrderProvider";
 import { CartPricingProvider } from "./CartPricing";
 import { CartContents } from "./CartContents";
 import { CheckoutSteps } from "./CheckoutSteps";
-import { createCheckout, checkGiftCard, checkDeliveryAction, type CheckoutInput } from "@/app/order/actions";
+import { createCheckout, checkGiftCard, checkDeliveryAction, type CheckoutInput, type OrderingWindow } from "@/app/order/actions";
+import { WhenToOrder } from "./WhenToOrder";
 
 import { money } from "@/lib/format";
 
@@ -93,6 +94,13 @@ export function CheckoutForm({
   // Payable total reported by the order summary (null until delivery is priced).
   const [payTotal, setPayTotal] = useState<number | null>(null);
   const [payMethod, setPayMethod] = useState<"card" | "cash">("card");
+  // "" means as soon as possible; otherwise an ISO instant the kitchen offered.
+  const [scheduledFor, setScheduledFor] = useState("");
+  const [orderWindow, setOrderWindow] = useState<OrderingWindow | null>(null);
+
+  // Shut, and no later time left to choose. The server would refuse this
+  // anyway; saying so on the button is kinder than taking card details first.
+  const cannotOrderNow = orderWindow != null && !orderWindow.openNow && orderWindow.slots.length === 0;
   // When this page appeared — a cash order posted in milliseconds is a bot.
   const [renderedAt] = useState(() => Date.now());
 
@@ -219,6 +227,7 @@ export function CheckoutForm({
       idempotencyKey: idempotencyKey(),
       paymentMethod: payMethod,
       honeypot: (document.getElementById(HONEYPOT_FIELD) as HTMLInputElement | null)?.value ?? "",
+      scheduledFor: scheduledFor || null,
       elapsedMs: Date.now() - renderedAt,
     };
     startTransition(async () => {
@@ -262,6 +271,20 @@ export function CheckoutForm({
           <div className="lg:grid lg:grid-cols-[1fr_380px] lg:gap-10">
             {/* Form */}
             <div className="flex flex-col gap-7">
+              {/* First, before the address and the card: whether we can cook
+                  at all right now. Finding out after filling everything in is
+                  the way to lose a customer for good. */}
+              <section>
+                <h2 className="font-serif text-[22px] text-[#2B221D] mb-3">When</h2>
+                <WhenToOrder
+                  locationSlug={locationSlug}
+                  fulfilment={fulfilment}
+                  value={scheduledFor}
+                  onChange={setScheduledFor}
+                  onWindow={setOrderWindow}
+                />
+              </section>
+
               {fulfilment === "delivery" ? (
                 <section>
                   <h2 className="font-serif text-[22px] text-[#2B221D] mb-4">Delivery address</h2>
@@ -398,7 +421,7 @@ export function CheckoutForm({
                 </div>
                 <button
                   onClick={pay}
-                  disabled={pending}
+                  disabled={pending || cannotOrderNow}
                   className="mt-5 w-full inline-flex items-center justify-center h-[56px] bg-[#5D0925] text-[#F6F2EA] text-[14px] tracking-[0.12em] uppercase font-sans hover:bg-[#420616] transition-colors duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {pending

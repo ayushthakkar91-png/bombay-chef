@@ -7,6 +7,8 @@ import { LocationsManager } from "@/components/admin/LocationsManager";
 import { OrderingToggle } from "@/components/admin/orders/OrderingToggle";
 import { DeliveryTiers } from "@/components/admin/DeliveryTiers";
 import { listDeliveryTiers } from "@/lib/ordering/delivery-tiers";
+import { getAllOrderingHours } from "@/lib/repositories/ordering-hours";
+import { OrderingHours } from "@/components/admin/OrderingHours";
 
 export default async function LocationsPage() {
   const ctx = await requireRole("location_manager");
@@ -14,9 +16,12 @@ export default async function LocationsPage() {
   const canManage = can(ctx, "restaurant_manager");
   const deliveryTiers = await listDeliveryTiers();
 
-  // Ordering on/off switch for the branch that takes online orders (Balham).
-  const orderingLoc = locations.find((l) => isInternalOrdering(l.slug));
-  const orderingStatus = orderingLoc ? await getOrderingStatusById(orderingLoc.id) : null;
+  // Every branch that takes online orders gets its own pause switch and its
+  // own hours. This used to find() the first one, so when Battersea joined it
+  // had neither — no way to pause it, and nowhere to set when it trades.
+  const orderingLocs = locations.filter((l) => isInternalOrdering(l.slug));
+  const orderingStatuses = await Promise.all(orderingLocs.map((l) => getOrderingStatusById(l.id)));
+  const hoursByLocation = await getAllOrderingHours();
 
   return (
     <>
@@ -24,12 +29,13 @@ export default async function LocationsPage() {
         title="Locations"
         description="Balham, Battersea and Kilburn — their details, hours and public visibility."
       />
-      {orderingLoc && orderingStatus && (
-        <div className="mb-6">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-body/80">Online ordering — {orderingLoc.name}</p>
-          <OrderingToggle locationId={orderingLoc.id} initialAccepting={orderingStatus.accepting} initialMessage={orderingStatus.message} />
+      {orderingLocs.map((loc, i) => (
+        <div key={loc.id} className="mb-6 flex flex-col gap-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-body/80">Online ordering — {loc.name}</p>
+          <OrderingToggle locationId={loc.id} initialAccepting={orderingStatuses[i].accepting} initialMessage={orderingStatuses[i].message} />
+          <OrderingHours locationId={loc.id} locationName={loc.name} hours={hoursByLocation[loc.id] ?? []} />
         </div>
-      )}
+      ))}
       <div className="mb-6">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-body/80">Delivery charges — all branches</p>
         <DeliveryTiers tiers={deliveryTiers} canManage={canManage} />
