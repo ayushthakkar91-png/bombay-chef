@@ -1,13 +1,28 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { SmoothScroll } from "@/components/motion/SmoothScroll";
-import { MobileBottomBar } from "@/components/common/MobileBottomBar";
 import { CookieNotice } from "@/components/common/CookieNotice";
-import { EventPopup } from "@/components/marketing/EventPopup";
 import type { EventPopupConfig } from "@/config/event-popup";
+
+/**
+ * The cinematic layer, loaded only where it is used.
+ *
+ * The /order branch below already refuses to RENDER any of this — but a
+ * static import is a static import, so GSAP, ScrollTrigger, ScrollSmoother
+ * and Lenis were still bundled into the chunk every page downloads. Lighthouse
+ * measured 22KB of 32KB going unused on the menu page: shipped to a phone,
+ * parsed, and never run, on exactly the pages where somebody is trying to pay.
+ *
+ * Splitting them out costs the marketing pages one extra request during
+ * hydration, after their HTML is already on screen, and takes the whole
+ * animation stack off the ordering flow.
+ */
+const SmoothScroll = dynamic(() => import("@/components/motion/SmoothScroll").then((m) => m.SmoothScroll));
+const MobileBottomBar = dynamic(() => import("@/components/common/MobileBottomBar").then((m) => m.MobileBottomBar));
+const EventPopup = dynamic(() => import("@/components/marketing/EventPopup").then((m) => m.EventPopup));
 import { Maintenance } from "@/components/layout/Maintenance";
 import { SITE_ENABLED } from "@/lib/flags";
 
