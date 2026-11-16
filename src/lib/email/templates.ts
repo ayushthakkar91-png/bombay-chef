@@ -8,7 +8,7 @@ import "server-only";
 
 export type ReservationEmailPayload = {
   guestName?: string;
-  /** Staff-only: shown in the admin new-reservation alert. */
+  /** The guest's or customer's phone. On an order it is how staff ring about a delivery. */
   guestPhone?: string;
   locationName?: string;
   dateLabel?: string;
@@ -32,6 +32,8 @@ export type ReservationEmailPayload = {
   deliveryAddressLabel?: string;
   etaLabel?: string;
   totalLabel?: string;
+  /** Anything the customer typed with the order. */
+  orderNotes?: string;
   /**
    * Cash on collection or delivery — the money has NOT been taken.
    *
@@ -174,16 +176,23 @@ function orderRows(p: ReservationEmailPayload): string {
     v == null || v === ""
       ? ""
       : `<tr><td style="font-family:Arial,sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:${GOLD};padding:6px 0;width:120px;">${k}</td><td style="font-size:16px;padding:6px 0;">${v}</td></tr>`;
+  // NOTE: everything below is inside a template literal, so a // comment in
+  // there is not a comment — it is printed. Two lines of my own explaining
+  // the address row went out in every confirmation email as body text, read
+  // by customers, until somebody noticed. Keep remarks out here.
+  //
+  // The address is shown because a customer checking their confirmation wants
+  // to see where it is going; a mistyped address is caught here or not at all.
   return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0;">
     ${row("Order", p.code)}
     ${row("Location", p.locationName)}
-    // A customer checking their confirmation wants to see WHERE it is going —
-    // mistyped addresses are caught here or not at all.
     ${row(p.fulfilment === "delivery" ? "Delivery to" : "Collection", p.fulfilment === "delivery" ? (p.deliveryAddressLabel || "Your address") : "From the restaurant")}
+    ${row("Phone", p.guestPhone)}
     ${row("Estimated", p.etaLabel)}
     ${row("Total", p.totalLabel)}
   </table>
-  ${p.itemsSummary ? `<p style="font-family:Arial,sans-serif;font-size:13px;color:${MUTED};line-height:1.7;">${p.itemsSummary}</p>` : ""}`;
+  ${p.itemsSummary ? `<p style="font-family:Arial,sans-serif;font-size:13px;color:${MUTED};line-height:1.7;">${p.itemsSummary}</p>` : ""}
+  ${p.orderNotes ? `<p style="font-family:Arial,sans-serif;font-size:13px;color:${INK};line-height:1.7;"><strong>Your note:</strong> ${p.orderNotes}</p>` : ""}`;
 }
 
 function orderText(p: ReservationEmailPayload): string {
@@ -192,8 +201,10 @@ function orderText(p: ReservationEmailPayload): string {
     p.locationName && `Location: ${p.locationName}`,
     p.fulfilment && `Fulfilment: ${p.fulfilment}`,
     p.etaLabel && `Estimated: ${p.etaLabel}`,
+    p.guestPhone && `Phone: ${p.guestPhone}`,
     p.totalLabel && `Total: ${p.totalLabel}`,
     p.itemsSummary && `\n${p.itemsSummary}`,
+    p.orderNotes && `\nNote: ${p.orderNotes}`,
   ]
     .filter(Boolean)
     .join("\n");

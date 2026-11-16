@@ -38,7 +38,7 @@ export async function enqueueOrderEmail(
   const { data } = await supabase
     .from("orders")
     .select(
-      "code, fulfilment, status, total_pence, prep_time_min, contact_name, contact_email, track_token, delivery_address, order_items(name, qty), payments(method), locations(name)",
+      "code, fulfilment, status, total_pence, prep_time_min, contact_name, contact_email, contact_phone, notes, track_token, delivery_address, order_items(name, qty), payments(method), locations(name)",
     )
     .eq("id", orderId)
     .maybeSingle();
@@ -59,6 +59,10 @@ export async function enqueueOrderEmail(
     deliveryAddressLabel: addressLine(data.delivery_address as Record<string, string> | null),
     etaLabel: prep ? `about ${prep} minutes` : undefined,
     totalLabel: money(data.total_pence as number),
+    // The customer's phone and their note were never sent, so staff reading
+    // the alert could not ring about a delivery and never saw "no doorbell".
+    guestPhone: (data.contact_phone as string | null) ?? undefined,
+    orderNotes: (data.notes as string | null) ?? undefined,
     itemsSummary: items.map((i) => `${i.qty}× ${i.name}`).join(", "),
     trackUrl: `${siteUrl()}/order/track/${data.track_token as string}`,
     statusLabel: ORDER_STATUS_LABEL[data.status as OrderStatus],
