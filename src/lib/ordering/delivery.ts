@@ -19,7 +19,17 @@ export type DeliveryCheck = {
   error?: string;
 };
 
-export type BranchSuggestion = { slug: string; name: string; feePence: number; minOrderPence: number; etaMin: number; outcode: string; servesExact: boolean };
+export type BranchSuggestion = {
+  slug: string;
+  name: string;
+  feePence: number;
+  minOrderPence: number;
+  etaMin: number;
+  outcode: string;
+  servesExact: boolean;
+  /** How far the branch actually is, when it could be measured. */
+  distanceMiles?: number;
+};
 
 /**
  * Distance-tiered delivery fee: £1 per started mile (minimum £1). 0.4mi → £1,
@@ -41,16 +51,123 @@ type ZoneLoc = { slug: string; name: string; is_active: boolean; delivery_enable
 const oneLoc = (j: unknown): ZoneLoc | null => { const x = j as ZoneLoc | ZoneLoc[] | null; return (Array.isArray(x) ? x[0] : x) ?? null; };
 
 /**
- * Suggest the nearest branch for a postcode, using existing delivery zones only
- * (no geocoding): first a branch whose active zone covers the exact outcode
- * (cheapest delivery wins), else a branch serving the same postcode area (e.g.
- * "SW…"). Returns null when nothing is close. Future-proof for multi-branch.
+ * Of the branches that can reach a postcode, which one should cook it.
+ *
+ * Pure, and exported, because this is the decision that sends food to the
+ * right kitchen and charges the right delivery fee. It used to be made by
+ * sorting on the flat delivery fee with distance never consulted.
+ *
+ * A branch qualifies only if the postcode is inside BOTH its own radius and
+ * the furthest delivery band. Nearest then wins, and a cheaper fee breaks a
+ * tie — at equal distance the customer should pay less.
+ */
+export function pickNearestBranch<T extends { miles: number; feePence: number; withinBands: boolean; radiusMiles: number }>(
+  candidates: T[],
+  bandLimitMiles: number | null,
+): T | null {
+  const limit = (c: T) => Math.min(c.radiusMiles, bandLimitMiles ?? Infinity);
+  const reachable = candidates
+    .filter((c) => c.withinBands && c.miles <= limit(c))
+    .sort((a, b) => a.miles - b.miles || a.feePence - b.feePence);
+  return reachable[0] ?? null;
+}
+
+type Candidate = {
+  slug: string;
+  name: string;
+  min_order_pence: number;
+  prep_time_min: number;
+  delivery_time_min: number;
+  delivery_fee_pence: number;
+  latitude: number | null;
+  longitude: number | null;
+  delivery_radius_miles: number | null;
+};
+
+/**
+ * Nearest branch that can actually deliver, by road-less straight-line miles.
+ *
+ * Returns null when nothing can be measured — no coordinates anywhere, or the
+ * postcode could not be geocoded — so the caller can fall back.
+ */
+async function nearestByDistance(
+  rawPostcode: string,
+  outcode: string,
+  supabase: NonNullable<ReturnType<typeof getServiceClient>>,
+): Promise<BranchSuggestion | null> {
+  const { data } = await supabase
+    .from("locations")
+    .select(
+      "slug, name, min_order_pence, prep_time_min, delivery_time_min, delivery_fee_pence, latitude, longitude, delivery_radius_miles",
+    )
+    .eq("is_active", true)
+    .eq("delivery_enabled", true);
+
+  const mappable = ((data ?? []) as Candidate[]).filter(
+    (l) => l.latitude != null && l.longitude != null && l.delivery_radius_miles != null,
+  );
+  if (mappable.length === 0) return null;
+
+  const dest = await geocodePostcode(rawPostcode);
+  if (!dest) return null;
+
+  const tiers = await listDeliveryTiers();
+  const bandLimit = maxDeliveryMiles(tiers);
+
+  const best = pickNearestBranch(
+    mappable.map((l) => {
+      const miles = distanceMiles({ lat: l.latitude as number, lng: l.longitude as number }, dest);
+      const tierFee = feeForMiles(miles, tiers);
+      return {
+        l,
+        miles,
+        feePence: tierFee ?? deliveryFeeForMiles(miles),
+        withinBands: tiers.length === 0 || tierFee != null,
+        radiusMiles: l.delivery_radius_miles as number,
+      };
+    }),
+    bandLimit,
+  );
+  if (!best) return null;
+
+  return {
+    slug: best.l.slug,
+    name: best.l.name,
+    feePence: best.feePence,
+    minOrderPence: best.l.min_order_pence,
+    etaMin: best.l.prep_time_min + best.l.delivery_time_min,
+    outcode,
+    servesExact: true,
+    distanceMiles: Math.round(best.miles * 10) / 10,
+  };
+}
+
+/**
+ * The branch that should take this postcode's order.
+ *
+ * Measured in miles, from each branch's own coordinates. This used to sort
+ * candidate branches by their flat delivery fee and never look at distance at
+ * all — which was harmless with one branch and wrong the moment there were
+ * two: SW17 7LT is 1.1 miles from Balham and 2.4 from Battersea, both inside
+ * the radius, and the customer was being sent to Battersea. That is £2 more
+ * delivery, a longer wait, and the wrong kitchen cooking.
+ *
+ * Only branches that can genuinely serve the postcode are considered — inside
+ * their radius AND inside a delivery band. Nearest wins; a cheaper fee breaks
+ * a tie, because at equal distance the customer should pay less.
+ *
+ * Falls back to the old outcode-zone lookup when the postcode cannot be
+ * geocoded or no branch has coordinates, so a postcodes.io outage degrades to
+ * the previous behaviour instead of refusing every order.
  */
 export async function suggestNearestBranch(rawPostcode: string): Promise<BranchSuggestion | null> {
   const outcode = outcodeOf(rawPostcode);
   if (!outcode) return null;
   const supabase = getServiceClient();
   if (!supabase) return null;
+
+  const byDistance = await nearestByDistance(rawPostcode, outcode, supabase);
+  if (byDistance) return byDistance;
 
   const SEL = "outcode, locations!inner(slug, name, is_active, delivery_enabled, delivery_fee_pence, min_order_pence, prep_time_min, delivery_time_min)";
   const toSuggestion = (l: ZoneLoc, exact: boolean): BranchSuggestion => ({ slug: l.slug, name: l.name, feePence: l.delivery_fee_pence, minOrderPence: l.min_order_pence, etaMin: l.prep_time_min + l.delivery_time_min, outcode, servesExact: exact });
