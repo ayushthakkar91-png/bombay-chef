@@ -54,8 +54,52 @@ function urgency(mins: number, stage: Stage): { cls: string; late: boolean } {
   return { cls: "bg-sand text-body", late: false };
 }
 
+/**
+ * A wait, in words someone can act on.
+ *
+ * "9577m · late" was on screen for orders left over from testing. A number
+ * that large reads as a glitch, and a glitch is ignored — including on the
+ * order that genuinely has been sitting for forty minutes.
+ */
+function waitLabel(mins: number): string {
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ${mins % 60}m`;
+  const days = Math.floor(hours / 24);
+  return days === 1 ? "yesterday" : `${days} days`;
+}
+
+/** Date and time in full, for the details panel. */
+function fullStamp(iso: string): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(iso));
+}
+
+/** One label/value row in the details panel. */
+function Line({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3">
+      <dt>{label}</dt>
+      <dd className="text-right font-medium tabular-nums text-text">{value}</dd>
+    </div>
+  );
+}
+
 function clockLabel(iso: string): string {
-  return new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
+  const d = new Date(iso);
+  const time = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", hour: "2-digit", minute: "2-digit" }).format(d);
+  // The date only when it is not today. On a normal service every order is
+  // from today and the date is noise; on a screen still holding last week's
+  // orders, "20:01" alone is actively misleading.
+  const today = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", dateStyle: "short" });
+  if (today.format(d) === today.format(new Date())) return time;
+  return `${new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", day: "2-digit", month: "short" }).format(d)}, ${time}`;
 }
 
 export function LiveOrders({ orders, locationId }: { orders: OrderDetail[]; locationId: string }) {
@@ -117,7 +161,7 @@ export function LiveOrders({ orders, locationId }: { orders: OrderDetail[]; loca
                     </div>
                     {urg && mins !== null && (
                       <span className={"shrink-0 rounded-md px-2 py-1 text-xs font-semibold tabular-nums " + urg.cls}>
-                        {mins}m{urg.late ? " · late" : ""}
+                        {waitLabel(mins)}{urg.late ? " · late" : ""}
                       </span>
                     )}
                   </header>
@@ -145,6 +189,31 @@ export function LiveOrders({ orders, locationId }: { orders: OrderDetail[]; loca
                     {delivery && address && (
                       <p className="mt-0.5 text-xs text-body">{[address.line1, address.line2, address.city, address.postcode].filter(Boolean).join(", ")}</p>
                     )}
+
+                    {/* The rest of the order, folded away.
+                        The card is built for a glance mid-service, so the
+                        breakdown and the email are not on it by default — but
+                        they were nowhere at all, which left no way to answer
+                        "what did they actually pay?" without the database.
+                        <details> keeps that one tap away and costs no JS. */}
+                    <details className="group mt-2.5">
+                      <summary className="cursor-pointer list-none text-xs font-medium text-primary hover:underline">
+                        <span className="group-open:hidden">Full order</span>
+                        <span className="hidden group-open:inline">Hide details</span>
+                      </summary>
+                      <dl className="mt-2 flex flex-col gap-1 border-t border-sand pt-2 text-xs text-body">
+                        <Line label="Placed" value={fullStamp(placed)} />
+                        {o.contactEmail && <Line label="Email" value={o.contactEmail} />}
+                        <Line label="Subtotal" value={money(o.subtotalPence)} />
+                        {o.deliveryFeePence > 0 && <Line label="Delivery" value={money(o.deliveryFeePence)} />}
+                        {o.discountPence > 0 && (
+                          <Line label={`Discount${o.promoCode ? ` (${o.promoCode})` : ""}`} value={`−${money(o.discountPence)}`} />
+                        )}
+                        <Line label="Total" value={money(o.totalPence)} />
+                        <Line label="Payment" value={o.isCash ? "Cash — not yet collected" : "Paid online"} />
+                        <Line label="Status" value={o.status.replace(/_/g, " ")} />
+                      </dl>
+                    </details>
                   </div>
 
                   <footer className="flex items-center justify-between gap-2 border-t border-sand px-4 py-2.5">
