@@ -44,8 +44,20 @@ export function OrderBar({ menu, branches, locationSlug }: { menu: OrderingMenu;
     setSuggestion(null);
     const res = await checkDeliveryAction(locationSlug, pcInput);
     setCheck(res);
-    if (res.served) { setPostcode(res.postcode ?? pcInput); return; }
-    // Current branch can't deliver — is another one nearer? (matters once multi-branch)
+    if (res.served) setPostcode(res.postcode ?? pcInput);
+
+    // Is another branch nearer? Asked whether or not this one can deliver.
+    //
+    // It used to be asked only when the chosen branch COULDN'T deliver, so a
+    // customer in Tooting who happened to land on Battersea was quietly served
+    // from 2.4 miles away while Balham sat 1.1 miles off — £2 more for
+    // delivery and a longer wait, with nothing on screen to say a nearer
+    // kitchen existed.
+    //
+    // suggestNearestBranch returns the closest branch that can actually
+    // deliver, so a different slug coming back always means "nearer than this
+    // one". Offered, never forced: switching branches changes the menu and the
+    // prices, and that is the customer's decision to make.
     if (multi) {
       const sug = await suggestBranchAction(pcInput);
       if (sug && sug.slug !== locationSlug) setSuggestion(sug);
@@ -132,7 +144,21 @@ export function OrderBar({ menu, branches, locationSlug }: { menu: OrderingMenu;
                 {check && !check.served && !suggestion && <span className="w-full font-sans text-[12.5px] text-[#5D0925]">Sorry, we don&apos;t deliver to this postcode yet — switch to <button onClick={() => setFulfilment("collection")} className="font-medium underline underline-offset-2">collection</button> instead.</span>}
                 {suggestion && (
                   <span className="flex w-full flex-wrap items-center gap-2 font-sans text-[12.5px] text-[#2B221D]">
-                    {menu.locationName} doesn&apos;t deliver there, but <strong>{suggestion.name}</strong> does ({money(suggestion.feePence)} · ~{suggestion.etaMin} mins).
+                    {/* Two different situations, and saying the wrong one is
+                        confusing: this branch cannot reach them at all, or it
+                        can but another is closer and cheaper. */}
+                    {check?.served ? (
+                      <>
+                        <strong>{suggestion.name}</strong> is closer
+                        {suggestion.distanceMiles != null ? ` (${suggestion.distanceMiles} miles)` : ""} —{" "}
+                        {money(suggestion.feePence)} delivery, ~{suggestion.etaMin} mins.
+                      </>
+                    ) : (
+                      <>
+                        {menu.locationName} doesn&apos;t deliver there, but <strong>{suggestion.name}</strong> does (
+                        {money(suggestion.feePence)} · ~{suggestion.etaMin} mins).
+                      </>
+                    )}
                     <button onClick={() => switchToBranch(suggestion.slug, { delivery: true, postcode: pcInput })} className="bg-[#5D0925] px-3 py-1 font-sans text-[11px] uppercase tracking-[0.08em] text-[#F6F2EA] transition-colors hover:bg-[#420616]">Switch to {suggestion.name}</button>
                   </span>
                 )}
