@@ -104,7 +104,7 @@ export const BRANCHES: Branch[] = [
       },
     ],
     outcodes: ["SW11", "SW18", "SW8", "SW15"],
-    ordering: { provider: "external" },
+    ordering: { provider: "internal" },
     reservable: false,
     image: "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?q=80&w=2000&auto=format&fit=crop",
     blurb: "On the buzz of Queenstown Road — modern Indian cooking, warm hospitality and a room made for gathering.",

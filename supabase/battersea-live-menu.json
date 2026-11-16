@@ -1,0 +1,1374 @@
+[
+  {
+    "category": "Veg Starters",
+    "handle": "french_fries",
+    "name": "French Fries",
+    "description": "Crispy golden fries, perfectly salted, served hot and fresh",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 295
+      }
+    ]
+  },
+  {
+    "category": "Veg Starters",
+    "handle": "paneer_shashlik",
+    "name": "Paneer Shashlik",
+    "description": "Marinated cottage cheese cubes, skewer-grilled to perfection, infused with aromatic spices",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 895
+      }
+    ]
+  },
+  {
+    "category": "Veg Starters",
+    "handle": "chilli_paneer",
+    "name": "Chilli Paneer",
+    "description": "Succulent cottage cheese cubes tossed in spicy, tangy sauce with bell peppers and onions.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 895
+      }
+    ]
+  },
+  {
+    "category": "Veg Starters",
+    "handle": "onion_bhaji_e",
+    "name": "Onion Bhaji (E)",
+    "description": "Onion slices mixed with homemade spices and deep fried (Three in a portion).",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 595
+      }
+    ]
+  },
+  {
+    "category": "Veg Starters",
+    "handle": "vegetable_pakora",
+    "name": "Vegetable Pakora",
+    "description": "Vegetables mixed with fresh ginger, garlic, coriander and deep fried.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 595
+      }
+    ]
+  },
+  {
+    "category": "Veg Starters",
+    "handle": "vegetable_samosa_g",
+    "name": "Vegetable Samosa (G)",
+    "description": "Pastry parcels freshly made, filled with spiced vegetable and deep fried (Three in a portion).",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 595
+      }
+    ]
+  },
+  {
+    "category": "Non Veg Starters",
+    "handle": "lamb_samosa",
+    "name": "Lamb Samosa",
+    "description": "Pastry parcels freshly made filled with minced lamb and deep fried.",
+    "skus": [
+      {
+        "variant": "regular",
+        "pence": 595
+      }
+    ]
+  },
+  {
+    "category": "Non Veg Starters",
+    "handle": "chicken_momo",
+    "name": "Chicken Momo",
+    "description": "Minced chicken encased in thin dough, steamed to perfection, server with dipping sauce",
+    "skus": [
+      {
+        "variant": "regular",
+        "pence": 995
+      }
+    ]
+  },
+  {
+    "category": "Non Veg Starters",
+    "handle": "tandoori_half_chicken",
+    "name": "Tandoori Half Chicken",
+    "description": "Made by marinating chicken in a mixture of yogurt, spices, and lemon juice, and then grilling it. It is flavourful, aromatic, and slightly spicy, and is a great option for those who enjoy bold, compelx flavours",
+    "skus": [
+      {
+        "variant": "regular",
+        "pence": 1095
+      }
+    ]
+  },
+  {
+    "category": "Non Veg Starters",
+    "handle": "tandoori_king_prawn",
+    "name": "Tandoori King Prawn",
+    "description": "Succulent prawns marinated in aromatic spices, skewer-griled to perfection, a royal start to your feast.",
+    "skus": [
+      {
+        "variant": "regular",
+        "pence": 1395
+      }
+    ]
+  },
+  {
+    "category": "Non Veg Starters",
+    "handle": "tandoori_chicken_tikka_d",
+    "name": "Tandoori Chicken Tikka (d)",
+    "description": "Tender chicken marinated in aromatic spices, yogurt, and herbs, skewer-grilled to perfection",
+    "skus": [
+      {
+        "variant": "regular",
+        "pence": 895
+      },
+      {
+        "variant": "large",
+        "pence": 1095
+      }
+    ]
+  },
+  {
+    "category": "Non Veg Starters",
+    "handle": "tandoori_lamb_tikka_d",
+    "name": "Tandoori Lamb Tikka (d)",
+    "description": "Succulent tandoori Lamb Tikka, marinated in aromatic spices, grilled to perfection",
+    "skus": [
+      {
+        "variant": "regular",
+        "pence": 895
+      },
+      {
+        "variant": "large",
+        "pence": 1095
+      }
+    ]
+  },
+  {
+    "category": "Non Veg Starters",
+    "handle": "chicken_pakora",
+    "name": "Chicken Pakora",
+    "description": "Crispy and spiced chicken pakora, deep-fried to perfection.",
+    "skus": [
+      {
+        "variant": "regular",
+        "pence": 595
+      }
+    ]
+  },
+  {
+    "category": "Non Veg Starters",
+    "handle": "lamb_shish_kebab_d",
+    "name": "Lamb Shish Kebab (d)",
+    "description": "Lean minced lamb blend with ginger, garlic, green chilli and mixture of spices wrapped around skewers and grilled.",
+    "skus": [
+      {
+        "variant": "regular",
+        "pence": 995
+      }
+    ]
+  },
+  {
+    "category": "Non Veg Starters",
+    "handle": "tandoori_mixed_grill_s_d",
+    "name": "Tandoori Mixed Grill (s) (d)",
+    "description": "A selection of prawn, lamb and chicken, marinated in herbs and spices. (Serves for two)",
+    "skus": [
+      {
+        "variant": "regular",
+        "pence": 1595
+      }
+    ]
+  },
+  {
+    "category": "Vegetable Mains",
+    "handle": "shahi_paneer_d",
+    "name": "Shahi Paneer (D)",
+    "description": "Paneer cubes cooked in onion-tomato gravy and cream, delivering a mild and flavourful taste.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1055
+      }
+    ]
+  },
+  {
+    "category": "Vegetable Mains",
+    "handle": "mixed_vegetables_curry_d",
+    "name": "Mixed Vegetables Curry (D)",
+    "description": "Fresh vegetables cooked in onion-tomato gravy, crafting a mild and flavourful taste.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1055
+      }
+    ]
+  },
+  {
+    "category": "Vegetable Mains",
+    "handle": "mixed_vegetable_korma_d_n",
+    "name": "Mixed Vegetable Korma (D) (N)",
+    "description": "Mixed vegetable, simmered in a onion gravy with cream, cashews, and a hint of sweetness.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1055
+      }
+    ]
+  },
+  {
+    "category": "Vegetable Mains",
+    "handle": "paneer_masala_n_d",
+    "name": "Paneer Masala (N) (D)",
+    "description": "Paneer cubes in rich onion-tomato gravy, with cream, cashew, and aromatic spices.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1055
+      }
+    ]
+  },
+  {
+    "category": "Vegetable Mains",
+    "handle": "mutter_paneer_d",
+    "name": "Mutter Paneer (D)",
+    "description": "Succulent paneer and green peas simmered in a luscious onion-tomato gravy.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1055
+      }
+    ]
+  },
+  {
+    "category": "Vegetable Mains",
+    "handle": "palak_paneer_d",
+    "name": "Palak Paneer (D)",
+    "description": "Delicate cubes of cottage cheese entwined with vibrant spinach leaves..",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1055
+      }
+    ]
+  },
+  {
+    "category": "Prawn Delicacies",
+    "handle": "king_prawn_masala_n_s_d",
+    "name": "King Prawn Masala (N) (S) (D)",
+    "description": "Marinated king prawn, grilled in clay oven, cooked in masala sauce.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1695
+      }
+    ]
+  },
+  {
+    "category": "Prawn Delicacies",
+    "handle": "king_prawn_bhuna_s_d",
+    "name": "King Prawn Bhuna (S) (D)",
+    "description": "King prawn sauteed with aromatic spices,cooked with herbs & fresh tomatoes.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1695
+      }
+    ]
+  },
+  {
+    "category": "Prawn Delicacies",
+    "handle": "king_prawn_pathiya_s_d",
+    "name": "King Prawn Pathiya (S) (D)",
+    "description": "Marinated king prawn cooked in a delicious sweet & sour sauce with curry leaves.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1695
+      }
+    ]
+  },
+  {
+    "category": "Prawn Delicacies",
+    "handle": "king_prawn_dhansak_s_d",
+    "name": "King Prawn Dhansak (S) (D)",
+    "description": "King prawn cooked with lentils in a delicious hot, sweet & sour sauce.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1695
+      }
+    ]
+  },
+  {
+    "category": "Prawn Delicacies",
+    "handle": "king_prawn_jalfrezi_s_d",
+    "name": "King Prawn Jalfrezi (S) (D)",
+    "description": "King prawn cooked with vibrant spices, peppers, garlic & tomatoes, bursting with spiced flavour.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1695
+      }
+    ]
+  },
+  {
+    "category": "Chicken Mains",
+    "handle": "chicken_vindaloo_d",
+    "name": "Chicken Vindaloo (D)",
+    "description": "(Very hot) - Tender chicken cooked with potato",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Chicken Mains",
+    "handle": "chicken_karahi_med_spicy_d",
+    "name": "Chicken Karahi (med spicy)(D)",
+    "description": "A tantalizing blend of tender chicken, aromatic spices, and vibrant herbs, cooked to perfection in a slightly spicy, rich, and aromatic curry.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Chicken Mains",
+    "handle": "chicken_tikka_masala_d_n",
+    "name": "Chicken Tikka Masala (D) (N)",
+    "description": "Savour our exquisite Chicken Masala, a culinary masterpiece featuring succulent chicken cooked in a rich onion-tomato gravy, adorned with cashews, and finished with a luscious touch of cream",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Chicken Mains",
+    "handle": "chicken_korma_n_d",
+    "name": "Chicken Korma (N) (D)",
+    "description": "Creamy chicken korma in luscious onion base gravy, enriched with cashews, cream, and sweet notes of a delightful dining experience.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Chicken Mains",
+    "handle": "butter_chicken_d_n",
+    "name": "Butter Chicken (D) (N)",
+    "description": "Indulge in our signature Butter Chicken, featuring succulent chicken in a rich onion-tomato gravy, blended with cashew nuts, and finished with a luxurious touch of cream.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Chicken Mains",
+    "handle": "chicken_madras_d",
+    "name": "Chicken Madras (D)",
+    "description": "Spicy and flavoured Indian curry made with tender chicken, aromatic spices, and a touch of heat. Perfectly balanced.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Chicken Mains",
+    "handle": "chicken_saag_d",
+    "name": "Chicken Saag (D)",
+    "description": "Tandoori chicken breast cooked with fresh spinach leaves.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Chicken Mains",
+    "handle": "chicken_jalfreizi_d",
+    "name": "Chicken Jalfreizi (D)",
+    "description": "Fiery and aromatic Indian dish with tender chicken, and ginger-garlic infusion for intense spice lovers.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Chicken Mains",
+    "handle": "chicken_dhansak_d",
+    "name": "Chicken Dhansak (D)",
+    "description": "Tender chicken in zesty onion-tomato gravy with yellow lentils, crafting a delightful sweet & sour flavour. Contains diary.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Chicken Mains",
+    "handle": "bombay_chicken_d_m",
+    "name": "Bombay Chicken (D) (M)",
+    "description": "A fiery chicken curry crafted with chopped onions, tomatoes, coriander and potent spices, delivering intense heat and bold flavours for those craving a spicy culinary adventure.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Chicken Mains",
+    "handle": "chicken_bhuna_d",
+    "name": "Chicken Bhuna (D)",
+    "description": "Succulent chicken cooked to a perfection in a rich onion-tomato gravy, bursting with aromatic spices.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Chicken Mains",
+    "handle": "chicken_balti_d",
+    "name": "Chicken Balti (D)",
+    "description": "Harmoniously balanced with equal parts tomato-onion gravy, enriched with an array of aromatic spices for a delightful culinary experience.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Chicken Mains",
+    "handle": "chilli_chicken_curry_d",
+    "name": "Chilli Chicken Curry (D)",
+    "description": "Tandoori chicken breast slices, cooked with homemade spices, garlic, ginger, fresh green chilli & coriander and finished with soya sauce.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Chicken Mains",
+    "handle": "chicken_rogan_d",
+    "name": "Chicken Rogan (D)",
+    "description": "Tandoori chicken breast cooked in a traditional Rogan sauce with lots of fresh tomatoes.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Lamb Mains",
+    "handle": "lamb_karahi",
+    "name": "Lamb Karahi",
+    "description": "A tantalizing blend of tender Lamb, aromatic spices, and vibrant herbs, cooked to perfection in a slightly spicy, rich, and aromatic curry",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Lamb Mains",
+    "handle": "lamb_dhansak_d",
+    "name": "Lamb Dhansak (D)",
+    "description": "Tender lamb cooked with yellow lentils in a sweet and sour sauce.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Lamb Mains",
+    "handle": "bombay_lamb_d_p_m",
+    "name": "Bombay Lamb (D) (P) (M)",
+    "description": "Tender lamb cooked with curry sauce, ginger, garlic, coriander, onions, green chili and fresh tomatoes. (Extra Hot)",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Lamb Mains",
+    "handle": "lamb_korma_d_n",
+    "name": "Lamb Korma (D) (N)",
+    "description": "Creamy lamb korma in luscious onion based gravy, enriched with cashews, cream, and sweet notes for a delightful dining experience.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Lamb Mains",
+    "handle": "lamb_tikka_masala_d_n",
+    "name": "Lamb Tikka Masala (D) (N)",
+    "description": "Tender lamb infused with aromatic spices, simmered in a rich onion-tomato gravy, enriched with cashews and cream.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Lamb Mains",
+    "handle": "lamb_bhuna_d",
+    "name": "Lamb Bhuna (D)",
+    "description": "Tender lamb cooked to perfection in a rich onion-tomato gravy, bursting with aromatic spices.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Lamb Mains",
+    "handle": "lamb_gosht_d",
+    "name": "Lamb Gosht (D)",
+    "description": "Tender lamb simmered in a fragrant onion-tomato gravy, with vibrant fresh spinach.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Lamb Mains",
+    "handle": "lamb_vindaloo_d",
+    "name": "Lamb Vindaloo (D)",
+    "description": "Spicy and tangy Indian lamb dish cooked with potatoes, infused with aromatic spices, perfect for adventurous taste buds.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Lamb Mains",
+    "handle": "lamb_pasanda_n_d",
+    "name": "Lamb Pasanda (N) (D)",
+    "description": "Tender lamb in an aromatic onion gravy, enriched with cashews and cream, offering a delightful balance of sweet and sour flavours.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Lamb Mains",
+    "handle": "lamb_rogan_josh_d",
+    "name": "Lamb Rogan Josh (D)",
+    "description": "Tender pieces in a luscious tomato-rich gravy, enhanced with a hint of onion richness, creating a flavourful and heavy culinary delight.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Lamb Mains",
+    "handle": "lamb_madras_d",
+    "name": "Lamb Madras (D)",
+    "description": "Spicy and flavourful Indian curry made with tender lamb, aromatic spices, and a touch of heat. Perfectly balanced.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1155
+      }
+    ]
+  },
+  {
+    "category": "Biryani",
+    "handle": "vegetable_dum_biryani_d",
+    "name": "Vegetable Dum Biryani (D)",
+    "description": "Savour our exquisite Lamb Biryani, a fragrant blend of succulent lamb, aromatic basmati rice, and chefs secret spices, creating a symphony of flavours in every bite. Served with vegetable gravy",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1095
+      }
+    ]
+  },
+  {
+    "category": "Biryani",
+    "handle": "lamb_dum_biryani_d",
+    "name": "Lamb Dum Biryani (D)",
+    "description": "Tender lamb cooked with basmati rice.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1295
+      }
+    ]
+  },
+  {
+    "category": "Biryani",
+    "handle": "mixed_dum_biryani_d_s",
+    "name": "Mixed Dum Biryani (D) (S)",
+    "description": "Basmati rice mixed with chicken, lamb and king prawn.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1395
+      }
+    ]
+  },
+  {
+    "category": "Biryani",
+    "handle": "king_prawn_dum_biryani_d_s",
+    "name": "King Prawn Dum Biryani (D) (S)",
+    "description": "Spiced prawn cooked with basmati rice.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1695
+      }
+    ]
+  },
+  {
+    "category": "Biryani",
+    "handle": "chicken_tikka_dum_biryani_d",
+    "name": "Chicken Tikka Dum Biryani (D)",
+    "description": "Indulge in the rich flavours of our Chicken Tikka Biryani, where succulent marinated chicken meets aromatic basmati rice, creating a delightful fusion of spices. Served with vegetable gravy.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 1295
+      }
+    ]
+  },
+  {
+    "category": "Vegetable Sides",
+    "handle": "bombay_aloo_d",
+    "name": "Bombay Aloo (D)",
+    "description": "Slices of potatoes cooked with butter & Bombay chat masala.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 695
+      }
+    ]
+  },
+  {
+    "category": "Vegetable Sides",
+    "handle": "daal_makhani_d",
+    "name": "Daal Makhani (D)",
+    "description": "Black lentils cooked with butter, cream and simmered on low heat for that unique flavour!",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 695
+      }
+    ]
+  },
+  {
+    "category": "Vegetable Sides",
+    "handle": "saag_aloo_d",
+    "name": "Saag Aloo (D)",
+    "description": "Fresh potatoes and vibrant spinach, delicately spiced for a delightful vegetarian experience.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 695
+      }
+    ]
+  },
+  {
+    "category": "Vegetable Sides",
+    "handle": "palak_d",
+    "name": "Palak (D)",
+    "description": "Fresh spinach leaves cooked with cumin, garlic & ginger.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 695
+      }
+    ]
+  },
+  {
+    "category": "Vegetable Sides",
+    "handle": "gobi_sabji_d",
+    "name": "Gobi Sabji (D)",
+    "description": "Fresh cauliflower cooked with tomato, onions and peppers.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 695
+      }
+    ]
+  },
+  {
+    "category": "Vegetable Sides",
+    "handle": "aloo_gobhi_d",
+    "name": "Aloo Gobhi (D)",
+    "description": "Potatoes & cauliflower cooked together with slices of tomatoes, green peppers & onions.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 695
+      }
+    ]
+  },
+  {
+    "category": "Vegetable Sides",
+    "handle": "shahi_baingan_d",
+    "name": "Shahi Baingan (D)",
+    "description": "Fresh aubergine cooked with onion, garlic & ginger.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 695
+      }
+    ]
+  },
+  {
+    "category": "Vegetable Sides",
+    "handle": "bhindi_sabji_d",
+    "name": "Bhindi Sabji (D)",
+    "description": "Fresh okra cooked with tomato, cumin, mustard seeds, sauteed with ginger & garlic.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 695
+      }
+    ]
+  },
+  {
+    "category": "Vegetable Sides",
+    "handle": "bombay_mushroom_d",
+    "name": "Bombay Mushroom (D)",
+    "description": "Fresh mushrooms cooked with onion, tomatoes, green peppers & light spices.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 695
+      }
+    ]
+  },
+  {
+    "category": "Vegetable Sides",
+    "handle": "khaybari_channa_masala_d",
+    "name": "Khaybari Channa Masala (D)",
+    "description": "Chick peas cooked with fresh tomatoes, onion, green pepper, ginger & our special channa masala.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 695
+      }
+    ]
+  },
+  {
+    "category": "Vegetable Sides",
+    "handle": "palak_daal_d",
+    "name": "Palak Daal (D)",
+    "description": "Cumin flavoured mix lentils cooked with garlic, ginger & spinach leaves.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 695
+      }
+    ]
+  },
+  {
+    "category": "Vegetable Sides",
+    "handle": "tarka_daal_d",
+    "name": "Tarka Daal (D)",
+    "description": "Assorted lentils cooked with butter & fried garlic.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 695
+      }
+    ]
+  },
+  {
+    "category": "Rice & Bread",
+    "handle": "basmati_pilau_rice_d",
+    "name": "Basmati Pilau Rice (D)",
+    "description": "Fragrant basmati rice infused with spices, a perfect companion to savoury dishes.",
+    "skus": [
+      {
+        "variant": "rice_large",
+        "pence": 565
+      },
+      {
+        "variant": "rice_regular",
+        "pence": 365
+      }
+    ]
+  },
+  {
+    "category": "Rice & Bread",
+    "handle": "egg_fried_rice_d_e",
+    "name": "Egg Fried Rice (D) (E)",
+    "description": "Savor aromatic Basmati egg fry rice, expertly cooked with green peas for a delightful fusion.",
+    "skus": [
+      {
+        "variant": "rice_large",
+        "pence": 695
+      }
+    ]
+  },
+  {
+    "category": "Rice & Bread",
+    "handle": "basmati_plain_rice",
+    "name": "Basmati Plain Rice",
+    "description": "Exquisite Basmati rice, expertly boiled for perfect texture, a delightful addition to your meal.",
+    "skus": [
+      {
+        "variant": "rice_large",
+        "pence": 535
+      },
+      {
+        "variant": "rice_regular",
+        "pence": 335
+      }
+    ]
+  },
+  {
+    "category": "Rice & Bread",
+    "handle": "special_mushroom_rice_d",
+    "name": "Special Mushroom Rice (D)",
+    "description": "Savour the exquisite blend of aromatic Basmati mushroom rice with sauteed mushrooms.",
+    "skus": [
+      {
+        "variant": "rice_large",
+        "pence": 595
+      },
+      {
+        "variant": "rice_regular",
+        "pence": 395
+      }
+    ]
+  },
+  {
+    "category": "Rice & Bread",
+    "handle": "peas_rice_d",
+    "name": "Peas Rice (D)",
+    "description": "Aromatic Basmati rice infused with vibrant peas, a delectable choice for discerning palates.",
+    "skus": [
+      {
+        "variant": "rice_large",
+        "pence": 555
+      },
+      {
+        "variant": "rice_regular",
+        "pence": 355
+      }
+    ]
+  },
+  {
+    "category": "Bread",
+    "handle": "plain_naan_e_g_d",
+    "name": "Plain Naan (E) (G) (D)",
+    "description": "Whole wheat bread freshly baked in our clay oven.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 295
+      }
+    ]
+  },
+  {
+    "category": "Bread",
+    "handle": "garlic_naan_e_g_d",
+    "name": "Garlic Naan (E) (G) (D)",
+    "description": "Naan bread coated with freshly chopped garlic.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 315
+      }
+    ]
+  },
+  {
+    "category": "Bread",
+    "handle": "peshwari_naan_e_g_n_d",
+    "name": "Peshwari Naan (E) (G) (N) (D)",
+    "description": "Naan bread stuffed with sultanas, coconut & cashew nuts.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 395
+      }
+    ]
+  },
+  {
+    "category": "Bread",
+    "handle": "kulcha_naan_e_g_d",
+    "name": "Kulcha Naan (E) (G) (D)",
+    "description": "Naan bread stuffed with mild spicy vegetables.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 395
+      }
+    ]
+  },
+  {
+    "category": "Bread",
+    "handle": "keema_naan_e_g_d",
+    "name": "Keema Naan (E) (G) (D)",
+    "description": "Naan bread stuffed with spiced lamb mince meat.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 395
+      }
+    ]
+  },
+  {
+    "category": "Bread",
+    "handle": "tandoori_roti_g_d",
+    "name": "Tandoori Roti (G) (D)",
+    "description": "Wheat bread freshly baked in tandoor.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 275
+      }
+    ]
+  },
+  {
+    "category": "Bread",
+    "handle": "laccha_paratha_g_d",
+    "name": "Laccha Paratha (G) (D)",
+    "description": "Whole wheat dough stretched, brushed with butter & baked in tandoor.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 385
+      }
+    ]
+  },
+  {
+    "category": "Vegan Dishes",
+    "handle": "regular_plain_rice",
+    "name": "Regular Plain Rice",
+    "description": "",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 295
+      }
+    ]
+  },
+  {
+    "category": "Vegan Dishes",
+    "handle": "large_plain_rice",
+    "name": "Large Plain Rice",
+    "description": "",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 495
+      }
+    ]
+  },
+  {
+    "category": "Vegan Dishes",
+    "handle": "vegan_tandoori_roti",
+    "name": "Vegan Tandoori Roti",
+    "description": "",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 215
+      }
+    ]
+  },
+  {
+    "category": "Vegan Dishes",
+    "handle": "mixed_vegetables_curry",
+    "name": "Mixed Vegetables Curry",
+    "description": "Fresh mixed vegetables cooked with our own spices.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 895
+      }
+    ]
+  },
+  {
+    "category": "Vegan Dishes",
+    "handle": "bombay_aloo",
+    "name": "Bombay Aloo",
+    "description": "Slices of potatoes cooked with butter and Bombay chat masala.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 595
+      }
+    ]
+  },
+  {
+    "category": "Vegan Dishes",
+    "handle": "saag_aloo",
+    "name": "Saag Aloo",
+    "description": "Slices of potatoes cooked with fresh spinach leaves.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 615
+      }
+    ]
+  },
+  {
+    "category": "Vegan Dishes",
+    "handle": "palak",
+    "name": "Palak",
+    "description": "Fresh spinach leaves cooked with cumin, garlic and ginger.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 645
+      }
+    ]
+  },
+  {
+    "category": "Vegan Dishes",
+    "handle": "gobi_sabji",
+    "name": "Gobi Sabji",
+    "description": "Fresh cauliflower cooked with tomato, onions and peppers.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 615
+      }
+    ]
+  },
+  {
+    "category": "Vegan Dishes",
+    "handle": "aloo_gobhi",
+    "name": "Aloo Gobhi",
+    "description": "Potatoes and cauliflower cooked together with slices of tomatoes, green peppers and onions.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 595
+      }
+    ]
+  },
+  {
+    "category": "Vegan Dishes",
+    "handle": "zeera_aloo",
+    "name": "Zeera Aloo",
+    "description": "Cumin and coriander flavoured dry sauteed potatoes.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 595
+      }
+    ]
+  },
+  {
+    "category": "Vegan Dishes",
+    "handle": "shahi_baingan",
+    "name": "Shahi Baingan",
+    "description": "Fresh aubergines cooked with onions, garlic and ginger.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 615
+      }
+    ]
+  },
+  {
+    "category": "Vegan Dishes",
+    "handle": "bhindi_sabji",
+    "name": "Bhindi Sabji",
+    "description": "Fresh okra cooked with tomato, cumin, mustard seeds, sauteed with ginger and garlic.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 655
+      }
+    ]
+  },
+  {
+    "category": "Vegan Dishes",
+    "handle": "bombay_mushroom",
+    "name": "Bombay Mushroom",
+    "description": "Fresh mushrooms cooked with onions, tomatoes, green peppers and light spices.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 655
+      }
+    ]
+  },
+  {
+    "category": "Vegan Dishes",
+    "handle": "khaybari_channa_masala",
+    "name": "Khaybari Channa Masala",
+    "description": "Chick peas cooked with fresh tomatoes, onions, green peppers, ginger and our special channa masala.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 615
+      }
+    ]
+  },
+  {
+    "category": "Vegan Dishes",
+    "handle": "palak_daal",
+    "name": "Palak Daal",
+    "description": "Cumin flavoured mix lentils cooked with garlic, ginger and spinach leaves.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 595
+      }
+    ]
+  },
+  {
+    "category": "Vegan Dishes",
+    "handle": "tarka_daal",
+    "name": "Tarka Daal",
+    "description": "Assorted lentils cooked with butter and fried garlic.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 595
+      }
+    ]
+  },
+  {
+    "category": "Drinks & Accompaniments",
+    "handle": "homemade_mango_lassi_d",
+    "name": "Homemade Mango Lassi (D)",
+    "description": "",
+    "skus": [
+      {
+        "variant": "beverage",
+        "pence": 425
+      }
+    ]
+  },
+  {
+    "category": "Drinks & Accompaniments",
+    "handle": "home_made_sweet_lassi_d",
+    "name": "Home Made Sweet Lassi (D)",
+    "description": "",
+    "skus": [
+      {
+        "variant": "beverage",
+        "pence": 425
+      }
+    ]
+  },
+  {
+    "category": "Drinks & Accompaniments",
+    "handle": "home_made_plain_lassi_d",
+    "name": "Home Made Plain Lassi (D)",
+    "description": "",
+    "skus": [
+      {
+        "variant": "beverage",
+        "pence": 425
+      }
+    ]
+  },
+  {
+    "category": "Drinks & Accompaniments",
+    "handle": "coke_1_25l",
+    "name": "Coke 1.25L",
+    "description": "",
+    "skus": [
+      {
+        "variant": "beverage",
+        "pence": 295
+      }
+    ]
+  },
+  {
+    "category": "Drinks & Accompaniments",
+    "handle": "diet_coke_1_25l",
+    "name": "Diet Coke 1.25L",
+    "description": "",
+    "skus": [
+      {
+        "variant": "beverage",
+        "pence": 295
+      }
+    ]
+  },
+  {
+    "category": "Drinks & Accompaniments",
+    "handle": "mineral_water_1_5l",
+    "name": "Mineral Water 1.5L",
+    "description": "",
+    "skus": [
+      {
+        "variant": "beverage",
+        "pence": 255
+      }
+    ]
+  },
+  {
+    "category": "Drinks & Accompaniments",
+    "handle": "can_of_coke_330ml",
+    "name": "Can of Coke 330ml",
+    "description": "",
+    "skus": [
+      {
+        "variant": "accompaniments",
+        "pence": 100
+      },
+      {
+        "variant": "beverage",
+        "pence": 100
+      }
+    ]
+  },
+  {
+    "category": "Drinks & Accompaniments",
+    "handle": "plain_poppadums",
+    "name": "Plain Poppadums",
+    "description": "",
+    "skus": [
+      {
+        "variant": "accompaniments",
+        "pence": 150
+      }
+    ]
+  },
+  {
+    "category": "Drinks & Accompaniments",
+    "handle": "spicy_poppadums",
+    "name": "Spicy Poppadums",
+    "description": "Two in a portion",
+    "skus": [
+      {
+        "variant": "accompaniments",
+        "pence": 150
+      }
+    ]
+  },
+  {
+    "category": "Drinks & Accompaniments",
+    "handle": "homemade_raitha_d",
+    "name": "Homemade Raitha (D)",
+    "description": "",
+    "skus": [
+      {
+        "variant": "accompaniments",
+        "pence": 150
+      }
+    ]
+  },
+  {
+    "category": "Drinks & Accompaniments",
+    "handle": "homemade_mint_yogurt_d",
+    "name": "Homemade Mint Yogurt (D)",
+    "description": "",
+    "skus": [
+      {
+        "variant": "accompaniments",
+        "pence": 150
+      }
+    ]
+  },
+  {
+    "category": "Drinks & Accompaniments",
+    "handle": "mango_chutney",
+    "name": "Mango Chutney",
+    "description": "",
+    "skus": [
+      {
+        "variant": "accompaniments",
+        "pence": 100
+      }
+    ]
+  },
+  {
+    "category": "Drinks & Accompaniments",
+    "handle": "onion_tomato_salad",
+    "name": "Onion - Tomato Salad",
+    "description": "Freshly chopped onions and tomatoes, drizzled with lemon juice and fresh coriander.",
+    "skus": [
+      {
+        "variant": "accompaniments",
+        "pence": 150
+      }
+    ]
+  },
+  {
+    "category": "Drinks & Accompaniments",
+    "handle": "mixed_pickle",
+    "name": "Mixed Pickle",
+    "description": "",
+    "skus": [
+      {
+        "variant": "accompaniments",
+        "pence": 125
+      }
+    ]
+  },
+  {
+    "category": "Drinks & Accompaniments",
+    "handle": "lime_pickle",
+    "name": "Lime Pickle",
+    "description": "",
+    "skus": [
+      {
+        "variant": "accompaniments",
+        "pence": 125
+      }
+    ]
+  },
+  {
+    "category": "Desserts",
+    "handle": "gulab_jamun_3_pcs_n",
+    "name": "Gulab Jamun (3 pcs) (N)",
+    "description": "Soft spongy balls flavoured with cardamom and pistachio nuts in sweet syrup.",
+    "skus": [
+      {
+        "variant": null,
+        "pence": 265
+      }
+    ]
+  }
+]

@@ -32,11 +32,22 @@ describe("ordering routing", () => {
     expect(isInternalOrdering("balham")).toBe(false);
   });
 
-  it("isInternalOrdering is true only for the internal branch with the flag on", async () => {
+  it("isInternalOrdering follows each branch's own setting", async () => {
     vi.stubEnv("NEXT_PUBLIC_FEATURE_ORDERING", "true");
     const { isInternalOrdering } = await import("./routing");
+    // Balham went live first; Battersea joined on 2026-11-16. Kilburn still
+    // takes its orders through the old Touch site.
     expect(isInternalOrdering("balham")).toBe(true);
-    expect(isInternalOrdering("battersea")).toBe(false);
+    expect(isInternalOrdering("battersea")).toBe(true);
     expect(isInternalOrdering("kilburn")).toBe(false);
+  });
+
+  it("sends a second internal branch to its own menu, not Balham's", async () => {
+    // Every order action resolves the branch from this slug, so a wrong one
+    // here would price and cook an order at the wrong kitchen.
+    vi.stubEnv("NEXT_PUBLIC_FEATURE_ORDERING", "true");
+    const { orderHrefFor } = await import("./routing");
+    const { branchBySlug } = await import("@/data/locations");
+    expect(orderHrefFor(branchBySlug("battersea")!).href).toBe("/order/menu?loc=battersea");
   });
 });
