@@ -440,6 +440,8 @@ namespace BombayBicycleChef
     {
         public int Qty;
         public string Name = "";
+        /** What this line costs in total, already multiplied by the quantity. */
+        public double Price;
         public string Notes = "";
         public List<string> Modifiers = new List<string>();
     }
@@ -478,7 +480,7 @@ namespace BombayBicycleChef
                 Code = "F6FC4E4D",
                 CustomerName = "A. Patel",
                 CustomerPhone = "07700 900123",
-                BranchName = "Bombay Bicycle Chef",
+                BranchName = "Battersea",
                 BranchAddress = "28 Queenstown Rd, London SW8 3RX",
                 BranchPhone = "020 7720 0500",
                 EtaMinutes = 45,
@@ -492,9 +494,9 @@ namespace BombayBicycleChef
                 Notes = "ring the top bell, buzzer is broken",
                 Address = "14 Balham High Road, London, SW12 9AJ",
             };
-            o.Items.Add(new OrderLine { Qty = 2, Name = "Chicken Tikka Masala", Modifiers = { "Extra hot", "No coriander" } });
-            o.Items.Add(new OrderLine { Qty = 1, Name = "Lamb Biryani", Notes = "no onions please" });
-            o.Items.Add(new OrderLine { Qty = 3, Name = "Garlic & Coriander Naan" });
+            o.Items.Add(new OrderLine { Qty = 2, Name = "Chicken Tikka Masala", Price = 17.90, Modifiers = { "Extra hot", "No coriander" } });
+            o.Items.Add(new OrderLine { Qty = 1, Name = "Lamb Biryani", Price = 8.45, Notes = "no onions please" });
+            o.Items.Add(new OrderLine { Qty = 3, Name = "Garlic & Coriander Naan", Price = 10.50 });
             return o;
         }
 
@@ -549,6 +551,7 @@ namespace BombayBicycleChef
                 {
                     Qty = (int)Json.Number(item, "quantity"),
                     Name = Json.Str(item, "productName"),
+                    Price = Json.Number(item, "price"),
                     Notes = Json.Str(item, "specialInstructions"),
                 };
                 if (line.Qty < 1) line.Qty = 1;
@@ -653,6 +656,7 @@ namespace BombayBicycleChef
         // Fixed for the business, unlike the branch address and landline which
         // arrive with each order. A VAT number on a receipt is a legal detail,
         // so it is stated once here rather than typed per till.
+        private const string BUSINESS_NAME = "BOMBAY BICYCLE CHEF";
         private const string VAT_NUMBER = "256200238";
         private const string MOBILE = "+44 7742 427701";
         private const string WEBSITE = "bombaybicyclechef.com";
@@ -682,8 +686,15 @@ namespace BombayBicycleChef
             // landline come down with the order, so the Battersea till cannot
             // print Balham's address and changing either in admin reaches both
             // printers without reinstalling anything.
+            // The full name of the shop, business and branch together:
+            // "BOMBAY BICYCLE CHEF BALHAM". branchName is the LOCATION's name
+            // on its own — "Balham", "Battersea" — so printing that alone
+            // would have lost the company off the top of every receipt.
             w.Raw(AlignCentre).Strong().Raw(Size(1, 2));
-            w.Line(order.BranchName.ToUpperInvariant());
+            string title = order.BranchName.Length > 0
+                ? BUSINESS_NAME + " " + order.BranchName.ToUpperInvariant()
+                : BUSINESS_NAME;
+            w.Wrapped(title, 0, 0, Width);
             w.Raw(Size(1, 1)).Plain();
             if (order.BranchAddress.Length > 0) w.Wrapped(order.BranchAddress, 0, 0, Width);
             if (order.BranchPhone.Length > 0) w.Line("Tel " + order.BranchPhone);
@@ -701,6 +712,10 @@ namespace BombayBicycleChef
             w.Feed();
 
             w.Raw(AlignLeft);
+            w.Strong();
+            w.Line("CUSTOMER DETAILS");
+            w.Plain();
+            w.Line(new string('-', Width));
             if (order.CustomerName.Length > 0) {
                 w.Strong();
                 w.Wrapped("For: " + order.CustomerName, 0, 5, Width);
@@ -732,7 +747,7 @@ namespace BombayBicycleChef
                 // fit in 21 characters — and two short lines read no better
                 // than one long one, for twice the paper.
                 w.Strong().Raw(Size(1, 2));
-                w.Wrapped(line.Qty + " x " + line.Name, 0, 5, Width);
+                w.PricedLine(line.Qty + " x " + line.Name, Money(line.Price), 5, Width);
                 w.Raw(Size(1, 1)).Plain();
 
                 // Modifiers and notes drop to ordinary height. They are read
@@ -939,6 +954,41 @@ namespace BombayBicycleChef
             public Writer Feed(int lines)
             {
                 for (int i = 0; i < lines; i++) Feed();
+                return this;
+            }
+
+            /// <summary>
+            /// A dish and its price: the name wrapping if it must, the figure
+            /// staying on the first line hard against the right.
+            ///
+            /// Columns() alone would push a long name and its price onto
+            /// separate lines, and a price adrift from its dish is worse than
+            /// no price at all — somebody checking a bill reads down the right
+            /// edge and matches by row.
+            /// </summary>
+            public Writer PricedLine(string label, string price, int continuationIndent, int width)
+            {
+                int room = width - price.Length - 1;
+                if (room < 10) room = 10;
+
+                var lines = new List<string>();
+                string line = "";
+                foreach (string word in label.Split(' '))
+                {
+                    if (line.Length == 0) line = word;
+                    else if (line.Length + 1 + word.Length <= room) line += " " + word;
+                    else { lines.Add(line); line = word; }
+                    while (line.Length > room) { lines.Add(line.Substring(0, room)); line = line.Substring(room); }
+                }
+                if (line.Length > 0) lines.Add(line);
+                if (lines.Count == 0) lines.Add("");
+
+                int gap = width - lines[0].Length - price.Length;
+                if (gap < 1) gap = 1;
+                Line(lines[0] + new string(' ', gap) + price);
+
+                string pad = new string(' ', continuationIndent);
+                for (int i = 1; i < lines.Count; i++) Line(pad + lines[i]);
                 return this;
             }
 
