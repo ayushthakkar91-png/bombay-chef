@@ -57,6 +57,8 @@ export function CheckoutForm({
   const [pending, startTransition] = useTransition();
   const [giftPending, startGift] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  // The page is older than the running build, so its server actions are gone.
+  const [stale, setStale] = useState(false);
   // Set once createCheckout returns an embedded Stripe session — swaps the form
   // for the in-page card entry.
   const [clientSecret, setClientSecret] = useState<string | null>(null);
@@ -234,13 +236,28 @@ export function CheckoutForm({
       elapsedMs: Date.now() - renderedAt,
     };
     startTransition(async () => {
-      const res = await createCheckout(input);
-      if (!res.ok) {
-        setError(res.error);
-      } else if ("clientSecret" in res) {
-        setClientSecret(res.clientSecret); // mount Stripe Embedded Checkout in-page
-      } else {
-        window.location.href = res.url; // gift-card covered / already paid → tracking
+      try {
+        const res = await createCheckout(input);
+        if (!res.ok) {
+          setError(res.error);
+        } else if ("clientSecret" in res) {
+          setClientSecret(res.clientSecret); // mount Stripe Embedded Checkout in-page
+        } else {
+          window.location.href = res.url; // gift-card covered / already paid → tracking
+        }
+      } catch {
+        // The call itself failed, rather than the order being refused.
+        //
+        // Nearly always a page loaded before the last deploy: a server action
+        // is addressed by an id that belongs to one build, and after a deploy
+        // that id is gone. Without this the promise rejected inside the
+        // transition, nothing changed on screen, and the customer pressed Pay
+        // again — on a page that could never work.
+        //
+        // The basket lives in localStorage, so a reload keeps it. Say so, or
+        // "refresh" sounds like losing the order.
+        setStale(true);
+        setError("This page is out of date — please refresh and try again. Your basket is saved.");
       }
     });
   };
@@ -392,7 +409,22 @@ export function CheckoutForm({
               <div className="bg-white border border-[#2A211C]/10 p-6 lg:sticky lg:top-[104px]">
                 <h2 className="font-serif text-[22px] text-[#2B221D] mb-3">Order summary</h2>
                 <CartContents menu={menu} locationSlug={locationSlug} showDelivery onTotalChange={setPayTotal} />
-                {error && <p role="alert" className="mt-4 text-[14px] text-[#5D0925] font-sans">{error}</p>}
+                {error && (
+                  <div role="alert" className="mt-4 flex flex-wrap items-center gap-3">
+                    <p className="text-[14px] text-[#5D0925] font-sans">{error}</p>
+                    {/* One tap, rather than telling somebody holding a card to
+                        go and find the refresh button. */}
+                    {stale && (
+                      <button
+                        type="button"
+                        onClick={() => window.location.reload()}
+                        className="bg-[#5D0925] px-4 py-2 font-sans text-[12px] uppercase tracking-[0.1em] text-[#F6F2EA] transition-colors hover:bg-[#420616]"
+                      >
+                        Refresh the page
+                      </button>
+                    )}
+                  </div>
+                )}
                 {/* Cash is taken at the counter or the door. It is offered plainly rather
                     than hidden, because a customer who wants it will otherwise phone. */}
                 <div className="mt-5 grid grid-cols-2 gap-2">
