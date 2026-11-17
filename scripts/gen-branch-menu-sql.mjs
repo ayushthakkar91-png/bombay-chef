@@ -155,7 +155,12 @@ if (novel.length) {
         const pence = priceOf(i);
         return `  (${q(catId(i.category))}, ${q(i.name)}, ${q("£" + (pence / 100).toFixed(2))}, ${pence}, ${q(i.description || null)}, null, ${2000 + n * 10}, '{}'::text[])`;
       })
-      .join(",\n") + "\non conflict do nothing;",
+      // Named conflict target, not a bare "on conflict do nothing". Without a
+      // unique index on menu_items.name there was nothing to conflict WITH, so
+      // running this twice inserted every dish again — and section 4 joins by
+      // name, so each duplicate got its own availability row. See
+      // supabase/fix_duplicate_dishes.sql, which adds the index this needs.
+      .join(",\n") + "\non conflict (name) do nothing;",
   );
   say();
   say("-- Hide the new dishes at every OTHER branch.");

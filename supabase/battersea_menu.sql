@@ -71,7 +71,7 @@ insert into menu_items (category_id, name, price, price_pence, description, imag
   ('accompaniments', 'Plain Poppadums', '£1.50', 150, null, null, 2250, '{}'::text[]),
   ('accompaniments', 'Spicy Poppadums', '£1.50', 150, 'Two in a portion', null, 2260, '{}'::text[]),
   ('desserts', 'Gulab Jamun (3 pcs) (N)', '£2.65', 265, 'Soft spongy balls flavoured with cardamom and pistachio nuts in sweet syrup.', null, 2270, '{}'::text[])
-on conflict do nothing;
+on conflict (name) do nothing;
 
 -- Hide the new dishes at every OTHER branch.
 insert into location_menu_items (location_id, item_id, is_available)
