@@ -11,12 +11,15 @@ set price_pence = round((replace(price, '£', '')::numeric) * 100)
 where price_pence is null
   and price ~ '^£?[0-9]+(\.[0-9]+)?$';
 
--- 1b. Ordering provider alignment (defense-in-depth second gate). Only Balham
--- takes orders on our own system today; Battersea/Kilburn route to the external
--- platform, so their collection/delivery are OFF in the DB too. This mirrors
+-- 1b. Ordering provider alignment (defense-in-depth second gate). Mirrors
 -- src/data/locations.ts `ordering.provider` and getOrderLocations()'s filter.
-update locations set collection_enabled = true,  delivery_enabled = true  where slug = 'balham';
-update locations set collection_enabled = false, delivery_enabled = false where slug in ('battersea','kilburn');
+--
+-- Battersea went live on 2026-11-16. This file used to switch its
+-- collection and delivery OFF, because Balham was the only branch when it was
+-- written — so re-running it would have quietly stopped Battersea taking
+-- orders, with nothing on screen to say why.
+update locations set collection_enabled = true,  delivery_enabled = true  where slug in ('balham','battersea');
+update locations set collection_enabled = false, delivery_enabled = false where slug = 'kilburn';
 
 -- Balham radius delivery: 2 miles from 88 Balham High Rd (SW12 9AG), £3.50 fee,
 -- £15 minimum, 3-mile radius. Delivery fee is distance-tiered in code (£1 per
@@ -28,8 +31,13 @@ update locations set
   longitude = -0.1526,
   delivery_radius_miles = 3,
   delivery_fee_pence = 300,
-  free_delivery_over_pence = 3000,
-  min_order_pence = 1500
+  -- NO free-delivery threshold. This used to seed 3000, which waived the fee
+  -- on every order over £30 whatever the distance — a 3-mile delivery on a
+  -- £35 order collected nothing toward it, and nobody chose that: it was a
+  -- placeholder nobody revisited. freeDeliveryApplies() now treats 0 and null
+  -- alike, so leaving it null is the honest "charge by distance".
+  free_delivery_over_pence = null,
+  min_order_pence = 2000
 where slug = 'balham';
 
 -- 2. Delivery zones per branch (postcode districts they deliver to).
