@@ -98,9 +98,12 @@ export function CheckoutForm({
   const [scheduledFor, setScheduledFor] = useState("");
   const [orderWindow, setOrderWindow] = useState<OrderingWindow | null>(null);
 
-  // Shut, and no later time left to choose. The server would refuse this
-  // anyway; saying so on the button is kinder than taking card details first.
-  const cannotOrderNow = orderWindow != null && !orderWindow.openNow && orderWindow.slots.length === 0;
+  // Closed, and either no time left today or none chosen yet. Nothing is
+  // pre-selected for the customer, so the button waits for them rather than
+  // sending an order the server will refuse — and rather than guessing a time
+  // they never agreed to.
+  const cannotOrderNow =
+    orderWindow != null && !orderWindow.openNow && (orderWindow.slots.length === 0 || scheduledFor === "");
   // When this page appeared — a cash order posted in milliseconds is a bot.
   const [renderedAt] = useState(() => Date.now());
 
@@ -424,11 +427,16 @@ export function CheckoutForm({
                   disabled={pending || cannotOrderNow}
                   className="mt-5 w-full inline-flex items-center justify-center h-[56px] bg-[#5D0925] text-[#F6F2EA] text-[14px] tracking-[0.12em] uppercase font-sans hover:bg-[#420616] transition-colors duration-300 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  {pending
-                    ? (payMethod === "cash" ? "Placing order…" : "Starting payment…")
-                    : payMethod === "cash"
-                      ? (chargePence != null ? `Place order · ${money(chargePence)} on ${fulfilment === "delivery" ? "delivery" : "collection"}` : "Place order")
-                      : chargePence != null ? `Pay ${money(chargePence)}` : "Pay securely"}
+                  {/* A greyed-out button with no reason on it is a dead end.
+                      Say which of the two it is: pick a time, or we are shut
+                      and there is nothing left to pick. */}
+                  {cannotOrderNow
+                    ? (orderWindow && orderWindow.slots.length > 0 ? "Choose a time above" : "Closed — no times left today")
+                    : pending
+                      ? (payMethod === "cash" ? "Placing order…" : "Starting payment…")
+                      : payMethod === "cash"
+                        ? (chargePence != null ? `Place order · ${money(chargePence)} on ${fulfilment === "delivery" ? "delivery" : "collection"}` : "Place order")
+                        : chargePence != null ? `Pay ${money(chargePence)}` : "Pay securely"}
                 </button>
                 <p className="mt-3 text-[12px] text-[#5A524B] font-sans text-center">
                   {payMethod === "cash"

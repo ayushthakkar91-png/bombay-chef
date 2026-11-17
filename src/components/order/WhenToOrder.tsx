@@ -42,11 +42,13 @@ export function WhenToOrder({
       if (cancelled) return;
       setWindow(w);
       onWindow?.(w);
-      // Closed, nothing chosen yet: pre-select the first time we can do, so
-      // the customer is pointed at the way forward rather than at a problem.
-      if (!w.openNow && !value && w.slots.length > 0) onChange(w.slots[0].value);
-      // Open again, or the chosen time has passed: fall back to ASAP rather
-      // than carrying a slot that is no longer offered into the payment.
+      // Nothing is chosen for them, even when the shop is shut. Picking the
+      // first slot put a time on the order the customer never agreed to —
+      // they may well want nine o'clock, and a pre-filled 17:30 is easy to
+      // scroll past. They choose, or they do not order.
+      //
+      // A slot that has since passed is cleared, so a stale page cannot carry
+      // a time we no longer offer into the payment.
       if (value && !w.slots.some((s) => s.value === value)) onChange("");
     });
     return () => {
@@ -102,9 +104,11 @@ export function WhenToOrder({
                 "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%232A211C' stroke-width='1.5'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E\")",
             }}
           >
-            {/* Only offered while the kitchen is actually cooking. Leaving it
-                on a closed shop would promise food nobody is there to make. */}
-            {!closed && <option value="">As soon as possible</option>}
+            {/* Open: "as soon as possible" is the default and what nearly
+                everybody wants. Closed: an empty prompt, because there is no
+                such thing as "now" and a pre-filled time is a decision taken
+                on the customer's behalf. */}
+            <option value="">{closed ? "Choose a time…" : "As soon as possible"}</option>
             {window_.slots.map((s) => (
               <option key={s.value} value={s.value}>
                 {closed ? s.label : `Later today — ${s.label}`}
