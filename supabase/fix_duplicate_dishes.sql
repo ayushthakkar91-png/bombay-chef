@@ -7,53 +7,47 @@
 -- joins dishes BY NAME, so each duplicate got its own availability row and
 -- Battersea reported 141 dishes on sale instead of 112.
 --
--- This removes the surplus copies, keeping the OLDEST of each name — the one
--- that photos, modifiers and any past order line already point at — and then
--- adds the unique index that should always have been there.
+-- Keeps the OLDEST row of each name — the one that photos, modifiers and any
+-- past order line already point at — and removes the later copies.
 --
--- Nothing a customer ordered is touched: order_items keeps its own copy of
--- each line's name, price and quantity, so past orders and reports still read
+-- A duplicate somebody has actually ordered from is KEPT, not deleted: an
+-- order line pointing at a dish is worth more than a tidy catalogue. If any
+-- survive, the check at the bottom lists them to merge by hand.
+--
+-- Past orders are unaffected either way: order_items keeps its own copy of
+-- each line's name, price and quantity, so receipts and reports read
 -- correctly whatever happens to the catalogue.
 --
--- Runs as one transaction. Safe to run twice.
+-- One statement at a time, no temporary tables — paste the whole thing and
+-- run it. Safe to run twice.
 -- ============================================================================
 
-begin;
+-- 1. Remove the later copies of any duplicated name --------------------------
+-- location_menu_items, item_modifier_groups, item_allergens and favourites
+-- all cascade from menu_items, so a dish's stray availability rows go with it.
+delete from menu_items
+ where id in (
+   select id from (
+     select id,
+            row_number() over (partition by name order by created_at, id) as rn
+       from menu_items
+   ) ranked
+    where rn > 1
+ )
+ -- …unless somebody ordered from that exact row.
+ and id not in (select item_id from order_items where item_id is not null);
 
--- 1. What we are about to remove ---------------------------------------------
--- Keeps the earliest row per name; everything later with the same name goes.
-create temporary table dupes_to_remove on commit drop as
-with ranked as (
-  select id, name,
-         row_number() over (partition by name order by created_at nulls first, id) as rn
-    from menu_items
-)
-select id, name from ranked where rn > 1;
-
--- A duplicate that somebody has actually ordered from is kept, not deleted:
--- an order line pointing at a dish is worth more than a tidy catalogue, and
--- the row can be merged by hand later.
-delete from dupes_to_remove d
- where exists (select 1 from order_items oi where oi.item_id = d.id);
-
--- 2. Remove them --------------------------------------------------------------
--- location_menu_items, item_modifier_groups, item_allergens and favourites all
--- cascade from menu_items, so the stray availability rows go with the dish.
-delete from menu_items m
- where m.id in (select id from dupes_to_remove);
-
--- 3. Stop it happening again ---------------------------------------------------
+-- 2. Stop it happening again --------------------------------------------------
 -- The whole per-branch menu design joins dishes by name. Two rows sharing a
 -- name was never going to work, and now the database says so.
+-- This FAILS if duplicates remain because they were ordered from — see step 1.
 create unique index if not exists menu_items_name_key on menu_items (name);
 
-commit;
-
 -- ============================================================================
--- Check
+-- Check — run these after
 -- ============================================================================
--- Any names still duplicated (expect 0 rows; anything here was ordered from
--- and needs merging by hand):
+-- Names still duplicated. Expect 0 rows. Anything listed was ordered from and
+-- needs merging by hand; tell me and I will write that bit.
 --   select name, count(*) from menu_items group by name having count(*) > 1;
 --
 -- Battersea should now read 112 on sale, 62 hidden:
@@ -63,6 +57,6 @@ commit;
 --     join locations l on l.id = li.location_id
 --    where l.slug = 'battersea';
 --
--- And Balham should still have its own 147:
+-- The catalogue should be 175 — Balham's 147 plus Battersea's 28:
 --   select count(*) from menu_items;
 -- ============================================================================
