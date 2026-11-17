@@ -1,11 +1,11 @@
 -- ============================================================================
 -- ADD BATTERSEA TO ONLINE ORDERING  —  ADDITIVE, nothing is deleted
 -- ============================================================================
--- Source: https://battersea.bombaybicyclechef.uk/menu  (scraped 2026-11-16)
+-- Source: https://battersea.bombaybicyclechef.uk/menu  (scraped 2026-11-17)
 --
 -- 112 dishes sold at battersea. Of those, 84 already exist in
 -- the catalogue (which was built from Balham) and 28 are new.
--- 63 catalogue dishes are NOT sold here and are switched off for
+-- 62 catalogue dishes are NOT sold here and are switched off for
 -- this branch only — Balham keeps all of them.
 --
 -- Prices differ between branches, so every dish gets an explicit override
@@ -283,7 +283,6 @@ select l.id, m.id, false
     'Vegetable Biryani (D)',
     'Chicken Tikka Biryani (D)',
     'Lamb Biryani (D)',
-    'Palak Daal',
     'Punjabi Channa Masala (D)',
     'Pilau Rice (D)',
     'Plain Rice (V)',

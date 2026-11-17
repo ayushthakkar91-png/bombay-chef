@@ -47,8 +47,18 @@ const priceOf = (item) => Math.min(...item.skus.map((s) => s.pence));
 /** Dishes this branch sells that the catalogue has never heard of. */
 const novel = incoming.filter((i) => !byHandle.has(i.handle));
 
-/** Catalogue dishes this branch does NOT sell. */
-const absent = catalogue.filter((i) => !incoming.some((x) => x.handle === i.handle));
+/**
+ * Catalogue dishes this branch does NOT sell.
+ *
+ * Matched by handle like everything else — but then filtered by NAME, because
+ * the rows are hidden by name and a name can outlive a handle. "Palak Daal" is
+ * `palak_daal_1` at Balham and `palak_daal` at Battersea: by handle they are
+ * two dishes, by name they are one row in the catalogue. Without this it
+ * appeared in both the sells list and the hidden list, and the hide ran last,
+ * so the branch silently stopped selling a dish it sells.
+ */
+const soldNames = new Set(incoming.map((i) => i.name));
+const absent = catalogue.filter((i) => !incoming.some((x) => x.handle === i.handle) && !soldNames.has(i.name));
 
 /**
  * Touch's section names → the category ids already in the database.
