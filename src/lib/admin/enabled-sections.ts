@@ -23,6 +23,7 @@ export const ADMIN_ENABLED_PREFIXES = [
   "/admin/marketing", // email marketing: CRM, campaigns, segments, promotions, offers popup
   "/admin/locations", // delivery radius/fee, opening hours
   "/admin/reports/sales", // revenue
+  "/admin/reports/loyalty", // points earned and redeemed, members by tier
 ] as const;
 
 /** Is this admin path part of a currently-enabled section? */

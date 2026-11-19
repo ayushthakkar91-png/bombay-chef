@@ -7,6 +7,9 @@ import { flags } from "@/lib/flags";
 import {
   pointsForPence,
   tierForLifetime,
+  tierRank,
+  TIER_LABEL,
+  type Tier,
   BIRTHDAY_DISCOUNT_PERCENT,
   BIRTHDAY_EXPIRY_DAYS,
   VOUCHER_EXPIRY_DAYS,
@@ -145,6 +148,16 @@ export async function redeemReward(customerId: string, rewardId: string): Promis
   const { data: account } = await supabase.from("loyalty_accounts").select("points_balance, tier").eq("customer_id", customerId).maybeSingle();
   const balance = (account?.points_balance as number) ?? 0;
   if (balance < (reward.points_cost as number)) return { ok: false, error: "You don't have enough points yet." };
+
+  // The tier gate. min_tier and the customer's tier were both read here and
+  // never compared, so a Bronze customer could redeem a VIP-only reward. That
+  // cost nothing while every reward was Bronze, and would have cost real money
+  // the day one wasn't.
+  const customerTier = (account?.tier as Tier) ?? "bronze";
+  const required = (reward.min_tier as Tier) ?? "bronze";
+  if (tierRank(customerTier) < tierRank(required)) {
+    return { ok: false, error: `That reward is for ${TIER_LABEL[required]} members and above.` };
+  }
 
   // Map the catalogue reward to a promo voucher.
   let kind: string;
