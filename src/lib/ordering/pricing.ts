@@ -88,13 +88,23 @@ export async function priceCart(
   // -> item_modifiers. So the groups come first, and the options are fetched by
   // group. (item_modifiers has no item_id column; filtering on one silently
   // returned NOTHING and failed every line that had an option.)
-  const [{ data: items }, { data: overrides }, { data: groups }] = await Promise.all([
+  const [{ data: items, error: itemsError }, { data: overrides }, { data: groups, error: groupsError }] = await Promise.all([
     supabase.from("menu_items").select("id, name, price_pence, is_available").in("id", itemIds),
     supabase.from("location_menu_items").select("item_id, is_available, price_pence_override").eq("location_id", locationId).in("item_id", itemIds),
     modifierIds.length
       ? supabase.from("item_modifier_groups").select("id, item_id").in("item_id", itemIds)
-      : Promise.resolve({ data: [] as { id: string; item_id: string }[] }),
+      : Promise.resolve({ data: [] as { id: string; item_id: string }[], error: null }),
   ]);
+
+  // A query that fails returns data: null, which reads exactly like "the menu
+  // has nothing" — and the customer is then told their option is unavailable
+  // when in truth we never looked. That is how a column name that did not
+  // exist went unnoticed for days. A broken query now says so, and is kept out
+  // of the menu's mouth.
+  if (itemsError || groupsError) {
+    console.error("[pricing] menu lookup failed", { itemsError, groupsError });
+    return { ok: false, error: "Ordering is temporarily unavailable." };
+  }
 
   // Every option belonging to the dishes being ordered, not only the ids the
   // browser sent — a dead id can only be recovered by name if the names are
@@ -103,10 +113,14 @@ export async function priceCart(
   const dishOfGroup = new Map(groupRows.map((g) => [g.id, g.item_id]));
   let mods: ModifierRow[] = [];
   if (groupRows.length) {
-    const { data: optionRows } = await supabase
+    const { data: optionRows, error: optionsError } = await supabase
       .from("item_modifiers")
       .select("id, group_id, name, price_delta_pence, is_available")
       .in("group_id", groupRows.map((g) => g.id));
+    if (optionsError) {
+      console.error("[pricing] option lookup failed", optionsError);
+      return { ok: false, error: "Ordering is temporarily unavailable." };
+    }
     mods = ((optionRows ?? []) as { id: string; group_id: string; name: string; price_delta_pence: number | null; is_available: boolean | null }[])
       // Flattened to carry the dish, so the rest of the function (and the
       // recovery) can reason about "options of THIS dish" in one place.
