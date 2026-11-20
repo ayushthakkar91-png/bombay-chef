@@ -20,12 +20,18 @@ export function BasketNotice({ menu }: { menu: OrderingMenu }) {
       role="status"
       className="mx-auto mb-4 flex max-w-[1200px] flex-wrap items-center gap-x-3 gap-y-1 border border-[#B08A3E]/40 bg-[#FBF7EE] px-4 py-3 font-sans text-[13.5px] text-[#2B221D]"
     >
-      {/* Only shown for something genuinely off the menu. A dish that merely
+      {/* Only shown for a dish this branch cannot make. One that merely
           changed id is repaired without a word, because from the customer's
-          side nothing they chose has changed. */}
+          side nothing they chose has changed.
+
+          The BRANCH is named rather than saying the dish is off the menu.
+          Battersea sells 112 dishes and Balham 147, and a postcode can move
+          somebody between them automatically — so "no longer on our menu"
+          would have told a customer you had stopped doing a dish you still
+          do, three miles away. */}
       <span>
         Sorry — <strong>{names.join(", ")}</strong>{" "}
-        {names.length === 1 ? "is no longer on our menu" : "are no longer on our menu"}, so{" "}
+        {names.length === 1 ? "isn’t available" : "aren’t available"} at {menu.locationName}, so{" "}
         {names.length === 1 ? "it has" : "they have"} been taken out of your basket. Everything else is still there.
       </span>
       <button
