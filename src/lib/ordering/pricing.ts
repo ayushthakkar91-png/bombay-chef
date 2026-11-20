@@ -84,16 +84,34 @@ export async function priceCart(
   const itemIds = [...new Set(lines.map((l) => l.itemId))];
   const modifierIds = [...new Set(lines.flatMap((l) => l.modifierIds))];
 
-  const [{ data: items }, { data: overrides }, { data: mods }] = await Promise.all([
+  // Options do not hang off the dish directly: menu_items -> item_modifier_groups
+  // -> item_modifiers. So the groups come first, and the options are fetched by
+  // group. (item_modifiers has no item_id column; filtering on one silently
+  // returned NOTHING and failed every line that had an option.)
+  const [{ data: items }, { data: overrides }, { data: groups }] = await Promise.all([
     supabase.from("menu_items").select("id, name, price_pence, is_available").in("id", itemIds),
     supabase.from("location_menu_items").select("item_id, is_available, price_pence_override").eq("location_id", locationId).in("item_id", itemIds),
-    // Every option belonging to the dishes being ordered, not only the ids the
-    // browser sent — a dead id can only be recovered by name if the names are
-    // here to match against. A handful of rows per dish.
     modifierIds.length
-      ? supabase.from("item_modifiers").select("id, item_id, name, price_delta_pence, is_available").in("item_id", itemIds)
-      : Promise.resolve({ data: [] as Record<string, unknown>[] }),
+      ? supabase.from("item_modifier_groups").select("id, item_id").in("item_id", itemIds)
+      : Promise.resolve({ data: [] as { id: string; item_id: string }[] }),
   ]);
+
+  // Every option belonging to the dishes being ordered, not only the ids the
+  // browser sent — a dead id can only be recovered by name if the names are
+  // here to match against. A handful of rows per dish.
+  const groupRows = (groups ?? []) as { id: string; item_id: string }[];
+  const dishOfGroup = new Map(groupRows.map((g) => [g.id, g.item_id]));
+  let mods: ModifierRow[] = [];
+  if (groupRows.length) {
+    const { data: optionRows } = await supabase
+      .from("item_modifiers")
+      .select("id, group_id, name, price_delta_pence, is_available")
+      .in("group_id", groupRows.map((g) => g.id));
+    mods = ((optionRows ?? []) as { id: string; group_id: string; name: string; price_delta_pence: number | null; is_available: boolean | null }[])
+      // Flattened to carry the dish, so the rest of the function (and the
+      // recovery) can reason about "options of THIS dish" in one place.
+      .map((o) => ({ id: o.id, item_id: dishOfGroup.get(o.group_id) ?? "", name: o.name, price_delta_pence: o.price_delta_pence, is_available: o.is_available }));
+  }
 
   const itemMap = new Map((items ?? []).map((i) => [i.id as string, i]));
   const overrideMap = new Map((overrides ?? []).map((o) => [o.item_id as string, o]));
@@ -118,7 +136,7 @@ export async function priceCart(
       // modifierRecovery.ts). The customer did not rebuild the menu and must
       // not be stopped from ordering by it — and this is the last line of
       // defence, so it cannot depend on the browser having repaired itself.
-      const m = resolveModifier((mods ?? []) as ModifierRow[], line.itemId, line.modifierIds[i], line.modifierNames?.[i]);
+      const m = resolveModifier(mods, line.itemId, line.modifierIds[i], line.modifierNames?.[i]);
       if (!m) {
         // Genuinely withdrawn. Say which dish — "a selected option is no
         // longer available" with five dishes on screen tells nobody anything.
