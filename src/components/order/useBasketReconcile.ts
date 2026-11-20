@@ -2,30 +2,59 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import type { OrderingMenu } from "@/lib/repositories/ordering-menu";
+import type { OrderingMenu, OrderMenuItem } from "@/lib/repositories/ordering-menu";
 import type { CartLine } from "@/lib/ordering/types";
 import { useOrder } from "./OrderProvider";
 
 /**
- * Drop basket lines the menu no longer has.
+ * Reconnect a saved basket to the current menu.
  *
  * A basket lives in the browser indefinitely, so it outlives the menu it was
- * built from. A dish withdrawn, or an option deleted and recreated with a new
- * id — which is what a menu rebuild does — leaves a line pointing at something
- * gone. The server then refuses to price the basket, and the customer finds
- * out at CHECKOUT, after the address and with the card in hand, from a message
- * that cannot tell them which of six dishes is at fault.
+ * built from. A rebuild deletes and recreates rows, so the dish and the option
+ * are still on sale under the same names with the same prices — only their ids
+ * changed. The basket still points at the old ids, the server cannot price it,
+ * and the customer could not check out at all.
  *
- * Checked here instead, against the menu already on the page, when the page
- * loads. The customer is told once, at the top of the journey, and can carry
- * on with the rest of their basket.
+ * None of which is the customer's doing, so they should not pay for it with a
+ * lost basket. Lines are REPAIRED by name: the dish is found by name, each
+ * option by name within that dish, and the line re-pointed at the ids the menu
+ * has today.
  *
- * Nothing is guessed. The dead line is removed, not matched to a
- * similar-looking option by name — a wrong guess means charging somebody for
- * an option they did not pick, and that argument happens at the door.
+ * This is not a guess about money. Matching is on exact names within the same
+ * dish, and the server prices every order from the database regardless — a
+ * repaired line is charged at today's price, not the one saved in the browser.
+ * Only something genuinely off the menu is removed, and then we say so.
  */
+
+type Resolved = { itemId: string; modifiers: { id: string; name: string; pricePence: number }[] } | null;
+
+/** The same dish and options as this line, as the menu has them now. */
+export function resolveLine(line: CartLine, byId: Map<string, OrderMenuItem>, byName: Map<string, OrderMenuItem>): Resolved {
+  const item = byId.get(line.itemId) ?? byName.get(line.name.trim().toLowerCase());
+  if (!item) return null;
+
+  const options = new Map<string, { id: string; name: string; pricePence: number }>();
+  const optionsByName = new Map<string, { id: string; name: string; pricePence: number }>();
+  for (const group of item.modifierGroups) {
+    for (const o of group.options) {
+      const entry = { id: o.id, name: o.name, pricePence: o.priceDeltaPence };
+      options.set(o.id, entry);
+      optionsByName.set(o.name.trim().toLowerCase(), entry);
+    }
+  }
+
+  const modifiers: { id: string; name: string; pricePence: number }[] = [];
+  for (const m of line.modifiers) {
+    const found = options.get(m.id) ?? optionsByName.get(m.name.trim().toLowerCase());
+    if (!found) return null; // that option really is gone
+    modifiers.push(found);
+  }
+
+  return { itemId: item.id, modifiers };
+}
+
 export function useBasketReconcile(menu: OrderingMenu): { removed: string[]; dismiss: () => void } {
-  const { lines, removeLine } = useOrder();
+  const { lines, removeLine, addLine } = useOrder();
   const [removed, setRemoved] = useState<string[]>([]);
   // Once per mount. Re-running as the basket changes would fight the customer
   // while they are adding things.
@@ -35,31 +64,54 @@ export function useBasketReconcile(menu: OrderingMenu): { removed: string[]; dis
     if (done.current) return;
     done.current = true;
 
-    // After paint. Pruning during the effect body is a synchronous setState
-    // in an effect, which cascades a render before the first has been shown.
+    // After paint: pruning during the effect body is a synchronous setState in
+    // an effect, which cascades a render before the first has been shown.
     const run = requestAnimationFrame(() => {
-    const items = new Map<string, Set<string>>();
-    for (const cat of menu.categories) {
-      for (const item of cat.items) {
-        const optionIds = new Set<string>();
-        for (const group of item.modifierGroups) for (const o of group.options) optionIds.add(o.id);
-        items.set(item.id, optionIds);
+      const byId = new Map<string, OrderMenuItem>();
+      const byName = new Map<string, OrderMenuItem>();
+      for (const cat of menu.categories) {
+        for (const item of cat.items) {
+          byId.set(item.id, item);
+          byName.set(item.name.trim().toLowerCase(), item);
+        }
       }
-    }
 
-    const stale = lines.filter((l: CartLine) => {
-      const options = items.get(l.itemId);
-      if (!options) return true; // the dish itself is gone
-      return l.modifiers.some((m) => !options.has(m.id)); // an option is gone
+      const gone: string[] = [];
+
+      for (const line of lines) {
+        const next = resolveLine(line, byId, byName);
+
+        if (!next) {
+          gone.push(line.name);
+          removeLine(line.key);
+          continue;
+        }
+
+        const sameItem = next.itemId === line.itemId;
+        const sameMods =
+          next.modifiers.length === line.modifiers.length &&
+          next.modifiers.every((m, i) => m.id === line.modifiers[i].id);
+        if (sameItem && sameMods) continue; // already current
+
+        // Re-point at today's ids, keeping quantity and any note. Silent: from
+        // the customer's side nothing changed, because nothing they chose did.
+        removeLine(line.key);
+        addLine({
+          itemId: next.itemId,
+          name: line.name,
+          basePence: line.basePence,
+          modifiers: next.modifiers,
+          notes: line.notes,
+          qty: line.qty,
+        });
+      }
+
+      if (gone.length > 0) setRemoved(gone);
     });
 
-      if (stale.length === 0) return;
-      for (const l of stale) removeLine(l.key);
-      setRemoved(stale.map((l) => l.name));
-    });
     return () => cancelAnimationFrame(run);
-    // `lines` and `removeLine` change identity as the cart does; this runs once
-    // on mount by design, guarded above.
+    // `lines`, `removeLine` and `addLine` change identity as the cart does;
+    // this runs once on mount by design, guarded above.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [menu]);
 
