@@ -112,7 +112,11 @@ export async function priceCart(
     for (const mid of line.modifierIds) {
       const m = modMap.get(mid);
       if (!m || m.item_id !== line.itemId || m.is_available === false) {
-        return { ok: false, error: "A selected option is no longer available." };
+        // Name the dish. A basket kept in a browser can outlive the menu it
+        // was built from — an option removed since then leaves the customer
+        // staring at "a selected option is no longer available" with five
+        // dishes on screen and no idea which one to fix.
+        return { ok: false, error: `“${item.name}”: one of the options you chose isn’t available any more. Please remove it and add it again.` };
       }
       chosen.push({ id: m.id as string, name: m.name as string, pricePence: (m.price_delta_pence as number) ?? 0 });
     }

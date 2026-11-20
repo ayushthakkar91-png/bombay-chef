@@ -33,7 +33,7 @@ export function CartContents({
   /** Receives the payable total once it's fully known (null while delivery is pending). */
   onTotalChange?: (totalPence: number | null) => void;
 }) {
-  const { lines, fulfilment, promoCode, postcode, setQty, removeLine, setPromoCode } = useOrder();
+  const { lines, fulfilment, promoCode, postcode, setQty, removeLine, setPromoCode, clear } = useOrder();
   const pricing = useCartPricing();
   const { result, loading, clientSubtotalPence } = pricing;
   const [promoInput, setPromoInput] = useState(promoCode ?? "");
@@ -116,7 +116,22 @@ export function CartContents({
         <p className="mt-2 text-[12px] text-[#5A524B] font-sans">Delivery fee added at checkout.</p>
       )}
 
-      {error && <p className="mt-3 text-[13px] text-[#5D0925] font-sans">{error}</p>}
+      {error && (
+        <div className="mt-3 flex flex-col gap-2">
+          <p className="text-[13px] text-[#5D0925] font-sans">{error}</p>
+          {/* A blocked basket with no way out is where an order dies. The
+              message names the dish, and this is the one action that always
+              works — a basket that cannot be priced cannot be paid for, so
+              emptying it is better than leaving somebody stuck. */}
+          <button
+            type="button"
+            onClick={() => { if (window.confirm("Empty your basket and start again?")) clear(); }}
+            className="self-start font-sans text-[12.5px] text-[#5A524B] underline underline-offset-2 hover:text-[#2B221D]"
+          >
+            Empty the basket and start again
+          </button>
+        </div>
+      )}
 
       {onCheckout && (
         <button
