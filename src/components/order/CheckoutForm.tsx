@@ -223,7 +223,7 @@ export function CheckoutForm({
     const input: CheckoutInput = {
       locationSlug,
       fulfilment,
-      lines: lines.map((l) => ({ itemId: l.itemId, modifierIds: l.modifiers.map((m) => m.id), qty: l.qty, notes: l.notes })),
+      lines: lines.map((l) => ({ itemId: l.itemId, modifierIds: l.modifiers.map((m) => m.id), modifierNames: l.modifiers.map((m) => m.name), qty: l.qty, notes: l.notes })),
       promoCode,
       contact,
       deliveryAddress: fulfilment === "delivery" ? addr : undefined,

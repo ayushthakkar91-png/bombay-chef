@@ -28,7 +28,7 @@ export function CartPricingProvider({ locationSlug, children }: { locationSlug: 
   const { lines, fulfilment, promoCode, postcode, ready } = useOrder();
 
   const inputLines: CartLineInput[] = useMemo(
-    () => lines.map((l) => ({ itemId: l.itemId, modifierIds: l.modifiers.map((m) => m.id), qty: l.qty, notes: l.notes })),
+    () => lines.map((l) => ({ itemId: l.itemId, modifierIds: l.modifiers.map((m) => m.id), modifierNames: l.modifiers.map((m) => m.name), qty: l.qty, notes: l.notes })),
     [lines],
   );
   // Postcode is part of the signature so the tiered delivery fee re-prices when it changes.

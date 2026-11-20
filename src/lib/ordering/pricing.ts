@@ -4,6 +4,7 @@ import { getServiceClient } from "@/lib/supabase/clients";
 import type { Fulfilment } from "./constants";
 import type { CartLineInput } from "./types";
 import { freeDeliveryApplies } from "./delivery-tiers";
+import { resolveModifier, type ModifierRow } from "./modifierRecovery";
 
 /**
  * Server-authoritative cart pricing. Clients send only item ids, modifier ids,
@@ -86,14 +87,16 @@ export async function priceCart(
   const [{ data: items }, { data: overrides }, { data: mods }] = await Promise.all([
     supabase.from("menu_items").select("id, name, price_pence, is_available").in("id", itemIds),
     supabase.from("location_menu_items").select("item_id, is_available, price_pence_override").eq("location_id", locationId).in("item_id", itemIds),
+    // Every option belonging to the dishes being ordered, not only the ids the
+    // browser sent — a dead id can only be recovered by name if the names are
+    // here to match against. A handful of rows per dish.
     modifierIds.length
-      ? supabase.from("item_modifiers").select("id, item_id, name, price_delta_pence, is_available").in("id", modifierIds)
+      ? supabase.from("item_modifiers").select("id, item_id, name, price_delta_pence, is_available").in("item_id", itemIds)
       : Promise.resolve({ data: [] as Record<string, unknown>[] }),
   ]);
 
   const itemMap = new Map((items ?? []).map((i) => [i.id as string, i]));
   const overrideMap = new Map((overrides ?? []).map((o) => [o.item_id as string, o]));
-  const modMap = new Map((mods ?? []).map((m) => [m.id as string, m]));
 
   const priced: PricedLine[] = [];
   for (const line of lines) {
@@ -109,16 +112,19 @@ export async function priceCart(
 
     const qty = Math.max(1, Math.min(MAX_QTY, Math.trunc(line.qty)));
     const chosen: { id: string; name: string; pricePence: number }[] = [];
-    for (const mid of line.modifierIds) {
-      const m = modMap.get(mid);
-      if (!m || m.item_id !== line.itemId || m.is_available === false) {
-        // Name the dish. A basket kept in a browser can outlive the menu it
-        // was built from — an option removed since then leaves the customer
-        // staring at "a selected option is no longer available" with five
-        // dishes on screen and no idea which one to fix.
+
+    for (let i = 0; i < line.modifierIds.length; i++) {
+      // The id first; by name on this dish if the id is gone (see
+      // modifierRecovery.ts). The customer did not rebuild the menu and must
+      // not be stopped from ordering by it — and this is the last line of
+      // defence, so it cannot depend on the browser having repaired itself.
+      const m = resolveModifier((mods ?? []) as ModifierRow[], line.itemId, line.modifierIds[i], line.modifierNames?.[i]);
+      if (!m) {
+        // Genuinely withdrawn. Say which dish — "a selected option is no
+        // longer available" with five dishes on screen tells nobody anything.
         return { ok: false, error: `“${item.name}”: one of the options you chose isn’t available any more. Please remove it and add it again.` };
       }
-      chosen.push({ id: m.id as string, name: m.name as string, pricePence: (m.price_delta_pence as number) ?? 0 });
+      chosen.push({ id: m.id, name: m.name, pricePence: m.price_delta_pence ?? 0 });
     }
 
     const unitPence = basePence + chosen.reduce((s, m) => s + m.pricePence, 0);
