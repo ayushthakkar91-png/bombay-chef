@@ -95,6 +95,22 @@ function parseItem(form: FormData): { data?: ParsedItem; errors?: Record<string,
   };
 }
 
+/**
+ * A database complaint, in words a manager can act on.
+ *
+ * Dish names are unique (menu_items_name_key), which is what lets each branch
+ * price and hide dishes by name. Renaming one onto another is therefore
+ * refused — and the raw "duplicate key value violates unique constraint"
+ * reads as a crash rather than as "that name is taken", so a real rename just
+ * looked like the save button not working.
+ */
+function dishError(error: { code?: string; message: string }, name: string): string {
+  if (error.code === "23505") {
+    return `A dish called “${name}” already exists. Two dishes can’t share a name — pick a different one, or merge them if they’re the same dish.`;
+  }
+  return error.message;
+}
+
 export async function createItem(_prev: ActionState, form: FormData): Promise<ActionState> {
   await requireRole("restaurant_manager");
   const { data, errors, values } = parseItem(form);
@@ -109,7 +125,7 @@ export async function createItem(_prev: ActionState, form: FormData): Promise<Ac
     .select("id")
     .single();
 
-  if (error || !inserted) return fail(error?.message ?? "Insert failed.", undefined, values);
+  if (error || !inserted) return fail(error ? dishError(error, data.name) : "Insert failed.", undefined, values);
 
   await syncAllergens(inserted.id as string, strList(form, "allergens"));
   revalidateMenu();
@@ -128,7 +144,7 @@ export async function updateItem(_prev: ActionState, form: FormData): Promise<Ac
   if (!supabase) return fail("Database not connected.");
 
   const { error } = await supabase.from("menu_items").update(data).eq("id", id);
-  if (error) return fail(error.message, undefined, values);
+  if (error) return fail(dishError(error, data.name), undefined, values);
 
   await syncAllergens(id, strList(form, "allergens"));
   revalidateMenu();

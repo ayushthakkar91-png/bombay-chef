@@ -54,14 +54,18 @@ export function resolveLine(line: CartLine, byId: Map<string, OrderMenuItem>, by
 }
 
 export function useBasketReconcile(menu: OrderingMenu): { removed: string[]; dismiss: () => void } {
-  const { lines, removeLine, addLine } = useOrder();
+  const { lines, removeLine, addLine, ready } = useOrder();
   const [removed, setRemoved] = useState<string[]>([]);
   // Once per mount. Re-running as the basket changes would fight the customer
   // while they are adding things.
   const done = useRef(false);
 
   useEffect(() => {
-    if (done.current) return;
+    // The basket is restored from localStorage AFTER the first render, so this
+    // has to wait for it. Running earlier saw an empty basket, found nothing
+    // to repair, and marked itself done — which is why the broken line kept
+    // coming back with the fix deployed and working.
+    if (!ready || done.current) return;
     done.current = true;
 
     // After paint: pruning during the effect body is a synchronous setState in
@@ -113,7 +117,7 @@ export function useBasketReconcile(menu: OrderingMenu): { removed: string[]; dis
     // `lines`, `removeLine` and `addLine` change identity as the cart does;
     // this runs once on mount by design, guarded above.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [menu]);
+  }, [menu, ready]);
 
   return { removed, dismiss: () => setRemoved([]) };
 }
