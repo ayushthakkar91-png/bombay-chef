@@ -11,6 +11,7 @@ import { CartContents } from "./CartContents";
 import { OrderBar } from "./OrderBar";
 import { CheckoutChoice } from "./CheckoutChoice";
 import { MenuCategoryNav } from "./MenuCategoryNav";
+import { BasketNotice } from "./BasketNotice";
 
 import { money } from "@/lib/format";
 
@@ -77,6 +78,9 @@ export function MenuBrowser({
     <CartPricingProvider locationSlug={locationSlug}>
       <main className="min-h-screen bg-[#F6F2EA] pt-[84px] pb-28 lg:pt-[88px] lg:pb-12">
         <OrderBar menu={menu} branches={branches} locationSlug={locationSlug} />
+        {/* A basket older than the menu loses its dead lines here, once, with
+            a word about it — rather than failing to price at checkout. */}
+        <div className="px-5 pt-3 lg:px-8"><BasketNotice menu={menu} /></div>
 
         {/* Search — sticky under the order bar, quick to reach one-handed. */}
         <div className="sticky top-[84px] z-30 border-b border-[#2A211C]/8 bg-[#F6F2EA]/95 px-5 py-2.5 backdrop-blur lg:static lg:z-auto lg:mx-auto lg:max-w-[1200px] lg:border-0 lg:bg-transparent lg:px-8 lg:pt-6">

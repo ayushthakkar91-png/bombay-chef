@@ -17,6 +17,7 @@ import { CartContents } from "./CartContents";
 import { CheckoutSteps } from "./CheckoutSteps";
 import { createCheckout, checkGiftCard, checkDeliveryAction, type CheckoutInput, type OrderingWindow } from "@/app/order/actions";
 import { WhenToOrder } from "./WhenToOrder";
+import { BasketNotice } from "./BasketNotice";
 
 import { money } from "@/lib/format";
 
@@ -287,6 +288,10 @@ export function CheckoutForm({
               <Link href={`/account/login?next=${encodeURIComponent(`/order/checkout?loc=${locationSlug}`)}`} className="font-medium text-[#5D0925] underline underline-offset-2 hover:text-[#420616]">Sign in instead</Link>
             </p>
           )}
+
+          {/* Someone can land here straight from a link with an old basket,
+              so the same check runs on this page too. */}
+          <BasketNotice menu={menu} />
 
           <div className="lg:grid lg:grid-cols-[1fr_380px] lg:gap-10">
             {/* Form */}
