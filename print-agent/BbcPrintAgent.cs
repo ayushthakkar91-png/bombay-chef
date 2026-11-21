@@ -752,7 +752,18 @@ namespace BombayBicycleChef
                 w.Raw(Size(1, 1)).Plain();
             }
 
-            if (order.CustomerPhone.Length > 0) w.Line("Tel " + order.CustomerPhone);
+            if (order.CustomerPhone.Length > 0)
+            {
+                // The driver dials this standing outside the wrong door with
+                // the food going cold. Same weight as the name and address:
+                // double height, double-struck. A UK number with "Tel " is
+                // under 20 characters, so double width would fit too — but
+                // keeping the three customer lines the same size reads as one
+                // block, which is the point.
+                w.Raw(DoubleStrikeOn).Raw(Size(1, 2));
+                w.Line("Tel " + order.CustomerPhone);
+                w.Raw(Size(1, 1)).Raw(DoubleStrikeOff);
+            }
             if (order.IsDelivery && order.Address.Length > 0) {
                 // Double height, like the name. The driver reads this off the
                 // ticket at the door, often one-handed in the dark. Height
