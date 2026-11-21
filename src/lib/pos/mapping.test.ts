@@ -168,3 +168,17 @@ describe("the day's order number on the ticket", () => {
     expect(orderToPosJson(BASE as never, []).dailyNumber).toBe(0);
   });
 });
+
+describe("when the server cannot tell how an order is paid", () => {
+  it("says so, rather than claiming it is paid", () => {
+    // No method on the order and no payment row. This used to be reported
+    // as "paid" — a ticket saying PAID ONLINE on an order nobody paid for.
+    const t = orderToPosJson({ ...BASE, payments: [] } as never, []);
+    expect(t.paymentStatus).toBe("unknown");
+  });
+
+  it("is never 'unknown' once the order carries its method", () => {
+    expect(orderToPosJson({ ...BASE, payment_method: "card", payments: [] } as never, []).paymentStatus).toBe("paid");
+    expect(orderToPosJson({ ...BASE, payment_method: "cash", payments: [] } as never, []).paymentStatus).toBe("cash");
+  });
+});

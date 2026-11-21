@@ -112,7 +112,7 @@ export function orderToPosJson(order: OrderRow, items: OrderItemRow[]): Record<s
     // The terminal prints "CASH — UNPAID" for anything that is not "paid",
     // which is exactly right: a cash order is confirmed but the money has not
     // been taken yet, and whoever hands it over has to collect it.
-    paymentStatus: isCashOrder(order) ? "cash" : "paid",
+    paymentStatus: paymentStatusOf(order),
     orderType: order.fulfilment, // "collection" | "delivery" — app's isDelivery() matches
     createdAt: order.placed_at ?? order.created_at,
     subtotal: money(order.subtotal_pence),
@@ -145,19 +145,25 @@ function branchOf(order: OrderRow): { name: string; address: string; phone: stri
 }
 
 /** Was this order placed as cash-on-collection / cash-on-delivery? */
-function isCashOrder(order: OrderRow): boolean {
-  // The order's own method is the one to trust: it is written when the order
-  // is created, so it is never missing, whereas the payments row is written a
-  // moment after the order is marked paid. A till polling in that gap used to
-  // see no payment at all and print PAID ONLINE on a cash delivery.
+/**
+ * "cash", "paid", or "unknown".
+ *
+ * "unknown" is the honest answer when the order carries no method AND no
+ * payment row exists — which takes both migration 0033 being un-run and the
+ * payments insert failing. It used to be reported as "paid", and a ticket
+ * saying PAID ONLINE on an order nobody has paid for is the one lie this
+ * system must never tell. An updated till prints CHECK PAYMENT; an old one
+ * still prints PAID ONLINE, exactly as it did before.
+ */
+export function paymentStatusOf(order: OrderRow): "cash" | "paid" | "unknown" {
   const declared = (order as { payment_method?: string | null }).payment_method;
-  if (declared) return declared === "cash";
-
+  if (declared) return declared === "cash" ? "cash" : "paid";
   const p = order.payments;
-  if (!p) return false;
-  const rows = Array.isArray(p) ? p : [p];
-  return rows.some((r) => r?.method === "cash");
+  const rows = p == null ? [] : Array.isArray(p) ? p : [p];
+  if (rows.length === 0) return "unknown";
+  return rows.some((r) => r?.method === "cash") ? "cash" : "paid";
 }
+
 
 /**
  * How long an order may sit unprinted while we wait for its payment row.

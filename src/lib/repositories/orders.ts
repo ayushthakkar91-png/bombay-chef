@@ -54,10 +54,12 @@ export type OrderDetail = Order & {
    * hands over food without taking the money.
    */
   isCash: boolean;
+  /** No method on the order and no payment row: the screen must not say "paid". */
+  paymentUnknown: boolean;
 };
 
 const SELECT =
-  "id, code, location_id, fulfilment, status, subtotal_pence, discount_pence, delivery_fee_pence, gift_card_pence, total_pence, promo_code, delivery_address, prep_time_min, scheduled_for, contact_name, contact_email, contact_phone, notes, track_token, placed_at, created_at";
+  "id, code, payment_method, location_id, fulfilment, status, subtotal_pence, discount_pence, delivery_fee_pence, gift_card_pence, total_pence, promo_code, delivery_address, prep_time_min, scheduled_for, contact_name, contact_email, contact_phone, notes, track_token, placed_at, created_at";
 
 function map(r: Record<string, unknown>): Order {
   return {
@@ -261,5 +263,6 @@ function toDetail(data: Record<string, unknown>): OrderDetail {
       : null,
     // Any cash leg means cash has to be collected, however the row is ordered.
     isCash: payments.some((row) => row.method === "cash"),
+    paymentUnknown: payments.length === 0 && !(data as { payment_method?: string | null }).payment_method,
   };
 }
