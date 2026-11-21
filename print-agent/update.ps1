@@ -25,8 +25,22 @@ param(
 $ErrorActionPreference = "Stop"
 
 $Repo = "ayushthakkar91-png/bombay-chef"
-$Base = "https://raw.githubusercontent.com/$Repo/$Branch/print-agent"
 $Files = @("BbcPrintAgent.cs", "install.ps1")
+
+# GitHub's file server keeps a copy of every file under a BRANCH name for a
+# few minutes after a push, and ignores anything added to the address to get
+# round it. A till that updated in that window quietly got the version before,
+# and the update "did nothing". A file under a COMMIT id never changes, so the
+# newest commit on the branch is looked up first and every file is fetched by
+# that id. If the lookup fails, the branch address is used as before.
+$Ref = $Branch
+try {
+  [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+  $head = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/commits/$Branch" `
+            -Headers @{ "User-Agent" = "bbc-print-agent"; "Accept" = "application/vnd.github+json" } -UseBasicParsing
+  if ($head.sha -match '^[0-9a-f]{40}$') { $Ref = $head.sha }
+} catch { }
+$Base = "https://raw.githubusercontent.com/$Repo/$Ref/print-agent"
 
 function Say($text, $colour = "Gray") { Write-Host $text -ForegroundColor $colour }
 
@@ -45,15 +59,10 @@ $staging = Join-Path $env:TEMP ("bbc-print-agent-" + [Guid]::NewGuid().ToString(
 New-Item -ItemType Directory -Force -Path $staging | Out-Null
 
 Say ""
-Say "Fetching the latest print agent..." "Cyan"
+Say ("Fetching the latest print agent (" + $Ref.Substring(0, [Math]::Min(7, $Ref.Length)) + ")...") "Cyan"
 try {
   foreach ($file in $Files) {
-    # GitHub's CDN keeps a copy of each file for a few minutes after a push.
-    # A till that updates in that window quietly gets the version before — and
-    # then "the update did nothing". A throwaway query string makes every
-    # fetch a fresh one.
-    $fresh = "$Base/${file}?nocache=" + [DateTime]::UtcNow.Ticks
-    Invoke-WebRequest -Uri $fresh -OutFile (Join-Path $staging $file) -UseBasicParsing
+    Invoke-WebRequest -Uri "$Base/$file" -OutFile (Join-Path $staging $file) -UseBasicParsing
     Say "  $file"
   }
 } catch {
