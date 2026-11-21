@@ -87,6 +87,10 @@ export function orderToPosJson(order: OrderRow, items: OrderItemRow[]): Record<s
   return {
     _id: order.id,
     orderNumber: order.code,
+    // 1, 2, 3 … for the day at this branch — what gets shouted across the
+    // kitchen and written on the bag. 0 until migration 0034 has run, and the
+    // till simply leaves it off.
+    dailyNumber: (order as { daily_seq?: number | null }).daily_seq ?? 0,
     customerName: order.contact_name ?? "Guest",
     // A delivery ticket without a phone number is no use to whoever is stood
     // outside the wrong door with the food going cold.

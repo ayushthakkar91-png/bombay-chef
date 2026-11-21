@@ -10,8 +10,10 @@ import { releaseCutoff } from "@/lib/ordering/scheduling";
 const ORDER_COLS =
   "id, code, status, fulfilment, contact_name, contact_phone, total_pence, subtotal_pence, delivery_fee_pence, discount_pence, promo_code, notes, delivery_address, placed_at, created_at, printed_at, scheduled_for, prep_time_min, locations(name, address, phone), payments(method)";
 
-/** The same columns plus the order's own payment method (migration 0033). */
-const ORDER_COLS_WITH_METHOD = ORDER_COLS.replace("id, code,", "id, payment_method, code,");
+/** The same columns plus the order's own payment method (migration 0033) and
+ *  its number for the day (0034). Tried first; the plain list is the fallback
+ *  until both migrations have been run. */
+const ORDER_COLS_WITH_METHOD = ORDER_COLS.replace("id, code,", "id, payment_method, daily_seq, code,");
 
 
 /** One live-orders query, so both column lists share the same filters. */

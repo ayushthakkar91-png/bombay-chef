@@ -158,3 +158,13 @@ describe("the order's own payment method is what the ticket trusts", () => {
     expect(t.paymentStatus).toBe("cash");
   });
 });
+
+describe("the day's order number on the ticket", () => {
+  it("sends it when the order has one", () => {
+    expect(orderToPosJson({ ...BASE, daily_seq: 7 } as never, []).dailyNumber).toBe(7);
+  });
+
+  it("sends 0 before the migration has run, so the till leaves it off", () => {
+    expect(orderToPosJson(BASE as never, []).dailyNumber).toBe(0);
+  });
+});

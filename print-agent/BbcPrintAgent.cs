@@ -258,7 +258,7 @@ namespace BombayBicycleChef
             already.Remember(order.Id);
             if (Api.MarkPrinted(config, _session, order.Id)) already.Forget(order.Id);
 
-            Log.Write("Printed " + order.Code + " (" + order.Fulfilment + ", " +
+            Log.Write("Printed " + (order.DailyNumber > 0 ? "#" + order.DailyNumber + " " : "") + order.Code + " (" + order.Fulfilment + ", " +
                       order.Total.ToString("0.00", CultureInfo.InvariantCulture) + (order.IsCash ? ", CASH" : "") + ").");
         }
     }
@@ -462,6 +462,8 @@ namespace BombayBicycleChef
         public DateTime? ScheduledFor;
         public bool IsPrinted;
         public bool IsCash;
+        /** 1, 2, 3 … this branch's count for the day. 0 when the server has not sent one. */
+        public int DailyNumber;
         public double Total, Subtotal, DeliveryFee, Discount;
         public string PromoCode = "";
         public string Notes = "";
@@ -486,6 +488,7 @@ namespace BombayBicycleChef
                 EtaMinutes = 45,
                 Fulfilment = "delivery",
                 IsCash = true,
+                DailyNumber = 7,
                 Subtotal = 28.40,
                 DeliveryFee = 1.99,
                 Discount = 2.84,
@@ -515,6 +518,7 @@ namespace BombayBicycleChef
                 Fulfilment = Json.Str(row, "orderType"),
                 IsPrinted = Json.Bool(row, "isPrinted"),
                 IsCash = Json.Str(row, "paymentStatus") == "cash",
+                DailyNumber = (int)Json.Number(row, "dailyNumber"),
                 Total = Json.Number(row, "totalPrice"),
                 Subtotal = Json.Number(row, "subtotal"),
                 DeliveryFee = Json.Number(row, "deliveryFee"),
@@ -645,6 +649,10 @@ namespace BombayBicycleChef
         private static readonly byte[] AlignCentre = { 0x1B, 0x61, 0x01 };
         private static readonly byte[] BoldOn = { 0x1B, 0x45, 0x01 };
         private static readonly byte[] BoldOff = { 0x1B, 0x45, 0x00 };
+        // ESC G: double-strike. Every dot is struck twice. The whole ticket is
+        // already bold, so this is what "make it bolder" actually means here.
+        private static readonly byte[] DoubleStrikeOn = { 0x1B, 0x47, 0x01 };
+        private static readonly byte[] DoubleStrikeOff = { 0x1B, 0x47, 0x00 };
         private static readonly byte[] Cut = { 0x1D, 0x56, 0x42, 0x00 };
         // GS B — white on black. One line that cannot be skimmed past.
         private static readonly byte[] ReverseOn = { 0x1D, 0x42, 0x01 };
@@ -702,6 +710,16 @@ namespace BombayBicycleChef
 
             // What kind of order, and its number. The loudest thing on the
             // ticket after the dishes.
+            if (order.DailyNumber > 0)
+            {
+                // The day's number: what the kitchen shouts and writes on the
+                // bag. Double width AND height — "ORDER 12" is eight characters
+                // and cannot wrap. The permanent code stays underneath for
+                // the website, refunds and the phone.
+                w.Raw(DoubleStrikeOn).Raw(Size(2, 2));
+                w.Line("ORDER " + order.DailyNumber);
+                w.Raw(Size(1, 1)).Raw(DoubleStrikeOff);
+            }
             w.Strong().Raw(Size(1, 2));
             w.Line((order.IsDelivery ? "DELIVERY" : "COLLECTION") + " #" + order.Code);
             w.Raw(Size(1, 1)).Plain();
@@ -719,9 +737,9 @@ namespace BombayBicycleChef
                 // alone makes the name no easier to pick out when the driver
                 // is holding six bags — size is what reads across a counter.
                 // Height only: double width would wrap most names.
-                w.Raw(Size(1, 2));
+                w.Raw(DoubleStrikeOn).Raw(Size(1, 2));
                 w.Wrapped("For: " + order.CustomerName, 0, 5, Width);
-                w.Raw(Size(1, 1));
+                w.Raw(Size(1, 1)).Raw(DoubleStrikeOff);
             }
 
             // When they were told to expect it. A chosen slot is a promise and
@@ -739,9 +757,9 @@ namespace BombayBicycleChef
                 // Double height, like the name. The driver reads this off the
                 // ticket at the door, often one-handed in the dark. Height
                 // only: double width would wrap nearly every London address.
-                w.Raw(Size(1, 2));
+                w.Raw(DoubleStrikeOn).Raw(Size(1, 2));
                 w.Wrapped(order.Address, 0, 2, Width);
-                w.Raw(Size(1, 1));
+                w.Raw(Size(1, 1)).Raw(DoubleStrikeOff);
             }
             w.Feed();
 
