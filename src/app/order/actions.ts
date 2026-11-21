@@ -324,10 +324,12 @@ async function createCheckoutInner(input: CheckoutInput): Promise<CheckoutResult
     chargePence = price.totalPence - giftRedeem;
   }
 
-  // Create the pending order.
-  const { data: order, error } = await supabase
-    .from("orders")
-    .insert({
+  // Create the pending order. How the customer chose to pay goes in the same
+  // write: the payments row is only written AFTER an order is marked paid, and
+  // a till polling in that gap once read "no payment yet" as card and printed
+  // PAID ONLINE on a cash delivery. Recorded here, it is known from the first
+  // instant the order exists.
+  const newOrder = {
       location_id: locationId,
       customer_id: customerId,
       idempotency_key: idem,
@@ -350,9 +352,30 @@ async function createCheckoutInner(input: CheckoutInput): Promise<CheckoutResult
       contact_phone: input.contact.phone.trim(),
       notes: input.notes?.trim() || null,
       marketing_opt_in: Boolean(input.marketingOptIn),
-    })
+      payment_method: cash ? "cash" : "card",
+  };
+
+  let { data: order, error } = await supabase
+    .from("orders")
+    .insert(newOrder)
     .select("id, code, track_token")
     .single();
+
+  // Before migration 0033 the column does not exist and Postgres refuses the
+  // whole row (42703: undefined column). No customer should be unable to order
+  // because of a column, so that one failure is retried without it — and the
+  // ticket falls back to the payments row, as it always did. Any other error
+  // is handled below as before.
+  if (error?.code === "42703") {
+    console.error("[checkout] orders.payment_method missing — run migration 0033");
+    const { payment_method: _omitted, ...withoutMethod } = newOrder;
+    void _omitted;
+    ({ data: order, error } = await supabase
+      .from("orders")
+      .insert(withoutMethod)
+      .select("id, code, track_token")
+      .single());
+  }
 
   if (error || !order) {
     // Concurrent submit with the same key lost the unique-index race — resume the
@@ -374,21 +397,6 @@ async function createCheckoutInner(input: CheckoutInput): Promise<CheckoutResult
   }
 
   const orderId = order.id as string;
-
-  // How they chose to pay, recorded on the order itself and before it can
-  // possibly be confirmed. The payments row is written a moment AFTER an order
-  // is marked paid, and a till polling in that gap saw a paid order with no
-  // payment and printed PAID ONLINE on a cash delivery. The choice is known
-  // here, so the kitchen never has to infer it.
-  //
-  // Tolerated failure on purpose: before migration 0033 the column does not
-  // exist, and no customer should be unable to order because of that. The
-  // ticket then falls back to the payments row, as it always did.
-  const { error: methodError } = await supabase
-    .from("orders")
-    .update({ payment_method: cash ? "cash" : "card" })
-    .eq("id", orderId);
-  if (methodError) console.error("[checkout] could not record the payment method", methodError);
 
   await recordOrderEvent(orderId, "ORDER_CREATED", { code: order.code, totalPence: price.totalPence, fulfilment: input.fulfilment });
 
