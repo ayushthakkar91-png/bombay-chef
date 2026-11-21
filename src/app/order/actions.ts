@@ -352,30 +352,16 @@ async function createCheckoutInner(input: CheckoutInput): Promise<CheckoutResult
       contact_phone: input.contact.phone.trim(),
       notes: input.notes?.trim() || null,
       marketing_opt_in: Boolean(input.marketingOptIn),
+      // Required by the database (migration 0035): an order cannot exist
+      // without knowing how it is paid, so the kitchen ticket never guesses.
       payment_method: cash ? "cash" : "card",
   };
 
-  let { data: order, error } = await supabase
+  const { data: order, error } = await supabase
     .from("orders")
     .insert(newOrder)
     .select("id, code, track_token")
     .single();
-
-  // Before migration 0033 the column does not exist and Postgres refuses the
-  // whole row (42703: undefined column). No customer should be unable to order
-  // because of a column, so that one failure is retried without it — and the
-  // ticket falls back to the payments row, as it always did. Any other error
-  // is handled below as before.
-  if (error?.code === "42703") {
-    console.error("[checkout] orders.payment_method missing — run migration 0033");
-    const { payment_method: _omitted, ...withoutMethod } = newOrder;
-    void _omitted;
-    ({ data: order, error } = await supabase
-      .from("orders")
-      .insert(withoutMethod)
-      .select("id, code, track_token")
-      .single());
-  }
 
   if (error || !order) {
     // Concurrent submit with the same key lost the unique-index race — resume the

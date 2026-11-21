@@ -54,8 +54,6 @@ export type OrderDetail = Order & {
    * hands over food without taking the money.
    */
   isCash: boolean;
-  /** No method on the order and no payment row: the screen must not say "paid". */
-  paymentUnknown: boolean;
 };
 
 const SELECT =
@@ -261,8 +259,7 @@ function toDetail(data: Record<string, unknown>): OrderDetail {
           paymentIntent: (p.provider_payment_intent as string | null) ?? null,
         }
       : null,
-    // Any cash leg means cash has to be collected, however the row is ordered.
-    isCash: payments.some((row) => row.method === "cash"),
-    paymentUnknown: payments.length === 0 && !(data as { payment_method?: string | null }).payment_method,
+    // From the order itself, which the database requires to say cash or card.
+    isCash: data.payment_method === "cash",
   };
 }

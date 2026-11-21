@@ -1,10 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { forwardStatusPath, appStatusToBbc, bbcStatusToApp, readyToTicket, orderToPosJson, PAYMENT_SETTLE_MS } from "./mapping";
+import { forwardStatusPath, appStatusToBbc, bbcStatusToApp, orderToPosJson } from "./mapping";
 
 /** A minimal live order row, as the till query returns one. */
 const BASE = {
   id: "o1",
   code: "30811412",
+  payment_method: "cash",
   status: "paid",
   fulfilment: "delivery",
   contact_name: "Ainslie McLennan",
@@ -84,77 +85,23 @@ describe("appStatusToBbc / bbcStatusToApp round-trips", () => {
   });
 });
 
-describe("a ticket waits for its payment row", () => {
-  const PLACED = "2026-11-21T17:29:39.602Z";
-  const at = (ms: number) => new Date(PLACED).getTime() + ms;
-
-  it("holds back a just-paid order that has no payment row yet", () => {
-    // The real failure: Balham's till polled 178ms after the status flipped,
-    // saw no payment, and printed PAID ONLINE on a cash order.
-    expect(readyToTicket({ placed_at: PLACED, payments: [] }, at(178))).toBe(false);
+describe("how an order is paid comes from the order itself", () => {
+  // orders.payment_method is written in the same insert that creates the
+  // order and the database refuses an order without it. There is no gap, no
+  // waiting, and no third answer.
+  it("cash", () => {
+    expect(orderToPosJson({ ...BASE, payment_method: "cash" } as never, []).paymentStatus).toBe("cash");
   });
 
-  it("releases it as soon as the payment row lands", () => {
-    expect(readyToTicket({ placed_at: PLACED, payments: [{ method: "cash" }] }, at(178))).toBe(true);
+  it("card", () => {
+    expect(orderToPosJson({ ...BASE, payment_method: "card" } as never, []).paymentStatus).toBe("paid");
   });
 
-  it("prints anyway rather than lose the ticket", () => {
-    // If a payment row never appears, the kitchen must still get the order.
-    expect(readyToTicket({ placed_at: PLACED, payments: [] }, at(PAYMENT_SETTLE_MS + 1))).toBe(true);
-  });
-
-  it("does not hold an older order back", () => {
-    expect(readyToTicket({ placed_at: PLACED, payments: [] }, at(60_000))).toBe(true);
-  });
-
-  it("copes with a single payment object rather than an array", () => {
-    expect(readyToTicket({ placed_at: PLACED, payments: { method: "card" } }, at(10))).toBe(true);
-  });
-
-  it("falls back to created_at, and prints when there is no timestamp at all", () => {
-    expect(readyToTicket({ created_at: PLACED, payments: [] }, at(10))).toBe(false);
-    expect(readyToTicket({ payments: [] }, at(10))).toBe(true);
-  });
-
-  it("is not fooled by a clock skewed into the future", () => {
-    // A placed_at ahead of our clock must not hold the ticket for ever.
-    expect(readyToTicket({ placed_at: PLACED, payments: [] }, at(-60_000))).toBe(true);
-  });
-});
-
-describe("the order's own payment method is what the ticket trusts", () => {
-  const PLACED = "2026-11-21T17:29:39.602Z";
-  const at = (ms: number) => new Date(PLACED).getTime() + ms;
-
-  it("does not wait at all once the order carries its method", () => {
-    // The whole race disappears: there is no instant when the order exists
-    // and its payment method does not.
-    expect(readyToTicket({ placed_at: PLACED, payment_method: "cash", payments: [] }, at(1))).toBe(true);
-  });
-
-  it("still waits when the method is missing and no payment row exists", () => {
-    expect(readyToTicket({ placed_at: PLACED, payments: [] }, at(1))).toBe(false);
-  });
-
-  it("marks a cash order as cash from the order alone", () => {
+  it("ignores the payments row entirely", () => {
+    // Written later than the order, so never the thing to read. This is the
+    // 178ms race that printed PAID ONLINE on a cash delivery: with the row
+    // missing, the order still says cash.
     const t = orderToPosJson({ ...BASE, payment_method: "cash", payments: [] } as never, []);
-    expect(t.paymentStatus).toBe("cash");
-  });
-
-  it("marks a card order as paid from the order alone", () => {
-    const t = orderToPosJson({ ...BASE, payment_method: "card", payments: [] } as never, []);
-    expect(t.paymentStatus).toBe("paid");
-  });
-
-  it("believes the order over a payments row that disagrees", () => {
-    // Should never happen, but if it does, the intent recorded at checkout is
-    // the one the customer agreed to.
-    const t = orderToPosJson({ ...BASE, payment_method: "cash", payments: [{ method: "card" }] } as never, []);
-    expect(t.paymentStatus).toBe("cash");
-  });
-
-  it("falls back to the payments row before the migration is applied", () => {
-    const t = orderToPosJson({ ...BASE, payments: [{ method: "cash" }] } as never, []);
     expect(t.paymentStatus).toBe("cash");
   });
 });
@@ -164,21 +111,7 @@ describe("the day's order number on the ticket", () => {
     expect(orderToPosJson({ ...BASE, daily_seq: 7 } as never, []).dailyNumber).toBe(7);
   });
 
-  it("sends 0 before the migration has run, so the till leaves it off", () => {
+  it("sends 0 when it has none, so the till leaves it off", () => {
     expect(orderToPosJson(BASE as never, []).dailyNumber).toBe(0);
-  });
-});
-
-describe("when the server cannot tell how an order is paid", () => {
-  it("says so, rather than claiming it is paid", () => {
-    // No method on the order and no payment row. This used to be reported
-    // as "paid" — a ticket saying PAID ONLINE on an order nobody paid for.
-    const t = orderToPosJson({ ...BASE, payments: [] } as never, []);
-    expect(t.paymentStatus).toBe("unknown");
-  });
-
-  it("is never 'unknown' once the order carries its method", () => {
-    expect(orderToPosJson({ ...BASE, payment_method: "card", payments: [] } as never, []).paymentStatus).toBe("paid");
-    expect(orderToPosJson({ ...BASE, payment_method: "cash", payments: [] } as never, []).paymentStatus).toBe("cash");
   });
 });

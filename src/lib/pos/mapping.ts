@@ -57,6 +57,7 @@ type OrderItemRow = {
 };
 
 type OrderRow = {
+  payment_method: "cash" | "card";
   id: string;
   code: string;
   status: OrderStatus;
@@ -112,7 +113,12 @@ export function orderToPosJson(order: OrderRow, items: OrderItemRow[]): Record<s
     // The terminal prints "CASH — UNPAID" for anything that is not "paid",
     // which is exactly right: a cash order is confirmed but the money has not
     // been taken yet, and whoever hands it over has to collect it.
-    paymentStatus: paymentStatusOf(order),
+    // Read from the order itself. orders.payment_method is written in the
+    // same insert that creates the order and the database refuses an order
+    // without it, so this is never missing and never has to be inferred from
+    // the payments row — which is written later, and once left a 178ms gap
+    // in which a cash delivery printed PAID ONLINE.
+    paymentStatus: order.payment_method === "cash" ? "cash" : "paid",
     orderType: order.fulfilment, // "collection" | "delivery" — app's isDelivery() matches
     createdAt: order.placed_at ?? order.created_at,
     subtotal: money(order.subtotal_pence),
@@ -145,61 +151,4 @@ function branchOf(order: OrderRow): { name: string; address: string; phone: stri
 }
 
 /** Was this order placed as cash-on-collection / cash-on-delivery? */
-/**
- * "cash", "paid", or "unknown".
- *
- * "unknown" is the honest answer when the order carries no method AND no
- * payment row exists — which takes both migration 0033 being un-run and the
- * payments insert failing. It used to be reported as "paid", and a ticket
- * saying PAID ONLINE on an order nobody has paid for is the one lie this
- * system must never tell. An updated till prints CHECK PAYMENT; an old one
- * still prints PAID ONLINE, exactly as it did before.
- */
-export function paymentStatusOf(order: OrderRow): "cash" | "paid" | "unknown" {
-  const declared = (order as { payment_method?: string | null }).payment_method;
-  if (declared) return declared === "cash" ? "cash" : "paid";
-  const p = order.payments;
-  const rows = p == null ? [] : Array.isArray(p) ? p : [p];
-  if (rows.length === 0) return "unknown";
-  return rows.some((r) => r?.method === "cash") ? "cash" : "paid";
-}
 
-
-/**
- * How long an order may sit unprinted while we wait for its payment row.
- *
- * confirmPaidOrder() flips the order to "paid" and writes the payments row a
- * moment later — two statements, not one transaction. A till polling in that
- * gap sees a paid order with no payment attached, which reads as "card", and
- * the ticket prints PAID ONLINE on an order the driver was meant to collect
- * cash for. Measured gap on a real order: 178ms.
- *
- * So a freshly-paid order with no payment row yet is held back for one poll.
- * The till polls every 5s, so nothing is noticeably delayed.
- */
-export const PAYMENT_SETTLE_MS = 15_000;
-
-/**
- * Is this order safe to put on a ticket yet?
- *
- * The grace window is bounded on purpose: if a payment row never appears, the
- * order prints anyway once the window passes. A kitchen that never sees the
- * ticket is worse than one that sees PAID ONLINE, so this delays a ticket but
- * can never lose one.
- */
-export function readyToTicket(
-  order: { placed_at?: string | null; created_at?: string | null; payments?: unknown; payment_method?: string | null },
-  now: number,
-): boolean {
-  // Once the order carries its own method there is nothing to wait for.
-  if (order.payment_method) return true;
-
-  const p = order.payments;
-  const rows = p == null ? [] : Array.isArray(p) ? p : [p];
-  if (rows.length > 0) return true;
-
-  const stamp = order.placed_at ?? order.created_at;
-  if (!stamp) return true;
-  const age = now - new Date(stamp).getTime();
-  return !(age >= 0 && age < PAYMENT_SETTLE_MS);
-}

@@ -15,7 +15,7 @@ with loc as (
 ),
 new_order as (
   insert into orders (
-    location_id, code, fulfilment, status,
+    location_id, code, fulfilment, status, payment_method,
     subtotal_pence, delivery_fee_pence, discount_pence, total_pence,
     promo_code, delivery_address,
     contact_name, contact_email, contact_phone, notes,
@@ -26,6 +26,7 @@ new_order as (
     'TEST' || upper(substr(encode(gen_random_bytes(4), 'hex'), 1, 4)),
     'delivery',          -- change to 'collection' to test the other ticket
     'paid',              -- what the kitchen sees for a real paid order
+    'cash',              -- required: every order says cash or card
     1840, 199, 0, 2039,
     null,
     jsonb_build_object(

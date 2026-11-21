@@ -34,10 +34,10 @@ insert into promo_codes (id, code, kind, value, global_limit, is_active)
 insert into locations (id, slug, name, address, is_active)
   values ('00000000-0000-0000-0000-0000000000d1', 'test-loc', 'Test', 'x', true)
   on conflict (id) do nothing;
-insert into orders (id, code, location_id, fulfilment, status, subtotal_pence, total_pence)
+insert into orders (id, code, location_id, fulfilment, status, payment_method, subtotal_pence, total_pence)
   values
-    ('00000000-0000-0000-0000-0000000000c1', 'TESTC1', '00000000-0000-0000-0000-0000000000d1', 'collection', 'pending_payment', 1000, 500),
-    ('00000000-0000-0000-0000-0000000000c2', 'TESTC2', '00000000-0000-0000-0000-0000000000d1', 'collection', 'pending_payment', 1000, 500)
+    ('00000000-0000-0000-0000-0000000000c1', 'TESTC1', '00000000-0000-0000-0000-0000000000d1', 'collection', 'pending_payment', 'card', 1000, 500),
+    ('00000000-0000-0000-0000-0000000000c2', 'TESTC2', '00000000-0000-0000-0000-0000000000d1', 'collection', 'pending_payment', 'card', 1000, 500)
   on conflict (id) do nothing;
 
 select lives_ok(

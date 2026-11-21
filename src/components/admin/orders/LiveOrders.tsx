@@ -219,7 +219,7 @@ export function LiveOrders({ orders, locationId }: { orders: OrderDetail[]; loca
                           <Line label={`Discount${o.promoCode ? ` (${o.promoCode})` : ""}`} value={`−${money(o.discountPence)}`} />
                         )}
                         <Line label="Total" value={money(o.totalPence)} />
-                        <Line label="Payment" value={o.paymentUnknown ? "NOT CONFIRMED — check before handing over" : o.isCash ? "Cash — not yet collected" : "Paid online"} />
+                        <Line label="Payment" value={o.isCash ? "Cash — not yet collected" : "Paid online"} />
                         {/* "paid" is the status an order reaches when it is PLACED,
                             card or cash alike — it has never meant the money is in.
                             Printed raw it told staff a cash order was settled, which

@@ -4,19 +4,14 @@ import { enqueueOrderEmail, STATUS_EMAIL } from "@/lib/ordering/notify";
 import { getServiceClient } from "@/lib/supabase/clients";
 import { LIVE_STATUSES, type Fulfilment, type OrderStatus } from "@/lib/ordering/constants";
 import { recordOrderEvent } from "@/lib/ordering/events";
-import { orderToPosJson, appStatusToBbc, forwardStatusPath, readyToTicket } from "./mapping";
+import { orderToPosJson, appStatusToBbc, forwardStatusPath } from "./mapping";
 import { releaseCutoff } from "@/lib/ordering/scheduling";
 
 const ORDER_COLS =
-  "id, code, status, fulfilment, contact_name, contact_phone, total_pence, subtotal_pence, delivery_fee_pence, discount_pence, promo_code, notes, delivery_address, placed_at, created_at, printed_at, scheduled_for, prep_time_min, locations(name, address, phone), payments(method)";
-
-/** The same columns plus the order's own payment method (migration 0033) and
- *  its number for the day (0034). Tried first; the plain list is the fallback
- *  until both migrations have been run. */
-const ORDER_COLS_WITH_METHOD = ORDER_COLS.replace("id, code,", "id, payment_method, daily_seq, code,");
+  "id, code, payment_method, daily_seq, status, fulfilment, contact_name, contact_phone, total_pence, subtotal_pence, delivery_fee_pence, discount_pence, promo_code, notes, delivery_address, placed_at, created_at, printed_at, scheduled_for, prep_time_min, locations(name, address, phone), payments(method)";
 
 
-/** One live-orders query, so both column lists share the same filters. */
+/** The live-orders query for a till. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ordersQuery(supabase: any, locationId: string, cols: string) {
   return supabase
@@ -35,29 +30,16 @@ function ordersQuery(supabase: any, locationId: string, cols: string) {
 export async function listLiveOrdersForPos(locationId: string): Promise<Record<string, unknown>[]> {
   const supabase = getServiceClient();
   if (!supabase) return [];
-  // Ask for the order's own payment method first. If migration 0033 has not
-  // been applied yet the column does not exist, Postgres rejects the whole
-  // query, and we fall back to the columns that have always been there — a
-  // till must never stop printing because of a column.
-  let orders: Record<string, unknown>[] | null = null;
-  for (const cols of [ORDER_COLS_WITH_METHOD, ORDER_COLS]) {
-    const res = await ordersQuery(supabase, locationId, cols);
-    if (!res.error) { orders = res.data as Record<string, unknown>[] | null; break; }
-    if (cols === ORDER_COLS) {
-      console.error("[pos] could not read orders for the till", res.error);
-      return [];
-    }
+  const res = await ordersQuery(supabase, locationId, ORDER_COLS);
+  if (res.error) {
+    // Logged, not hidden: a till that stops printing must say why.
+    console.error("[pos] could not read orders for the till", res.error);
+    return [];
   }
-  if (!orders?.length) return [];
+  const orders = (res.data ?? []) as Record<string, unknown>[];
+  if (!orders.length) return [];
 
-  // Hold back an order whose payment row has not landed yet — otherwise a cash
-  // order can print PAID ONLINE and nobody collects the money. See
-  // readyToTicket.
-  const now = Date.now();
-  const ready = orders.filter((o) => readyToTicket(o as Record<string, unknown>, now));
-  if (!ready.length) return [];
-
-  const ids = ready.map((o) => o.id as string);
+  const ids = orders.map((o) => o.id as string);
   const { data: items } = await supabase
     .from("order_items")
     .select("order_id, name, qty, line_total_pence, notes, modifiers")
@@ -70,7 +52,7 @@ export async function listLiveOrdersForPos(locationId: string): Promise<Record<s
     byOrder.set(it.order_id as string, arr);
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return ready.map((o: any) => orderToPosJson(o, (byOrder.get(o.id) ?? []) as any));
+  return orders.map((o: any) => orderToPosJson(o, (byOrder.get(o.id) ?? []) as any));
 }
 
 /** Confirm the order is at this location before any POS write (auth already

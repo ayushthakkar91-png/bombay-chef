@@ -259,7 +259,7 @@ namespace BombayBicycleChef
             if (Api.MarkPrinted(config, _session, order.Id)) already.Forget(order.Id);
 
             Log.Write("Printed " + (order.DailyNumber > 0 ? "#" + order.DailyNumber + " " : "") + order.Code + " (" + order.Fulfilment + ", " +
-                      order.Total.ToString("0.00", CultureInfo.InvariantCulture) + (order.IsCash ? ", CASH" : order.PaymentUnknown ? ", PAYMENT UNKNOWN" : "") + ").");
+                      order.Total.ToString("0.00", CultureInfo.InvariantCulture) + (order.IsCash ? ", CASH" : "") + ").");
         }
     }
 
@@ -462,8 +462,6 @@ namespace BombayBicycleChef
         public DateTime? ScheduledFor;
         public bool IsPrinted;
         public bool IsCash;
-        /** The server could not tell. Neither cash nor paid: ask before handing over. */
-        public bool PaymentUnknown;
         /** 1, 2, 3 … this branch's count for the day. 0 when the server has not sent one. */
         public int DailyNumber;
         public double Total, Subtotal, DeliveryFee, Discount;
@@ -520,7 +518,6 @@ namespace BombayBicycleChef
                 Fulfilment = Json.Str(row, "orderType"),
                 IsPrinted = Json.Bool(row, "isPrinted"),
                 IsCash = Json.Str(row, "paymentStatus") == "cash",
-                PaymentUnknown = Json.Str(row, "paymentStatus") == "unknown",
                 DailyNumber = (int)Json.Number(row, "dailyNumber"),
                 Total = Json.Number(row, "totalPrice"),
                 Subtotal = Json.Number(row, "subtotal"),
@@ -840,16 +837,6 @@ namespace BombayBicycleChef
                 // amount matters more than keeping it on one line.
                 w.Line("COLLECT CASH");
                 w.Line(Money(order.Total));
-            }
-            else if (order.PaymentUnknown)
-            {
-                // The server does not know. Saying PAID here is the one thing
-                // this ticket must never do, so it says the opposite: stop
-                // and check — on the screen, or by asking the customer.
-                w.Line("CHECK PAYMENT");
-                w.Raw(Size(1, 2));
-                w.Line("NOT CONFIRMED - ASK");
-                w.Line("BEFORE HANDING OVER");
             }
             else
             {
