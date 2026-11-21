@@ -52,7 +52,7 @@ try {
     # A till that updates in that window quietly gets the version before — and
     # then "the update did nothing". A throwaway query string makes every
     # fetch a fresh one.
-    $fresh = "$Base/$file?nocache=" + [DateTime]::UtcNow.Ticks
+    $fresh = "$Base/${file}?nocache=" + [DateTime]::UtcNow.Ticks
     Invoke-WebRequest -Uri $fresh -OutFile (Join-Path $staging $file) -UseBasicParsing
     Say "  $file"
   }
