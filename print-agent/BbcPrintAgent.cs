@@ -715,9 +715,13 @@ namespace BombayBicycleChef
             w.Plain();
             w.Line(new string('-', Width));
             if (order.CustomerName.Length > 0) {
-                w.Strong();
+                // Double height. The whole ticket is already bold, so bold
+                // alone makes the name no easier to pick out when the driver
+                // is holding six bags — size is what reads across a counter.
+                // Height only: double width would wrap most names.
+                w.Raw(Size(1, 2));
                 w.Wrapped("For: " + order.CustomerName, 0, 5, Width);
-                w.Plain();
+                w.Raw(Size(1, 1));
             }
 
             // When they were told to expect it. A chosen slot is a promise and
