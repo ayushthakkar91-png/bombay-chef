@@ -147,3 +147,36 @@ function isCashOrder(order: OrderRow): boolean {
   const rows = Array.isArray(p) ? p : [p];
   return rows.some((r) => r?.method === "cash");
 }
+
+/**
+ * How long an order may sit unprinted while we wait for its payment row.
+ *
+ * confirmPaidOrder() flips the order to "paid" and writes the payments row a
+ * moment later — two statements, not one transaction. A till polling in that
+ * gap sees a paid order with no payment attached, which reads as "card", and
+ * the ticket prints PAID ONLINE on an order the driver was meant to collect
+ * cash for. Measured gap on a real order: 178ms.
+ *
+ * So a freshly-paid order with no payment row yet is held back for one poll.
+ * The till polls every 5s, so nothing is noticeably delayed.
+ */
+export const PAYMENT_SETTLE_MS = 15_000;
+
+/**
+ * Is this order safe to put on a ticket yet?
+ *
+ * The grace window is bounded on purpose: if a payment row never appears, the
+ * order prints anyway once the window passes. A kitchen that never sees the
+ * ticket is worse than one that sees PAID ONLINE, so this delays a ticket but
+ * can never lose one.
+ */
+export function readyToTicket(order: { placed_at?: string | null; created_at?: string | null; payments?: unknown }, now: number): boolean {
+  const p = order.payments;
+  const rows = p == null ? [] : Array.isArray(p) ? p : [p];
+  if (rows.length > 0) return true;
+
+  const stamp = order.placed_at ?? order.created_at;
+  if (!stamp) return true;
+  const age = now - new Date(stamp).getTime();
+  return !(age >= 0 && age < PAYMENT_SETTLE_MS);
+}

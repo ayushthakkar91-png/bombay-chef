@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { forwardStatusPath, appStatusToBbc, bbcStatusToApp } from "./mapping";
+import { forwardStatusPath, appStatusToBbc, bbcStatusToApp, readyToTicket, PAYMENT_SETTLE_MS } from "./mapping";
 
 describe("forwardStatusPath", () => {
   it("walks a single hop", () => {
@@ -58,5 +58,43 @@ describe("appStatusToBbc / bbcStatusToApp round-trips", () => {
   it("round-trips ready_for_collection/out_for_delivery -> ready app status", () => {
     expect(bbcStatusToApp("ready_for_collection")).toBe("ready");
     expect(bbcStatusToApp("out_for_delivery")).toBe("ready");
+  });
+});
+
+describe("a ticket waits for its payment row", () => {
+  const PLACED = "2026-11-21T17:29:39.602Z";
+  const at = (ms: number) => new Date(PLACED).getTime() + ms;
+
+  it("holds back a just-paid order that has no payment row yet", () => {
+    // The real failure: Balham's till polled 178ms after the status flipped,
+    // saw no payment, and printed PAID ONLINE on a cash order.
+    expect(readyToTicket({ placed_at: PLACED, payments: [] }, at(178))).toBe(false);
+  });
+
+  it("releases it as soon as the payment row lands", () => {
+    expect(readyToTicket({ placed_at: PLACED, payments: [{ method: "cash" }] }, at(178))).toBe(true);
+  });
+
+  it("prints anyway rather than lose the ticket", () => {
+    // If a payment row never appears, the kitchen must still get the order.
+    expect(readyToTicket({ placed_at: PLACED, payments: [] }, at(PAYMENT_SETTLE_MS + 1))).toBe(true);
+  });
+
+  it("does not hold an older order back", () => {
+    expect(readyToTicket({ placed_at: PLACED, payments: [] }, at(60_000))).toBe(true);
+  });
+
+  it("copes with a single payment object rather than an array", () => {
+    expect(readyToTicket({ placed_at: PLACED, payments: { method: "card" } }, at(10))).toBe(true);
+  });
+
+  it("falls back to created_at, and prints when there is no timestamp at all", () => {
+    expect(readyToTicket({ created_at: PLACED, payments: [] }, at(10))).toBe(false);
+    expect(readyToTicket({ payments: [] }, at(10))).toBe(true);
+  });
+
+  it("is not fooled by a clock skewed into the future", () => {
+    // A placed_at ahead of our clock must not hold the ticket for ever.
+    expect(readyToTicket({ placed_at: PLACED, payments: [] }, at(-60_000))).toBe(true);
   });
 });

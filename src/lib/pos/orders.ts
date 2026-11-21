@@ -4,7 +4,7 @@ import { enqueueOrderEmail, STATUS_EMAIL } from "@/lib/ordering/notify";
 import { getServiceClient } from "@/lib/supabase/clients";
 import { LIVE_STATUSES, type Fulfilment, type OrderStatus } from "@/lib/ordering/constants";
 import { recordOrderEvent } from "@/lib/ordering/events";
-import { orderToPosJson, appStatusToBbc, forwardStatusPath } from "./mapping";
+import { orderToPosJson, appStatusToBbc, forwardStatusPath, readyToTicket } from "./mapping";
 import { releaseCutoff } from "@/lib/ordering/scheduling";
 
 const ORDER_COLS =
@@ -26,7 +26,14 @@ export async function listLiveOrdersForPos(locationId: string): Promise<Record<s
     .limit(100);
   if (!orders?.length) return [];
 
-  const ids = orders.map((o) => o.id as string);
+  // Hold back an order whose payment row has not landed yet — otherwise a cash
+  // order can print PAID ONLINE and nobody collects the money. See
+  // readyToTicket.
+  const now = Date.now();
+  const ready = orders.filter((o) => readyToTicket(o as Record<string, unknown>, now));
+  if (!ready.length) return [];
+
+  const ids = ready.map((o) => o.id as string);
   const { data: items } = await supabase
     .from("order_items")
     .select("order_id, name, qty, line_total_pence, notes, modifiers")
@@ -39,7 +46,7 @@ export async function listLiveOrdersForPos(locationId: string): Promise<Record<s
     byOrder.set(it.order_id as string, arr);
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return orders.map((o: any) => orderToPosJson(o, (byOrder.get(o.id) ?? []) as any));
+  return ready.map((o: any) => orderToPosJson(o, (byOrder.get(o.id) ?? []) as any));
 }
 
 /** Confirm the order is at this location before any POS write (auth already
