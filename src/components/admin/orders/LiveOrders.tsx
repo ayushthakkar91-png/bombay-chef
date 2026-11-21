@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import type { OrderDetail } from "@/lib/repositories/orders";
-import type { OrderStatus } from "@/lib/ordering/constants";
+import { ORDER_STATUS_LABEL, type OrderStatus } from "@/lib/ordering/constants";
 import { EmptyState } from "@/components/admin/primitives";
 import { useNow } from "@/components/admin/useNow";
 import { OrderActions } from "./OrderActions";
@@ -220,7 +220,16 @@ export function LiveOrders({ orders, locationId }: { orders: OrderDetail[]; loca
                         )}
                         <Line label="Total" value={money(o.totalPence)} />
                         <Line label="Payment" value={o.isCash ? "Cash — not yet collected" : "Paid online"} />
-                        <Line label="Status" value={o.status.replace(/_/g, " ")} />
+                        {/* "paid" is the status an order reaches when it is PLACED,
+                            card or cash alike — it has never meant the money is in.
+                            Printed raw it told staff a cash order was settled, which
+                            is how £22.65 went out of the door uncollected. */}
+                        <Line
+                          label="Status"
+                          value={o.isCash && o.status === "paid"
+                            ? `New — collect ${money(o.totalPence)} cash`
+                            : ORDER_STATUS_LABEL[o.status]}
+                        />
                       </dl>
                     </details>
                   </div>
