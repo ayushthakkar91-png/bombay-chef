@@ -736,9 +736,12 @@ namespace BombayBicycleChef
 
             if (order.CustomerPhone.Length > 0) w.Line("Tel " + order.CustomerPhone);
             if (order.IsDelivery && order.Address.Length > 0) {
-                w.Strong();
+                // Double height, like the name. The driver reads this off the
+                // ticket at the door, often one-handed in the dark. Height
+                // only: double width would wrap nearly every London address.
+                w.Raw(Size(1, 2));
                 w.Wrapped(order.Address, 0, 2, Width);
-                w.Plain();
+                w.Raw(Size(1, 1));
             }
             w.Feed();
 
