@@ -10,12 +10,16 @@ import { releaseCutoff } from "@/lib/ordering/scheduling";
 const ORDER_COLS =
   "id, code, status, fulfilment, contact_name, contact_phone, total_pence, subtotal_pence, delivery_fee_pence, discount_pence, promo_code, notes, delivery_address, placed_at, created_at, printed_at, scheduled_for, prep_time_min, locations(name, address, phone), payments(method)";
 
-export async function listLiveOrdersForPos(locationId: string): Promise<Record<string, unknown>[]> {
-  const supabase = getServiceClient();
-  if (!supabase) return [];
-  const { data: orders } = await supabase
+/** The same columns plus the order's own payment method (migration 0033). */
+const ORDER_COLS_WITH_METHOD = ORDER_COLS.replace("id, code,", "id, payment_method, code,");
+
+
+/** One live-orders query, so both column lists share the same filters. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function ordersQuery(supabase: any, locationId: string, cols: string) {
+  return supabase
     .from("orders")
-    .select(ORDER_COLS)
+    .select(cols)
     .eq("location_id", locationId)
     .in("status", LIVE_STATUSES)
     // A scheduled order is held back until an hour before its slot: a ticket
@@ -24,6 +28,24 @@ export async function listLiveOrdersForPos(locationId: string): Promise<Record<s
     .or(`scheduled_for.is.null,scheduled_for.lte.${releaseCutoff()}`)
     .order("placed_at", { ascending: false })
     .limit(100);
+}
+
+export async function listLiveOrdersForPos(locationId: string): Promise<Record<string, unknown>[]> {
+  const supabase = getServiceClient();
+  if (!supabase) return [];
+  // Ask for the order's own payment method first. If migration 0033 has not
+  // been applied yet the column does not exist, Postgres rejects the whole
+  // query, and we fall back to the columns that have always been there — a
+  // till must never stop printing because of a column.
+  let orders: Record<string, unknown>[] | null = null;
+  for (const cols of [ORDER_COLS_WITH_METHOD, ORDER_COLS]) {
+    const res = await ordersQuery(supabase, locationId, cols);
+    if (!res.error) { orders = res.data as Record<string, unknown>[] | null; break; }
+    if (cols === ORDER_COLS) {
+      console.error("[pos] could not read orders for the till", res.error);
+      return [];
+    }
+  }
   if (!orders?.length) return [];
 
   // Hold back an order whose payment row has not landed yet — otherwise a cash

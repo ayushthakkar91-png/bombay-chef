@@ -33,7 +33,7 @@ export async function confirmPaidOrder(
     .maybeSingle();
   if (!claimed) return false;
 
-  await supabase.from("payments").insert({
+  const { error: paymentError } = await supabase.from("payments").insert({
     order_id: orderId,
     // Cash is taken at the counter or the door, so it is neither Stripe nor a
     // gift card. Recording it honestly keeps the sales report truthful about
@@ -45,6 +45,13 @@ export async function confirmPaidOrder(
     method: opts.method,
     status: "succeeded",
   });
+  if (paymentError) {
+    // The money is taken (or owed, for cash) either way — the order stays
+    // paid. But an order with no payment row is invisible to the sales report
+    // and tells the kitchen nothing about who still owes money, so it must not
+    // pass in silence.
+    console.error("[confirm] payment row could not be written", { orderId, method: opts.method, paymentError });
+  }
 
   // Gift card partial-balance redemption. The card was NOT reserved at order
   // create (unlike the fully-covered path), so its balance may have been drained

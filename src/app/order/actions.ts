@@ -374,6 +374,22 @@ async function createCheckoutInner(input: CheckoutInput): Promise<CheckoutResult
   }
 
   const orderId = order.id as string;
+
+  // How they chose to pay, recorded on the order itself and before it can
+  // possibly be confirmed. The payments row is written a moment AFTER an order
+  // is marked paid, and a till polling in that gap saw a paid order with no
+  // payment and printed PAID ONLINE on a cash delivery. The choice is known
+  // here, so the kitchen never has to infer it.
+  //
+  // Tolerated failure on purpose: before migration 0033 the column does not
+  // exist, and no customer should be unable to order because of that. The
+  // ticket then falls back to the payments row, as it always did.
+  const { error: methodError } = await supabase
+    .from("orders")
+    .update({ payment_method: cash ? "cash" : "card" })
+    .eq("id", orderId);
+  if (methodError) console.error("[checkout] could not record the payment method", methodError);
+
   await recordOrderEvent(orderId, "ORDER_CREATED", { code: order.code, totalPence: price.totalPence, fulfilment: input.fulfilment });
 
   await supabase.from("order_items").insert(

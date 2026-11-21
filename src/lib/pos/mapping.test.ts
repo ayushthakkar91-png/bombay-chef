@@ -1,5 +1,28 @@
 import { describe, it, expect } from "vitest";
-import { forwardStatusPath, appStatusToBbc, bbcStatusToApp, readyToTicket, PAYMENT_SETTLE_MS } from "./mapping";
+import { forwardStatusPath, appStatusToBbc, bbcStatusToApp, readyToTicket, orderToPosJson, PAYMENT_SETTLE_MS } from "./mapping";
+
+/** A minimal live order row, as the till query returns one. */
+const BASE = {
+  id: "o1",
+  code: "30811412",
+  status: "paid",
+  fulfilment: "delivery",
+  contact_name: "Ainslie McLennan",
+  contact_phone: "+447771976993",
+  total_pence: 2265,
+  subtotal_pence: 2265,
+  delivery_fee_pence: 0,
+  discount_pence: 0,
+  promo_code: null,
+  notes: null,
+  delivery_address: { line1: "23 Elmbourne Road", city: "London", postcode: "SW17 8JS" },
+  placed_at: "2026-11-21T17:29:39.602Z",
+  created_at: "2026-11-21T17:29:39.257Z",
+  printed_at: null,
+  scheduled_for: null,
+  prep_time_min: 40,
+  locations: { name: "Balham", address: "", phone: "" },
+};
 
 describe("forwardStatusPath", () => {
   it("walks a single hop", () => {
@@ -96,5 +119,42 @@ describe("a ticket waits for its payment row", () => {
   it("is not fooled by a clock skewed into the future", () => {
     // A placed_at ahead of our clock must not hold the ticket for ever.
     expect(readyToTicket({ placed_at: PLACED, payments: [] }, at(-60_000))).toBe(true);
+  });
+});
+
+describe("the order's own payment method is what the ticket trusts", () => {
+  const PLACED = "2026-11-21T17:29:39.602Z";
+  const at = (ms: number) => new Date(PLACED).getTime() + ms;
+
+  it("does not wait at all once the order carries its method", () => {
+    // The whole race disappears: there is no instant when the order exists
+    // and its payment method does not.
+    expect(readyToTicket({ placed_at: PLACED, payment_method: "cash", payments: [] }, at(1))).toBe(true);
+  });
+
+  it("still waits when the method is missing and no payment row exists", () => {
+    expect(readyToTicket({ placed_at: PLACED, payments: [] }, at(1))).toBe(false);
+  });
+
+  it("marks a cash order as cash from the order alone", () => {
+    const t = orderToPosJson({ ...BASE, payment_method: "cash", payments: [] } as never, []);
+    expect(t.paymentStatus).toBe("cash");
+  });
+
+  it("marks a card order as paid from the order alone", () => {
+    const t = orderToPosJson({ ...BASE, payment_method: "card", payments: [] } as never, []);
+    expect(t.paymentStatus).toBe("paid");
+  });
+
+  it("believes the order over a payments row that disagrees", () => {
+    // Should never happen, but if it does, the intent recorded at checkout is
+    // the one the customer agreed to.
+    const t = orderToPosJson({ ...BASE, payment_method: "cash", payments: [{ method: "card" }] } as never, []);
+    expect(t.paymentStatus).toBe("cash");
+  });
+
+  it("falls back to the payments row before the migration is applied", () => {
+    const t = orderToPosJson({ ...BASE, payments: [{ method: "cash" }] } as never, []);
+    expect(t.paymentStatus).toBe("cash");
   });
 });

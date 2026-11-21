@@ -142,6 +142,13 @@ function branchOf(order: OrderRow): { name: string; address: string; phone: stri
 
 /** Was this order placed as cash-on-collection / cash-on-delivery? */
 function isCashOrder(order: OrderRow): boolean {
+  // The order's own method is the one to trust: it is written when the order
+  // is created, so it is never missing, whereas the payments row is written a
+  // moment after the order is marked paid. A till polling in that gap used to
+  // see no payment at all and print PAID ONLINE on a cash delivery.
+  const declared = (order as { payment_method?: string | null }).payment_method;
+  if (declared) return declared === "cash";
+
   const p = order.payments;
   if (!p) return false;
   const rows = Array.isArray(p) ? p : [p];
@@ -170,7 +177,13 @@ export const PAYMENT_SETTLE_MS = 15_000;
  * ticket is worse than one that sees PAID ONLINE, so this delays a ticket but
  * can never lose one.
  */
-export function readyToTicket(order: { placed_at?: string | null; created_at?: string | null; payments?: unknown }, now: number): boolean {
+export function readyToTicket(
+  order: { placed_at?: string | null; created_at?: string | null; payments?: unknown; payment_method?: string | null },
+  now: number,
+): boolean {
+  // Once the order carries its own method there is nothing to wait for.
+  if (order.payment_method) return true;
+
   const p = order.payments;
   const rows = p == null ? [] : Array.isArray(p) ? p : [p];
   if (rows.length > 0) return true;
