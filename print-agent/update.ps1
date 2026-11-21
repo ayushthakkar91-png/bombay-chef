@@ -48,7 +48,12 @@ Say ""
 Say "Fetching the latest print agent..." "Cyan"
 try {
   foreach ($file in $Files) {
-    Invoke-WebRequest -Uri "$Base/$file" -OutFile (Join-Path $staging $file) -UseBasicParsing
+    # GitHub's CDN keeps a copy of each file for a few minutes after a push.
+    # A till that updates in that window quietly gets the version before — and
+    # then "the update did nothing". A throwaway query string makes every
+    # fetch a fresh one.
+    $fresh = "$Base/$file?nocache=" + [DateTime]::UtcNow.Ticks
+    Invoke-WebRequest -Uri $fresh -OutFile (Join-Path $staging $file) -UseBasicParsing
     Say "  $file"
   }
 } catch {

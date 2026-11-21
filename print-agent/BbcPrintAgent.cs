@@ -755,12 +755,11 @@ namespace BombayBicycleChef
             if (order.CustomerPhone.Length > 0)
             {
                 // The driver dials this standing outside the wrong door with
-                // the food going cold. Same weight as the name and address:
-                // double height, double-struck. A UK number with "Tel " is
-                // under 20 characters, so double width would fit too — but
-                // keeping the three customer lines the same size reads as one
-                // block, which is the point.
-                w.Raw(DoubleStrikeOn).Raw(Size(1, 2));
+                // the food going cold. Double width AND height, double-struck:
+                // the biggest thing in the customer block. "Tel " plus a UK
+                // number is 16 characters; 21 fit at double width, so it
+                // cannot wrap.
+                w.Raw(DoubleStrikeOn).Raw(Size(2, 2));
                 w.Line("Tel " + order.CustomerPhone);
                 w.Raw(Size(1, 1)).Raw(DoubleStrikeOff);
             }
