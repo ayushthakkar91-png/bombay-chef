@@ -725,20 +725,21 @@ namespace BombayBicycleChef
             w.Raw(Size(1, 1)).Plain();
             w.Line(order.PlacedAt.ToString("ddd dd MMM yyyy  HH:mm", CultureInfo.InvariantCulture));
             w.Line(WEBSITE);
-            w.Feed();
 
+            // The ticket is three blocks — who, what, money — each under the
+            // same heavy rule, so a glance finds the right one without reading.
             w.Raw(AlignLeft);
-            w.Strong();
-            w.Line("CUSTOMER DETAILS");
-            w.Plain();
-            w.Line(new string('-', Width));
+            w.Block("CUSTOMER DETAILS");
+
+            // Name, phone and address at ONE size: double width and height,
+            // double-struck. The driver reads all three at the door, usually
+            // one-handed, and three sizes for three facts is noise. At double
+            // width 21 characters fit, so a long name or a London address
+            // wraps — a second line of big text reads better than one line of
+            // small, and that is what the paper is for.
             if (order.CustomerName.Length > 0) {
-                // Double height. The whole ticket is already bold, so bold
-                // alone makes the name no easier to pick out when the driver
-                // is holding six bags — size is what reads across a counter.
-                // Height only: double width would wrap most names.
-                w.Raw(DoubleStrikeOn).Raw(Size(1, 2));
-                w.Wrapped("For: " + order.CustomerName, 0, 5, Width);
+                w.Raw(DoubleStrikeOn).Raw(Size(2, 2));
+                w.Wrapped(order.CustomerName, 0, 2, Width / 2);
                 w.Raw(Size(1, 1)).Raw(DoubleStrikeOff);
             }
 
@@ -754,24 +755,26 @@ namespace BombayBicycleChef
 
             if (order.CustomerPhone.Length > 0)
             {
-                // The driver dials this standing outside the wrong door with
-                // the food going cold. Double width AND height, double-struck:
-                // the biggest thing in the customer block. "Tel " plus a UK
-                // number is 16 characters; 21 fit at double width, so it
-                // cannot wrap.
                 w.Raw(DoubleStrikeOn).Raw(Size(2, 2));
-                w.Line("Tel " + order.CustomerPhone);
+                w.Wrapped("Tel " + order.CustomerPhone, 0, 2, Width / 2);
                 w.Raw(Size(1, 1)).Raw(DoubleStrikeOff);
             }
             if (order.IsDelivery && order.Address.Length > 0) {
-                // Double height, like the name. The driver reads this off the
-                // ticket at the door, often one-handed in the dark. Height
-                // only: double width would wrap nearly every London address.
-                w.Raw(DoubleStrikeOn).Raw(Size(1, 2));
-                w.Wrapped(order.Address, 0, 2, Width);
+                // One part per line — street, then town, then postcode — the
+                // way an address is read aloud. Wrapping the whole thing as
+                // one sentence at this size split "High / Road" and left the
+                // postcode orphaned on a line of its own.
+                w.Raw(DoubleStrikeOn).Raw(Size(2, 2));
+                foreach (string part in order.Address.Split(','))
+                {
+                    string piece = part.Trim();
+                    if (piece.Length > 0) w.Wrapped(piece, 0, 2, Width / 2);
+                }
                 w.Raw(Size(1, 1)).Raw(DoubleStrikeOff);
             }
-            w.Feed();
+
+            // ---- Block 2: what to make
+            w.Block("ORDER DETAILS");
 
             foreach (OrderLine line in order.Items)
             {
@@ -826,7 +829,7 @@ namespace BombayBicycleChef
             // text is a solid block of thermal burn, which comes out greyer on
             // a tired roll and is harder to read across a counter than the big
             // letters it was meant to emphasise.
-            w.Feed();
+            w.Block("PAYMENT");
             w.Raw(AlignCentre).Strong().Raw(Size(2, 2));
             if (order.IsCash)
             {
@@ -1040,6 +1043,24 @@ namespace BombayBicycleChef
             public Writer Wrapped(string text, int indent, int width)
             {
                 return Wrapped(text, indent, indent, width);
+            }
+
+            /// <summary>
+            /// A block heading. Every section of the ticket opens the same
+            /// way — a heavy rule, the title, a light rule — so the eye learns
+            /// where things are: who at the top, what in the middle, money at
+            /// the bottom.
+            /// </summary>
+            public Writer Block(string title)
+            {
+                Feed();
+                Raw(AlignLeft);
+                Line(new string('=', Width));
+                Strong().Raw(Size(1, 2));
+                Line(title);
+                Raw(Size(1, 1)).Plain();
+                Line(new string('-', Width));
+                return this;
             }
 
             /// <summary>
