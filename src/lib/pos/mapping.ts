@@ -88,6 +88,11 @@ export function orderToPosJson(order: OrderRow, items: OrderItemRow[]): Record<s
   return {
     _id: order.id,
     orderNumber: order.code,
+    // "web" or "phone". A phone order is one somebody typed in while the
+    // customer waited on the line, so the ticket names who took it — the
+    // person to ask when "that is not what I ordered".
+    source: (order as { source?: string | null }).source ?? "web",
+    takenBy: (order as { taken_by_name?: string | null }).taken_by_name ?? "",
     // 1, 2, 3 … for the day at this branch — what gets shouted across the
     // kitchen and written on the bag. 0 until migration 0034 has run, and the
     // till simply leaves it off.

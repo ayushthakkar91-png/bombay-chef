@@ -462,6 +462,10 @@ namespace BombayBicycleChef
         public DateTime? ScheduledFor;
         public bool IsPrinted;
         public bool IsCash;
+        /** "web" or "phone". */
+        public string Source = "web";
+        /** Who typed a phone order in. Empty for web orders. */
+        public string TakenBy = "";
         /** 1, 2, 3 … this branch's count for the day. 0 when the server has not sent one. */
         public int DailyNumber;
         public double Total, Subtotal, DeliveryFee, Discount;
@@ -518,6 +522,8 @@ namespace BombayBicycleChef
                 Fulfilment = Json.Str(row, "orderType"),
                 IsPrinted = Json.Bool(row, "isPrinted"),
                 IsCash = Json.Str(row, "paymentStatus") == "cash",
+                Source = Json.Str(row, "source"),
+                TakenBy = Json.Str(row, "takenBy"),
                 DailyNumber = (int)Json.Number(row, "dailyNumber"),
                 Total = Json.Number(row, "totalPrice"),
                 Subtotal = Json.Number(row, "subtotal"),
@@ -723,6 +729,12 @@ namespace BombayBicycleChef
             w.Strong().Raw(Size(1, 2));
             w.Line((order.IsDelivery ? "DELIVERY" : "COLLECTION") + " #" + order.Code);
             w.Raw(Size(1, 1)).Plain();
+            if (order.Source == "phone")
+            {
+                // Typed in by a person, not the website — so the ticket says
+                // which person. "That is not what I ordered" has somebody to ask.
+                w.Line("PHONE ORDER" + (order.TakenBy.Length > 0 ? " - taken by " + order.TakenBy : ""));
+            }
             w.Line(order.PlacedAt.ToString("ddd dd MMM yyyy  HH:mm", CultureInfo.InvariantCulture));
             w.Line(WEBSITE);
 

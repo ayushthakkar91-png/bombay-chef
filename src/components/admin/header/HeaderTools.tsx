@@ -115,7 +115,7 @@ export function GlobalSearch() {
 
 const QUICK = [
   { href: "/admin/reservations", label: "New reservation", icon: CalendarDays },
-  { href: "/admin/orders/live", label: "New order", icon: ShoppingBag },
+  { href: "/admin/orders/new", label: "New order", icon: ShoppingBag },
   { href: "/admin/menu/items", label: "Add dish", icon: UtensilsCrossed },
   { href: "/admin/giftcards", label: "Create gift card", icon: Gift },
   { href: "/admin/messaging/campaigns", label: "Send campaign", icon: Send },

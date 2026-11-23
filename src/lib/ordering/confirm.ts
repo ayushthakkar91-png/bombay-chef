@@ -38,7 +38,10 @@ export async function confirmPaidOrder(
     // Cash is taken at the counter or the door, so it is neither Stripe nor a
     // gift card. Recording it honestly keeps the sales report truthful about
     // what actually cleared a card processor.
-    provider: opts.method === "gift_card" ? "gift_card" : opts.method === "cash" ? "cash" : "stripe",
+    // "terminal" is a card taken on the shop's own machine for a phone or
+    // walk-in order: paid, but never through Stripe, and the sales report
+    // must not say it was.
+    provider: opts.method === "gift_card" ? "gift_card" : opts.method === "cash" ? "cash" : opts.method === "terminal" ? "terminal" : "stripe",
     provider_payment_intent: opts.paymentIntent ?? null,
     amount_pence: opts.amountPence,
     currency: "gbp",

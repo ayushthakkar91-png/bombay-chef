@@ -8,7 +8,7 @@ import { orderToPosJson, appStatusToBbc, forwardStatusPath } from "./mapping";
 import { releaseCutoff } from "@/lib/ordering/scheduling";
 
 const ORDER_COLS =
-  "id, code, payment_method, daily_seq, status, fulfilment, contact_name, contact_phone, total_pence, subtotal_pence, delivery_fee_pence, discount_pence, promo_code, notes, delivery_address, placed_at, created_at, printed_at, scheduled_for, prep_time_min, locations(name, address, phone), payments(method)";
+  "id, code, payment_method, daily_seq, source, taken_by_name, status, fulfilment, contact_name, contact_phone, total_pence, subtotal_pence, delivery_fee_pence, discount_pence, promo_code, notes, delivery_address, placed_at, created_at, printed_at, scheduled_for, prep_time_min, locations(name, address, phone), payments(method)";
 
 
 /** The live-orders query for a till. */
