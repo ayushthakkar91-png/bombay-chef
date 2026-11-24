@@ -126,10 +126,17 @@ export async function placePhoneOrder(input: PhoneOrderInput): Promise<PhoneOrde
   // ---- A double-click places one order, not two ------------------------
   const { data: existing } = await supabase
     .from("orders")
-    .select("code, daily_seq, total_pence")
+    .select("code, status, daily_seq, total_pence")
     .eq("idempotency_key", input.idempotencyKey)
     .maybeSingle();
   if (existing) {
+    // Only a placed order counts as "already done". An attempt that failed
+    // part-way is cancelled below, and must not be handed back as a success
+    // — the kitchen never saw it. The browser takes a fresh key on any error,
+    // so "try again" really does try again.
+    if (existing.status === "cancelled" || existing.status === "pending_payment") {
+      return { ok: false, error: "That attempt did not go through. Press Place order again." };
+    }
     return { ok: true, code: existing.code as string, dailySeq: (existing.daily_seq as number | null) ?? null, totalPence: existing.total_pence as number };
   }
 
@@ -219,7 +226,11 @@ export async function placePhoneOrder(input: PhoneOrderInput): Promise<PhoneOrde
   // for a webhook that is not coming.
   after(async () => { await Promise.allSettled([dispatchDue(), dispatchTelegramDue()]); });
 
-  const { data: placed } = await supabase.from("orders").select("daily_seq").eq("id", orderId).maybeSingle();
+  // The day's number, assigned by trigger when the order became paid. The
+  // order is placed and printing whatever this returns; a failure here only
+  // costs the number on the confirmation screen, but it should not be silent.
+  const { data: placed, error: seqError } = await supabase.from("orders").select("daily_seq").eq("id", orderId).maybeSingle();
+  if (seqError) console.error("[phone-order] could not read daily_seq", seqError.message);
 
   revalidatePath("/admin/orders");
   revalidatePath("/admin/orders/live");

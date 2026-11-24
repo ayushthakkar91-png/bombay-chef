@@ -70,22 +70,30 @@ if (-not (Test-Path $csc)) {
   exit 1
 }
 
+New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
+New-Item -ItemType Directory -Force -Path $DataDir | Out-Null
+
+# Compile BEFORE touching the running service, to a file beside the real one.
+# The old order — stop, then compile — meant a compile failure left the till
+# with no printer at all until somebody noticed. Now the old agent keeps
+# printing right up until there is a good new one to swap in.
+Say "Compiling..."
+$NewExe = "$Exe.new"
+$refs = @("/r:System.Web.Extensions.dll", "/r:System.ServiceProcess.dll", "/r:System.Security.dll")
+& $csc /nologo /optimize+ /target:exe "/out:$NewExe" $refs $Source
+if ($LASTEXITCODE -ne 0) {
+  Remove-Item $NewExe -ErrorAction SilentlyContinue
+  Say "The agent did not compile. Nothing was changed; the printer is still running." "Red"
+  exit 1
+}
+
 if (Get-Service -Name $ServiceName -ErrorAction SilentlyContinue) {
   Say "Stopping the running agent..."
   try { Stop-Service -Name $ServiceName -Force -ErrorAction Stop } catch {}
   Start-Sleep -Seconds 2
 }
 
-New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
-New-Item -ItemType Directory -Force -Path $DataDir | Out-Null
-
-Say "Compiling..."
-$refs = @("/r:System.Web.Extensions.dll", "/r:System.ServiceProcess.dll", "/r:System.Security.dll")
-& $csc /nologo /optimize+ /target:exe "/out:$Exe" $refs $Source
-if ($LASTEXITCODE -ne 0) {
-  Say "The agent did not compile. Nothing was changed." "Red"
-  exit 1
-}
+Move-Item -Force $NewExe $Exe
 Say "Built $Exe" "Green"
 
 # --- settings --------------------------------------------------------------

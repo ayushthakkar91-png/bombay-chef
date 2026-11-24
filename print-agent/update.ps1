@@ -97,6 +97,15 @@ try {
   } else {
     & powershell -ExecutionPolicy Bypass -File (Join-Path $staging "install.ps1") -SkipCredentials
   }
+  # The installer's own verdict. Without this, a failed install printed
+  # "Up to date." underneath its own red error and the till operator walked
+  # away believing it had worked.
+  if ($LASTEXITCODE -ne 0) {
+    Say ""
+    Say "The update did NOT install (see the error above). Check the printer is still running:" "Red"
+    Say "    Get-Service BBCPrintAgent" "Yellow"
+    exit 1
+  }
 } finally {
   Pop-Location
   Remove-Item -Recurse -Force $staging -ErrorAction SilentlyContinue

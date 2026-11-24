@@ -57,7 +57,12 @@ type OrderItemRow = {
 };
 
 type OrderRow = {
+  /** Required by the database (migration 0035). The ticket cannot print without it. */
   payment_method: "cash" | "card";
+  /** Optional: fetched separately in listLiveOrdersForPos and absent until their migrations run. */
+  daily_seq?: number | null;
+  source?: string | null;
+  taken_by_name?: string | null;
   id: string;
   code: string;
   status: OrderStatus;

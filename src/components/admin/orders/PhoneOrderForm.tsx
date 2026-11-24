@@ -168,8 +168,15 @@ export function PhoneOrderForm({ location, menu, takenBy }: Props) {
         payment,
         idempotencyKey: attemptKey.current,
       });
-      if (r.ok) setPlaced(r);
-      else setError(r.error);
+      if (r.ok) {
+        setPlaced(r);
+      } else {
+        setError(r.error);
+        // No order is live after an error — either it was never created or
+        // the server cancelled it. A fresh key lets "try again" try again
+        // rather than hit the cancelled attempt's key.
+        attemptKey.current = crypto.randomUUID();
+      }
     });
   }
 
