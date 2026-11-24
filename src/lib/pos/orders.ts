@@ -7,9 +7,24 @@ import { recordOrderEvent } from "@/lib/ordering/events";
 import { orderToPosJson, appStatusToBbc, forwardStatusPath } from "./mapping";
 import { releaseCutoff } from "@/lib/ordering/scheduling";
 
+// Only columns the database GUARANTEES. payment_method is required by
+// migration 0035 and the ticket cannot be printed without it. Anything newer
+// goes in OPTIONAL_COLS below and is fetched separately — see why there.
 const ORDER_COLS =
-  "id, code, payment_method, daily_seq, source, taken_by_name, status, fulfilment, contact_name, contact_phone, total_pence, subtotal_pence, delivery_fee_pence, discount_pence, promo_code, notes, delivery_address, placed_at, created_at, printed_at, scheduled_for, prep_time_min, locations(name, address, phone), payments(method)";
+  "id, code, payment_method, status, fulfilment, contact_name, contact_phone, total_pence, subtotal_pence, delivery_fee_pence, discount_pence, promo_code, notes, delivery_address, placed_at, created_at, printed_at, scheduled_for, prep_time_min, locations(name, address, phone), payments(method)";
 
+
+/**
+ * Columns that improve a ticket but are not needed to print one: the day's
+ * number (0034), where the order came from and who took it (0036).
+ *
+ * Fetched in a second query that is allowed to fail. On 23 Nov 2026 these
+ * were added to the main query before their migration had been run; Postgres
+ * rejected every poll, the till received an empty list, and nothing printed
+ * at Battersea all evening. A till must never stop printing because of a
+ * column it does not strictly need.
+ */
+const OPTIONAL_COLS = "id, daily_seq, source, taken_by_name";
 
 /** The live-orders query for a till. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,6 +55,15 @@ export async function listLiveOrdersForPos(locationId: string): Promise<Record<s
   if (!orders.length) return [];
 
   const ids = orders.map((o) => o.id as string);
+
+  // The nice-to-have columns. If this fails the ticket prints without them.
+  const extras = await supabase.from("orders").select(OPTIONAL_COLS).in("id", ids);
+  if (extras.error) {
+    console.error("[pos] optional order columns unavailable — run the latest migrations", extras.error.message);
+  } else {
+    const byId = new Map(((extras.data ?? []) as Record<string, unknown>[]).map((e) => [e.id as string, e]));
+    for (const o of orders) Object.assign(o, byId.get(o.id as string) ?? {});
+  }
   const { data: items } = await supabase
     .from("order_items")
     .select("order_id, name, qty, line_total_pence, notes, modifiers")
