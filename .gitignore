@@ -43,3 +43,7 @@ next-env.d.ts
 # local tooling & generated design artifacts
 /.claude/
 /.impeccable/
+
+# one-off probe scripts written by review agents
+.probe.mjs
+.*.mjs
