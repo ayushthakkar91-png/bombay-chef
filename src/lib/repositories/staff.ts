@@ -58,7 +58,7 @@ export async function listShifts(locationId: string, fromISO: string, toISO: str
   if (!supabase) return [];
   const { data } = await supabase
     .from("shifts")
-    .select("id, profile_id, location_id, starts_at, ends_at, position, notes, profiles(full_name)")
+    .select("id, profile_id, location_id, starts_at, ends_at, position, notes, profiles!profile_id(full_name)")
     .eq("location_id", locationId)
     .gte("starts_at", fromISO)
     .lt("starts_at", toISO)
@@ -121,7 +121,7 @@ export async function listLeave(locationId: string, statuses?: string[]): Promis
   if (!supabase) return [];
   let q = supabase
     .from("leave_requests")
-    .select("id, profile_id, location_id, start_date, end_date, kind, reason, status, decided_at, profiles(full_name)")
+    .select("id, profile_id, location_id, start_date, end_date, kind, reason, status, decided_at, profiles!profile_id(full_name)")
     .eq("location_id", locationId)
     .order("start_date", { ascending: false })
     .limit(200);
@@ -135,7 +135,7 @@ export async function listMyLeave(profileId: string): Promise<LeaveRow[]> {
   if (!supabase) return [];
   const { data } = await supabase
     .from("leave_requests")
-    .select("id, profile_id, location_id, start_date, end_date, kind, reason, status, decided_at, profiles(full_name)")
+    .select("id, profile_id, location_id, start_date, end_date, kind, reason, status, decided_at, profiles!profile_id(full_name)")
     .eq("profile_id", profileId)
     .order("start_date", { ascending: false })
     .limit(100);
