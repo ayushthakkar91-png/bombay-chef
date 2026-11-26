@@ -1,6 +1,18 @@
 import "server-only";
 
 import { getServiceClient } from "@/lib/supabase/clients";
+import { flags } from "@/lib/flags";
+
+/**
+ * The platform console's tables (tenants, plans, subscriptions, and
+ * locations.tenant_id) only exist once migration 0017 is run, and that is
+ * only done when the feature is switched on. With it off there is nothing to
+ * read, so no query is made at all — every reader below already treats "no
+ * client" as "no data".
+ */
+function platformClient(): ReturnType<typeof getServiceClient> {
+  return flags.platform ? getServiceClient() : null;
+}
 
 const num = (v: unknown): number => Number(v ?? 0);
 const joinName = (j: unknown): string | null => {
@@ -11,7 +23,7 @@ const joinName = (j: unknown): string | null => {
 export type Plan = { id: string; key: string; name: string; monthlyPence: number; annualPence: number; maxLocations: number | null; maxUsers: number | null; features: string[] };
 
 export async function listPlans(): Promise<Plan[]> {
-  const supabase = getServiceClient();
+  const supabase = platformClient();
   if (!supabase) return [];
   const { data } = await supabase.from("plans").select("id, key, name, monthly_price_pence, annual_price_pence, max_locations, max_users, features").eq("is_active", true).order("sort_order");
   return (data ?? []).map((p) => ({ id: p.id as string, key: p.key as string, name: p.name as string, monthlyPence: num(p.monthly_price_pence), annualPence: num(p.annual_price_pence), maxLocations: (p.max_locations as number | null) ?? null, maxUsers: (p.max_users as number | null) ?? null, features: (p.features as string[]) ?? [] }));
@@ -20,7 +32,7 @@ export async function listPlans(): Promise<Plan[]> {
 export type TenantRow = { id: string; slug: string; name: string; status: string; planName: string | null; ownerName: string | null; locationCount: number; createdAt: string };
 
 export async function listTenants(): Promise<TenantRow[]> {
-  const supabase = getServiceClient();
+  const supabase = platformClient();
   if (!supabase) return [];
   const { data } = await supabase.from("tenants").select("id, slug, name, status, created_at, plans(name), profiles(full_name)").order("created_at", { ascending: false });
   const { data: locs } = await supabase.from("locations").select("tenant_id");
@@ -42,7 +54,7 @@ export type TenantDetail = {
 };
 
 export async function getTenant(id: string): Promise<TenantDetail | null> {
-  const supabase = getServiceClient();
+  const supabase = platformClient();
   if (!supabase) return null;
   const { data: t } = await supabase.from("tenants").select("id, slug, name, status, plan_id, created_at, plans(name)").eq("id", id).maybeSingle();
   if (!t) return null;
@@ -73,7 +85,7 @@ export async function getTenant(id: string): Promise<TenantDetail | null> {
 export type PlatformStats = { tenants: number; active: number; trialing: number; suspended: number; mrrPence: number; planBreakdown: { label: string; value: number }[] };
 
 export async function getPlatformStats(): Promise<PlatformStats> {
-  const supabase = getServiceClient();
+  const supabase = platformClient();
   if (!supabase) return { tenants: 0, active: 0, trialing: 0, suspended: 0, mrrPence: 0, planBreakdown: [] };
 
   const [{ data: tenants }, { data: subs }, plans] = await Promise.all([
