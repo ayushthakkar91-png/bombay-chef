@@ -60,12 +60,20 @@ function withPaymentPageCsp(request: NextRequest): NextResponse {
   return response;
 }
 
-/** Routes that must render for signed-out visitors (login/register). */
+/**
+ * Routes that must render for signed-out visitors.
+ *
+ * Forgot and reset belong here by definition: the only people who need them
+ * are the ones who cannot sign in. Without them "Forgot?" bounced straight
+ * back to the login page, and a customer with a lost password had no way in.
+ */
 function isPublicAuthPath(pathname: string): boolean {
   return (
     pathname === "/admin/login" ||
     pathname === "/account/login" ||
-    pathname === "/account/register"
+    pathname === "/account/register" ||
+    pathname === "/account/forgot" ||
+    pathname === "/account/reset"
   );
 }
 
